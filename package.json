@@ -1,0 +1,24 @@
+{
+  "name": "trail",
+  "version": "0.0.1",
+  "description": "trail programming language",
+  "main": "trail.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/iagafonov/trail.git"
+  },
+  "keywords": [
+    "trail",
+    "programming",
+    "language"
+  ],
+  "author": "Ivan Agafonov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/iagafonov/trail/issues"
+  },
+  "homepage": "https://github.com/iagafonov/trail#readme"
+}
