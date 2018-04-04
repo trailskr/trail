@@ -1,5 +1,5 @@
 const code =
-`
+  `
 import {out} from 'std'
 a: 1
 b: a + 1
@@ -8,23 +8,29 @@ out(b)
 
 let tab = ' .'
 let indent = ''
+let globalLogging = true
 const log = (toIndent, ...args) => {
-  if (toIndent === true) indent += tab
-  console.log(indent, ...args)
   if (toIndent === false) indent = indent.slice(0, indent.length - tab.length)
+  if (globalLogging) console.log(indent, ...args)
+  if (toIndent === true) indent += tab
 }
 
-let logging = true
-const logger = (name, fn, params) => {
+const logger = (name, fn, params, logging) => {
   if (logging) {
-    return (code) => {
-      log(true, `parsing ${name}${params ? ' ' + params : ''} on ${pos} "${code.slice(pos, pos + 15)}"`)
+    return function l(code) {
+      if (l.message) {
+        log(true, `parsing ${l.message} on "${code.slice(pos, pos + 15)}"`)
+        globalLogging = false
+      } else {
+        log(true, `parsing ${name}${params ? ' ' + params : ''} on "${code.slice(pos, pos + 15)}"`)
+      }
       const result = fn(code)
       if (result === undefined) {
         log(false, `not parsed ${name}`)
       } else {
         log(false, `parsed ${name} ${JSON.stringify(result)}`)
       }
+      if (l.message) globalLogging = true
       return result
     }
   } else {
@@ -32,8 +38,8 @@ const logger = (name, fn, params) => {
   }
 }
 
-const make = (name, fn, params) => {
-  const parser = logger(name, fn, params)
+const make = (name, fn, params = undefined) => {
+  const parser = logger(name, fn, params, true)
   Object.defineProperty(parser, 'skp', {
     get() {
       parser.skip = true
@@ -46,11 +52,18 @@ const make = (name, fn, params) => {
       return parser
     }
   })
-  parser.transform = fn => make('wrapper', (code) => {
+  parser.msg = (msg) => {
+    parser.message = msg
+    parser.params = msg
+    return parser
+  }
+  parser.transform = fn => make('transform', (code) => {
     const result = parser(code)
     if (result === undefined) return undefined
     return fn(result)
   })
+  parser.params = params
+  parser.title = name
   return parser
 }
 
@@ -90,7 +103,7 @@ const anyChar = make('any char', (code) => {
 
 const exceptChar = (char, escape) => {
   if (escape === undefined) {
-    make('except', (code) => {
+    return make('except', (code) => {
       const res = code[pos]
       if (res === char) return undefined
       pos += 1
@@ -113,7 +126,7 @@ const or = (...args) => make('or', (code) => {
     return res
   }
   return undefined
-})
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
 
 const join = (...args) => make('join', (code) => {
   let result = ''
@@ -128,7 +141,7 @@ const join = (...args) => make('join', (code) => {
     if (!p.skip) result += res
   }
   return result.length > 0 ? result : undefined
-})
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
 
 const pattern = (...args) => make('pattern', (code) => {
   const result = []
@@ -138,7 +151,10 @@ const pattern = (...args) => make('pattern', (code) => {
     const p = args[i]
     const res = p(code)
     if (res === undefined) {
-      if (p.optional) continue
+      if (p.optional) {
+        if (!p.skip) result.push(undefined)
+        continue
+      }
       pos = from
       return undefined
     }
@@ -150,7 +166,7 @@ const pattern = (...args) => make('pattern', (code) => {
     pos = from
     return undefined
   }
-})
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
 
 const one = (...args) => make('one in pattern', (code) => {
   const result = []
@@ -172,7 +188,7 @@ const one = (...args) => make('one in pattern', (code) => {
     pos = from
     return undefined
   }
-})
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
 
 const repeatChar = (p, min, max) => make('repeat char', (code) => {
   let i
@@ -186,7 +202,7 @@ const repeatChar = (p, min, max) => make('repeat char', (code) => {
     return undefined
   }
   return code.slice(from, pos)
-})
+}, `${JSON.stringify(p)} from ${min} times to ${max}`)
 
 const repeat = (p, min, max) => make('repeat', (code) => {
   const result = []
@@ -202,13 +218,13 @@ const repeat = (p, min, max) => make('repeat', (code) => {
     return undefined
   }
   return result
-})
+}, `(${p.title}: ${p.params}) from ${min} times to ${max}`)
 
 const series = (parser, divider = c(',')) => {
   return pattern(parser, repeat(one(divider.skp, WS, parser), 0, Infinity).opt).transform(([first, rest]) => ([first, ...rest]))
 }
 
-const WS = repeatChar(or(c('\u0020'), c('\u0009'), c('\u000B'), c('\u000C')), 1, Infinity).skp
+const WS = repeatChar(or(c('\u0020'), c('\u0009'), c('\u000B'), c('\u000C')), 1, Infinity).skp.msg('white space')
 const LE = repeatChar(or(c('\u000A'), c('\u000D'), s('\u000D\u000A'), c('\u2028'), c('\u2029'), 1, Infinity))
 const UPPER = range('A', 'Z')
 const LOWER = range('a', 'z')
@@ -219,18 +235,18 @@ const DOLLAR = c('$')
 
 const IDENTIFIER_FIRST = or(UPPER, LOWER, DASH, DOLLAR)
 const IDENTIFIER_REST = or(UPPER, LOWER, DASH, DOLLAR, DIGIT)
-const IDENTIFIER = join(IDENTIFIER_FIRST, repeatChar(IDENTIFIER_REST, 0, Infinity))
+const IDENTIFIER = join(IDENTIFIER_FIRST, repeatChar(IDENTIFIER_REST, 0, Infinity)).msg('identifier')
 
-const INTEGER = join(c('-').opt, NON_ZERO_DIGIT, repeatChar(DIGIT, 0, Infinity))
+const INTEGER = join(c('-').opt, NON_ZERO_DIGIT, repeatChar(DIGIT, 0, Infinity)).msg('integer')
 
-const STRING_SINGLE_QUOTE = join(c("'"), repeatChar(exceptChar("'", '\\'), 0, Infinity), c("'"))
-const STRING_DOUBLE_QUOTE = join(c('"'), repeatChar(exceptChar("'", '\\'), 0, Infinity), c('"'))
-const STRING = or(STRING_SINGLE_QUOTE, STRING_DOUBLE_QUOTE)
+const STRING_SINGLE_QUOTE = join(c('\''), repeatChar(exceptChar('\'', '\\'), 0, Infinity), c('\'')).msg('single quoted string')
+const STRING_DOUBLE_QUOTE = join(c('"'), repeatChar(exceptChar('\'', '\\'), 0, Infinity), c('"')).msg('double quoted string')
+const STRING = or(STRING_SINGLE_QUOTE, STRING_DOUBLE_QUOTE).msg('string')
 
 const pImportAlias = one(s('as').skp, WS, IDENTIFIER).opt
 const pImportItem = pattern(IDENTIFIER, one(WS, pImportAlias).opt).transform(([identifier, alias]) => ({identifier, alias}))
 const pImportItems = one(c('{').skp, series(pImportItem), c('}').skp).opt
-const pImport = pattern(s('import').skp, WS, pImportItem, WS, pImportItems, WS, s('from').skp, WS, wrap(STRING_SINGLE_QUOTE))
+const pImport = pattern(s('import').skp, WS, pImportItem, WS, pImportItems, WS, s('from').skp, WS, STRING_SINGLE_QUOTE)
   .transform(([main, imports, path]) => ({main, imports, path}))
 
 const show = arg => {
@@ -238,4 +254,4 @@ const show = arg => {
   console.log(`\nresult: ${JSON.stringify(arg, null, '  ')}\n`)
 }
 
-show(pImport("import asd as n {out, a as b} from 'std'"))
+show(pImport('import asd {out, a as b} from \'std\''))
