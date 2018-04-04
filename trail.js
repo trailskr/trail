@@ -1,10 +1,4 @@
-const code =
-  `
-import {out} from 'std'
-a: 1
-b: a + 1
-out(b)
-`
+const util = require('util')
 
 let tab = ' .'
 let indent = ''
@@ -38,7 +32,7 @@ const logger = (name, fn, params, logging) => {
   }
 }
 
-const make = (name, fn, params = undefined) => {
+const make = (name, fn, params = undefined, args) => {
   const parser = logger(name, fn, params, true)
   Object.defineProperty(parser, 'skp', {
     get() {
@@ -52,6 +46,15 @@ const make = (name, fn, params = undefined) => {
       return parser
     }
   })
+  if (args) {
+    Object.defineProperty(parser, 'recursive', {
+      get() {
+        args.push(parser)
+        console.log(args)
+        return parser
+      }
+    })
+  }
   parser.msg = (msg) => {
     parser.message = msg
     parser.params = msg
@@ -126,7 +129,7 @@ const or = (...args) => make('or', (code) => {
     return res
   }
   return undefined
-}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`, args)
 
 const join = (...args) => make('join', (code) => {
   let result = ''
@@ -141,9 +144,9 @@ const join = (...args) => make('join', (code) => {
     if (!p.skip) result += res
   }
   return result.length > 0 ? result : undefined
-}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`, args)
 
-const pattern = (...args) => make('pattern', (code) => {
+const seq = (...args) => make('seq', (code) => {
   const result = []
   const len = args.length
   const from = pos
@@ -166,9 +169,9 @@ const pattern = (...args) => make('pattern', (code) => {
     pos = from
     return undefined
   }
-}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`)
+}, `[${args.map(parser => `${parser.title}: ${parser.params}`).join(', ')}]`, args)
 
-const one = (...args) => make('one in pattern', (code) => {
+const one = (...args) => make('one in seq', (code) => {
   const result = []
   const len = args.length
   const from = pos
@@ -221,7 +224,7 @@ const repeat = (p, min, max) => make('repeat', (code) => {
 }, `(${p.title}: ${p.params}) from ${min} times to ${max}`)
 
 const series = (parser, divider = c(',')) => {
-  return pattern(parser, repeat(one(divider.skp, WS, parser), 0, Infinity).opt).transform(([first, rest]) => ([first, ...rest]))
+  return seq(parser, repeat(one(divider.skp, WS, parser), 0, Infinity).opt).transform(([first, rest]) => ([first, ...rest]))
 }
 
 const WS = repeatChar(or(c('\u0020'), c('\u0009'), c('\u000B'), c('\u000C')), 1, Infinity).skp.msg('white space')
@@ -233,25 +236,52 @@ const NON_ZERO_DIGIT = range('1', '9')
 const DASH = c('_')
 const DOLLAR = c('$')
 
-const IDENTIFIER_FIRST = or(UPPER, LOWER, DASH, DOLLAR)
-const IDENTIFIER_REST = or(UPPER, LOWER, DASH, DOLLAR, DIGIT)
-const IDENTIFIER = join(IDENTIFIER_FIRST, repeatChar(IDENTIFIER_REST, 0, Infinity)).msg('identifier')
+const IDENTIFIER_FIRST_LETTER = or(UPPER, LOWER, DASH, DOLLAR)
+const IDENTIFIER_REST_LETTER = or(UPPER, LOWER, DASH, DOLLAR, DIGIT)
+const IDENTIFIER = join(IDENTIFIER_FIRST_LETTER, repeatChar(IDENTIFIER_REST_LETTER, 0, Infinity)).msg('identifier')
 
 const INTEGER = join(c('-').opt, NON_ZERO_DIGIT, repeatChar(DIGIT, 0, Infinity)).msg('integer')
 
 const STRING_SINGLE_QUOTE = join(c('\''), repeatChar(exceptChar('\'', '\\'), 0, Infinity), c('\'')).msg('single quoted string')
+  .transform(str => str.replace(/\\'/g, "'").slice(1, -1))
 const STRING_DOUBLE_QUOTE = join(c('"'), repeatChar(exceptChar('\'', '\\'), 0, Infinity), c('"')).msg('double quoted string')
+  .transform(str => str.replace(/\\"/g, '"').slice(1, -1))
 const STRING = or(STRING_SINGLE_QUOTE, STRING_DOUBLE_QUOTE).msg('string')
 
 const pImportAlias = one(s('as').skp, WS, IDENTIFIER).opt
-const pImportItem = pattern(IDENTIFIER, one(WS, pImportAlias).opt).transform(([identifier, alias]) => ({identifier, alias}))
-const pImportItems = one(c('{').skp, series(pImportItem), c('}').skp).opt
-const pImport = pattern(s('import').skp, WS, pImportItem, WS, pImportItems, WS, s('from').skp, WS, STRING_SINGLE_QUOTE)
-  .transform(([main, imports, path]) => ({main, imports, path}))
+const pImportItem = seq(IDENTIFIER, one(WS, pImportAlias).opt)
+  .transform(([identifier, alias]) => ({identifier, alias}))
+const pImportItems = one(c('{').skp, series(pImportItem), c('}').skp)
+const pImport = seq(s('import').skp, one(WS, pImportItem).opt, one(WS, pImportItems).opt, WS, s('from').skp, WS, STRING_SINGLE_QUOTE)
+  .transform(([def, other, path]) => ({default: def, other, path}))
+
+// const pBinaryOperator = seq(pExpression, WS, or(c('+'), c('-'), c('*'), c('/')), WS, pExpression)
+// const pExpression = or(
+//   pLiteral,
+//   pBinaryOperator
+// )
+const pDeclaration = one(IDENTIFIER, c(':'))
+// const pStatement = or(
+//   pDeclaration,
+//   pExpression
+// )
+
+const pRec = or(c('+'), c('-'))
 
 const show = arg => {
   pos = 0
-  console.log(`\nresult: ${JSON.stringify(arg, null, '  ')}\n`)
+  console.log('\n')
+  console.log(util.inspect(arg))
+  console.log('\n')
 }
 
-show(pImport('import asd {out, a as b} from \'std\''))
+show(pRec('-'))
+
+const code = `
+import {out} from 'std'
+a: 1
+b: a + 1
+out(b)
+`
+
+// show(pImport('import asd {out, a as b} from \'std\''))
