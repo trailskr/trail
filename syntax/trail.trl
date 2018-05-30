@@ -1,0 +1,265 @@
+// all spaces a significant
+// all types deduced automatically
+a: 5
+b: a + 1
+assert(b == 6)
+
+// list of declarations
+a1, a2: 5
+b1, b2, b3: 1, 2, 3
+c1, c2: b2, b1
+
+// type constructors (functions)
+assert(int(5) == 5)
+// assert(true == !false) // error, by default equalities for booleans should be replaced with "is" operator (see below)
+
+// all types is initialized by their default value
+assert(int() == 0)
+
+// "instance of" operator returns suitablility of values for types
+assert(5 iof any)
+assert(5 iof num)
+assert(5 iof int)
+assert(5 iof 5) // values is also restrictive types
+assert(int iof num)
+assert(bool(1) iof true)
+assert(false.iof(true) is false)
+
+// is operator checks reference types objects for equality of their references
+// functions is also reference types
+
+// "type of" operator returns constructor function
+assert(tof(5) is int)
+
+// a = 7 // error, a is immutable
+d:
+assert(tof(d) is und) // type of d is undefined
+d = 10 // later binding, d is also immutable
+
+c: mut(5) // c is mutable
+// c: 1 // error, c is already defined
+c = 10 // not an error
+
+// print
+out(10)
+
+// code block
+{
+  a: 10
+  assert(a == 10)
+}
+assert(a == 5)
+
+// code block can return
+c = {
+  => 1 // => is return statement
+}
+assert(c == 1)
+
+// functions is return statements with arguments on the left size
+foo: a, b => {
+  // a = 5 // error, all arguments are immutable
+  => a + b
+}
+bar: a, b => a + b
+zar: _ => 3 // use "_" if function has no arguments
+zar2: zar // functions are reference type values
+assert(foo(1, 2) == bar(2, 1) and bar(2, 1) == zar2())
+// is the same as:
+assert({
+  a: foo(1, 2)
+  => a == bar(2, 1) and a == zar2()
+})
+
+// brackets also create their own scope
+c = (self: a => if a > 0 then self(a - 1)) // recursion
+assert(c == 0)
+
+c = (_ => 5)() // anonymous function call
+assert(c == 5)
+
+// code block is the short hand for in place executed function without arguments
+_ => {
+  a: 10
+  assert(a == 10)
+}()
+
+// functions can return list of values
+swap: a, b => b, a
+sa, sb: swap(2, 1) // list of values can be destructured
+assert(sa, sb == 1, 2) // operators can work with list of values
+assert(sa, sb < 3) // list of values and one value are also supported
+
+// Unified function call syntax (UFCS)
+func: a => a + 1
+assert(func(a) == a.func() == a.func) // brackets can be omitted when only UFCS is used
+
+fun: a, b => a + b
+assert(fun(a, b) == a.fun(b))
+
+5.out
+assert((a => a + 1)(5) == 6)
+assert(5.(a => a + 1) == 6)
+assert(5.(a => a + 1)() == 6)
+
+// Replace unified function call syntax (RUFCS)
+func3: a, b => a * b
+c!func3(3) // sugar for c = c.func3(3)
+assert(c == 6)
+
+// RUFCS syntax "eats" first value in return list, but leaves rest
+assert(c!func3(3) iof und)
+func4: a => a, a + 1
+assert(c!func4 == 7)
+
+// for every operator exists corresponding function
+assert(sub(1, 2) == 1 - 2)
+assert(le(1, 2))
+
+// python style comparison
+assert((a == +a == b - 1 <= b > 0) == true)
+
+// input
+d: inp()
+assert(d.tof is tof(d) is str)
+
+// type conversion (type constructor)
+assert(int('10') == 10)
+assert(str(10) == '10')
+
+// availablility operator
+assert(5? is true)
+assert(und()? is false)
+
+e: int.inp // can be an error
+if e? // availability operator
+  then assert(e.tof is int)
+  else assert(e.tof is und)
+
+if e? then {
+  assert(e.tof is int)
+} else {
+  assert(e.tof is und)
+}
+
+// if can also return value (ternary operator)
+c = if e? then {
+  => e
+} else {
+  => 0
+}
+c = if e? then e else 0
+
+c: if a == 0 then 5
+elif a == 1 then 3
+else 1
+
+// supply value if undefined operator :)
+c = e ?? 0
+
+assert(tof(int.inp ?? 0) is int)
+
+// arrays
+// array type modifiers automatically deduced
+// all modifying methods returns copy of original array in first value in return list
+tuple: [1, 'string'] // static array of type 1 or 'string'
+theSameTuple: [] // is is the same, because of all operations can be done at compilation time
+theSameTuple!push(1)
+theSameTuple!push('string')
+// if code will have dynamic parts with appending dynamic types, tuple will be dynamic array of dynamic types
+// if code will have dynamic parts with appending same type, it will be dynamic array of that type
+
+arr: [1, 2, 3]
+assert(arr.len == 3)
+assert(arr.push(0) == [1, 2, 3, 0])
+assert(arr.len == 3)
+arr!push(4)
+arr!append([5, 6])
+assert(arr!pop())
+assert(arr!popFront() == 6)
+assert(arr!popFront == 6)
+assert(arr == [0, 2, 3, 4, 5]) // it also will be static array of integers (equality by content values)
+assert(not arr.empty)
+
+// all dynamic arrays are slices - pointers from start element and to end element
+// there is slice operator arr[from..to]
+
+arr2: arr[1..3]
+arr[1] == 5
+assert(arr2 == [5, 3] == arr[1..$]) // $ - array length
+assert(arr[0...2] == arr[0..3])
+
+// sequence generators
+assert([0..3] == [0, 1, 2])
+assert([3..0] == [3, 2, 1])
+assert([0...32, 8] == [0, 8, 16, 24, 32])
+
+// cicles
+// there is no cicle operators, only recusive function calls
+(self: i => {
+  out(i)
+  if i < 10 then self(i + 1)
+})(0)
+
+// default collection functions
+for: arr, iter => {
+  (loop: slice, index => {
+    if not slice.empty then {
+      sliced, item = slice.popFront
+      iter(item, index)
+      loop(sliced, index + 1)
+    }
+  })(arr, 0)
+}
+
+map: arr, iter => {
+  res = []
+  (loop: slice, index => {
+    if not slice.empty then {
+      sliced, item = slice.popFront
+      res.push(iter(item, index))
+      loop(sliced, index + 1)
+    }
+  })(arr, 0)
+  return res
+}
+
+filter: arr, iter => {
+  res = []
+  (loop: slice, index => {
+    if not slice.empty then {
+      sliced, item = slice.popFront
+      if iter(item, index) then res.push(item)
+      loop(sliced, index + 1)
+    }
+  })(arr, 0)
+  return res
+}
+
+// anonymous objects or structures. members a mutable by default
+obj: {
+  a: 1
+  b: 'string'
+}
+
+obj2: {a: 1, b: .a} // self operator
+assert(obj2.a == obj2.b)
+
+// spread operator, destructuring and so on, imports, exports
+import Type, {...methods} from './methods'
+export default {a: 1}
+export a => a + 1
+
+// objects destructuring
+{
+  {a, b} = obj
+  assert(a == 1 and b == 'string')
+}
+
+// variadic function parameters
+f: a, b, ...rest => a + b + rest.reduce(+)
+assert(f(1, 2, 3, 4) == 10)
+
+// function parameters destructuring
+f2: a, {b, c: z} => a + b + z
+assert(f2(1, {b: 2, c: 3}) == 6)
