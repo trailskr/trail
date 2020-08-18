@@ -16,7 +16,7 @@ assert(int(5) == 5)
 // all types is initialized by their default value
 assert(int() == 0)
 
-// "instance of" operator returns suitablility of values for types
+// "instance of" operator returns suitabillity of values for types
 assert(5 iof any)
 assert(5 iof num)
 assert(5 iof int)
@@ -106,6 +106,8 @@ assert(5.(a => a + 1)() == 6)
 func3: a, b => a * b
 c!func3(3) // sugar for c = c.func3(3)
 assert(c == 6)
+
+b: a(5) or 10
 
 // RUFCS syntax "eats" first value in return list, but leaves rest
 assert(c!func3(3) iof und)
