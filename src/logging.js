@@ -25,7 +25,7 @@ export const logger = (tab = ' .') => {
   }
 }
 
-const enabled = true
+let enabled = false
 
 export const makeLoggable = enabled
   ? (logger) => (name, parser) => wrapParser(parser, (codePointer) => {

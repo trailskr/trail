@@ -23,8 +23,10 @@ const str = (val) => {
   return val.toString()
 }
 
-export const represent = (expr) => {
+export const represent = (expr, needParens = false) => {
   switch (expr.type) {
+    case 'block':
+      return expr.expressions.map(represent).join('\n')
     case 'assignment':
       return `${represent(expr.identifier)}: ${represent(expr.value)}`
     case 'functionCall':
@@ -32,11 +34,17 @@ export const represent = (expr) => {
     case 'parensExpression':
       return `(${represent(expr.content)})`
     case 'binaryOperator':
-      return `${represent(expr.left)} ${expr.op} ${represent(expr.right)}`
+      return needParens
+        ? `(${represent(expr.left, true)} ${expr.op} ${represent(expr.right, true)})`
+        : `${represent(expr.left, true)} ${expr.op} ${represent(expr.right, true)}`
     case 'prefixOperator':
-      return expr.op.length === 1
-        ? `${expr.op}${represent(expr.right)}`
-        : `${expr.op} ${represent(expr.right)}`
+      return needParens
+        ? expr.op.length === 1
+          ? `(${expr.op}${represent(expr.right, true)})`
+          : `(${expr.op} ${represent(expr.right, true)})`
+        : expr.op.length === 1
+          ? `${expr.op}${represent(expr.right, true)}`
+          : `${expr.op} ${represent(expr.right, true)}`
     case 'identifier':
       return expr.label
     case 'integer':
