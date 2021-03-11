@@ -94,6 +94,30 @@ const BITWISE_XOR = char('^')
 const LOGICAL_AND = string('and')
 const LOGICAL_OR = string('or')
 
+const BINARY_OPERATOR = any(
+  POW,
+  PLUS,
+  MINUS,
+  MUL,
+  DIV,
+  MODULO,
+  DIV_FLOOR,
+  SHIFT_LEFT_ZERO,
+  SHIFT_RIGHT_ZERO,
+  SHIFT_RIGHT_SIGNED,
+  EQUAL,
+  NOT_EQUAL,
+  LESS_THAN,
+  GREATER_THAN,
+  LESS_THAN_OR_EQUAL_TO,
+  GREATER_THAN_OR_EQUAL_TO,
+  BITWISE_AND,
+  BITWISE_OR,
+  BITWISE_XOR,
+  LOGICAL_AND,
+  LOGICAL_OR
+)
+
 const BITWISE_NOT = char('~')
 
 const NOT = string('not')
@@ -120,12 +144,12 @@ const series = (parser, divider) => transform(
 )
 
 const STRING_SINGLE_QUOTE = sequenceToString(
-  skip(char("'")),
+  skip(char('\'')),
   transform(
-    repeatToString(exceptChar("'", '\\')),
-    (str) => str.replace(/\\'/g, "'")
+    repeatToString(exceptChar('\'', '\\')),
+    (str) => str.replace(/\\'/g, '\'')
   ),
-  skip(char("'"))
+  skip(char('\''))
 )
 const STRING_DOUBLE_QUOTE = sequenceToString(
   skip(char('"')),
@@ -237,77 +261,142 @@ const pPrefixOperator = loggable('prefix operator', transform(
   }
 ))
 
-const Associativity = {
-  left: 0,
-  right: 1
-}
+// const Associativity = {
+//   left: 0,
+//   right: 1
+// }
+//
+// const associativityBinaryTransforms = [
+//   ([left, repeat]) => {
+//     return repeat.length === 0
+//       ? left
+//       : repeat.reduce((left, [op, right]) => {
+//         return {
+//           type: 'binaryOperator',
+//           op,
+//           left,
+//           right,
+//           pos: {from: left.pos.from, to: right.pos.to}
+//         }
+//       }, left)
+//   },
+//   ([left, repeat]) => {
+//     const recursive = (left, index) => {
+//       if (index === repeat.length) return left
+//
+//       const [op, next] = repeat[index]
+//       const right = recursive(next, index + 1)
+//       return {
+//         type: 'binaryOperator',
+//         op,
+//         left,
+//         right,
+//         pos: {from: left.pos.from, to: right.pos.to}
+//       }
+//     }
+//
+//     return recursive(left, 0)
+//   }
+// ]
 
-const associativityBinaryTransforms = [
-  ([left, repeat]) => {
-    return repeat.length === 0
-      ? left
-      : repeat.reduce((left, [op, right]) => {
-        return {
-          type: 'binaryOperator',
-          op,
-          left,
-          right,
-          pos: {from: left.pos.from, to: right.pos.to}
-        }
-      }, left)
-  },
-  ([left, repeat]) => {
-    const recursive = (left, index) => {
-      if (index === repeat.length) return left
+// const makeBinary = (higherPriorityParser, operatorsParser, associativity = Associativity.left) => {
+//   return transform(
+//     sequence(
+//       loggable('left argument', higherPriorityParser),
+//       repeat(
+//         sequence(
+//           WS,
+//           loggable('operator', operatorsParser),
+//           WS,
+//           higherPriorityParser
+//         )
+//       )
+//     ),
+//     associativityBinaryTransforms[associativity]
+//   )
+// }
 
-      const [op, next] = repeat[index]
-      const right = recursive(next, index + 1)
-      return {
+// const pPowerOperator = loggable('power operator', makeBinary(pPrefixOperator, POW, Associativity.right))
+// const pMultiplicativeOperator = loggable('multiplicative operator', makeBinary(pPowerOperator, any(MUL, DIV, MODULO, DIV_FLOOR)))
+// const pAdditiveOperator = loggable('additive operator', makeBinary(pMultiplicativeOperator, any(PLUS, MINUS)))
+//
+// const pBitShiftOperator = loggable('bit shift operator', makeBinary(pAdditiveOperator, any(SHIFT_LEFT_ZERO, SHIFT_RIGHT_ZERO, SHIFT_RIGHT_SIGNED)))
+// const pEqualityOperator = loggable('equality operator', makeBinary(pBitShiftOperator, any(EQUAL, NOT_EQUAL)))
+// const pComparisonOperator = loggable('comparison operator', makeBinary(pEqualityOperator, any(LESS_THAN_OR_EQUAL_TO, GREATER_THAN_OR_EQUAL_TO, LESS_THAN, GREATER_THAN)))
+//
+// const pBitwiseAndOperator = loggable('bitwise and operator', makeBinary(pComparisonOperator, BITWISE_AND))
+// const pBitwiseOrOperator = loggable('bitwise or operator', makeBinary(pBitwiseAndOperator, BITWISE_OR))
+// const pBitwiseXorOperator = loggable('bitwise xor operator', makeBinary(pBitwiseOrOperator, BITWISE_XOR))
+//
+// const pLogicalAndOperator = loggable('logical and operator', makeBinary(pBitwiseXorOperator, LOGICAL_AND))
+// const pLogicalOrOperator = loggable('logical or operator', makeBinary(pLogicalAndOperator, LOGICAL_OR))
+
+const opPrecedence = [
+  ['**'],
+  ['*', '/', 'mod', 'div'],
+  ['+', '-'],
+  ['<<', '>>', '>>>'],
+  ['==', '!='],
+  ['<', '>', '<=', '>='],
+  ['&'],
+  ['|'],
+  ['^'],
+  ['and'],
+  ['or']
+].reduce((res, ops, ind, arr) => {
+  return {
+    ...res,
+    ...ops.reduce((res, op) => {
+      return {...res, [op]: arr.length - ind}
+    }, {})
+  }
+}, {})
+
+const pBinaryOperator = loggable('binary operator', (codePointer) => {
+  const recursive = (ptrLeft, left, precedence = 0) => {
+    const [ptrWs, ws] = WS(ptrLeft)
+    if (!ws) {
+      return [ptrLeft, left]
+    }
+    const [ptrOp, op] = BINARY_OPERATOR(ptrWs)
+    if (!op) {
+      return [ptrLeft, left]
+    }
+
+    const prec = opPrecedence[op]
+    if (prec > precedence) {
+      const [ptrWs2, ws2] = WS(ptrOp)
+      if (!ws2) {
+        return [ptrLeft, left]
+      }
+      const [newLeftPtr, newLeft] = pPrefixOperator(ptrWs2)
+      if (!newLeft) {
+        return [ptrLeft, left]
+      }
+
+      const [rightPtr, right] = recursive(newLeftPtr, newLeft, prec)
+
+      return recursive(rightPtr, {
         type: 'binaryOperator',
         op,
         left,
         right,
         pos: {from: left.pos.from, to: right.pos.to}
-      }
+      }, precedence)
     }
-
-    return recursive(left, 0)
+    return [ptrLeft, left]
   }
-]
+  const [ptrLeft, left] = pPrefixOperator(codePointer)
 
-const makeBinary = (higherPriorityParser, operatorsParser, associativity = Associativity.left) => {
-  return transform(
-    sequence(
-      loggable('left argument', higherPriorityParser),
-      repeat(
-        sequence(
-          WS,
-          loggable('operator', operatorsParser),
-          WS,
-          higherPriorityParser
-        )
-      )
-    ),
-    associativityBinaryTransforms[associativity]
-  )
-}
+  return recursive(ptrLeft, left, 0)
+})
+//
+// const ast = pBinaryOperator(CodePointer('a + b / c * 10'))
+// console.log(inspect(ast, {depth: Infinity}))
+//
+// process.exit(0)
 
-const pPowerOperator = loggable('power operator', makeBinary(pPrefixOperator, POW, Associativity.right))
-const pMultiplicativeOperator = loggable('multiplicative operator', makeBinary(pPowerOperator, any(MUL, DIV, MODULO, DIV_FLOOR)))
-const pAdditiveOperator = loggable('additive operator', makeBinary(pMultiplicativeOperator, any(PLUS, MINUS)))
-
-const pBitShiftOperator = loggable('bit shift operator', makeBinary(pAdditiveOperator, any(SHIFT_LEFT_ZERO, SHIFT_RIGHT_ZERO, SHIFT_RIGHT_SIGNED)))
-const pEqualityOperator = loggable('equality operator', makeBinary(pBitShiftOperator, any(EQUAL, NOT_EQUAL)))
-const pComparisonOperator = loggable('comparison operator', makeBinary(pEqualityOperator, any(LESS_THAN_OR_EQUAL_TO, GREATER_THAN_OR_EQUAL_TO, LESS_THAN, GREATER_THAN)))
-
-const pBitwiseAndOperator = loggable('bitwise and operator', makeBinary(pComparisonOperator, BITWISE_AND))
-const pBitwiseOrOperator = loggable('bitwise or operator', makeBinary(pBitwiseAndOperator, BITWISE_OR))
-const pBitwiseXorOperator = loggable('bitwise xor operator', makeBinary(pBitwiseOrOperator, BITWISE_XOR))
-
-const pLogicalAndOperator = loggable('logical and operator', makeBinary(pBitwiseXorOperator, LOGICAL_AND))
-const pLogicalOrOperator = loggable('logical or operator', makeBinary(pLogicalAndOperator, LOGICAL_OR))
-
-pExpression.parsers.push(pLogicalOrOperator)
+pExpression.parsers.push(pBinaryOperator)
 
 const pBlock = loggable('block code', transform(
   series(pExpression, loggable('line end', LE)),
@@ -320,32 +409,32 @@ const pBlock = loggable('block code', transform(
 
 const parse = (code) => pBlock(CodePointer(code))[1]
 
-const testAst = (sourceCode, resultAst) => {
-  assert(includes(parse(sourceCode), resultAst))
-}
+// const testAst = (sourceCode, resultAst) => {
+//   assert(includes(parse(sourceCode), resultAst))
+// }
 
-unittest(() => {
-  testAst('true', {type: 'boolean', value: true, pos: {from: {col: 1}, to: {col: 5}}})
-  testAst('false', {type: 'boolean', value: false})
-
-  testAst('1', {type: 'integer', value: 1})
-  testAst('1050', {type: 'integer', value: 1050})
-
-  testAst('.1', {type: 'fractional', value: 0.1})
-  testAst('1e3', {type: 'fractional', value: 1000})
-  testAst('0.5e-1', {type: 'fractional', value: 0.05})
-
-  testAst(`'string'`, {type: 'string', value: 'string', pos: {from: {col: 1}, to: {col: 9}}})
-  testAst(`"string"`, {type: 'string', value: 'string'})
-  testAst(`'\n'`, {type: 'string', value: '\n'})
-  testAst(`'"'`, {type: 'string', value: '"'})
-  testAst(`"'"`, {type: 'string', value: "'"})
-  testAst(`"a\\"b"`, {type: 'string', value: 'a"b'})
-  testAst(`'a\\'b'`, {type: 'string', value: "a'b"})
-
-  testAst(`alpha`, {type: 'identifier', label: 'alpha'})
-  testAst(`$this-is_ID`, {type: 'identifier', label: '$this-is_ID'})
-})
+// unittest(() => {
+//   testAst('true', {type: 'boolean', value: true, pos: {from: {col: 1}, to: {col: 5}}})
+//   testAst('false', {type: 'boolean', value: false})
+//
+//   testAst('1', {type: 'integer', value: 1})
+//   testAst('1050', {type: 'integer', value: 1050})
+//
+//   testAst('.1', {type: 'fractional', value: 0.1})
+//   testAst('1e3', {type: 'fractional', value: 1000})
+//   testAst('0.5e-1', {type: 'fractional', value: 0.05})
+//
+//   testAst(`'string'`, {type: 'string', value: 'string', pos: {from: {col: 1}, to: {col: 9}}})
+//   testAst(`"string"`, {type: 'string', value: 'string'})
+//   testAst(`'\n'`, {type: 'string', value: '\n'})
+//   testAst(`'"'`, {type: 'string', value: '"'})
+//   testAst(`"'"`, {type: 'string', value: '\''})
+//   testAst(`"a\\"b"`, {type: 'string', value: 'a"b'})
+//   testAst(`'a\\'b'`, {type: 'string', value: 'a\'b'})
+//
+//   testAst(`alpha`, {type: 'identifier', label: 'alpha'})
+//   testAst(`$this-is_ID`, {type: 'identifier', label: '$this-is_ID'})
+// })
 
 const testRepr = (sourceCode, resultCode) => {
   assert(resultCode === represent(parse(sourceCode)))
