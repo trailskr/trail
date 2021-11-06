@@ -7,7 +7,7 @@ import {pBlock} from './main.js'
 const parse = (code) => pBlock(CodePointer(code))[1]
 
 const testAst = (sourceCode, resultAst) => {
-  assert(includes(parse(sourceCode), resultAst))
+  assert(() => includes(parse(sourceCode), resultAst))
 }
 
 unittest('parsing atoms', () => {
@@ -36,11 +36,11 @@ unittest('parsing atoms', () => {
 const fromTo = (from, to) => ({from: {col: from}, to: {col: to}})
 
 const testRepr = (sourceCode, resultCode) => {
-  assert(resultCode === represent(parse(sourceCode)))
+  assert(() => resultCode === represent(parse(sourceCode)))
 }
 
 unittest('parsing binary expressions', () => {
-  testRepr('(1)', '(11)')
+  testRepr('(1)', '(1)')
 
   testRepr('not 1', 'not 1')
   testRepr('~1', '~1')
@@ -87,7 +87,7 @@ unittest('parsing binary expressions', () => {
 })
 
 unittest('parsing binary expressions ast', () => {
-  assert(includes(parse('a + b + c'), {
+  assert(() => includes(parse('a + b + c'), {
     left: {
       left: {label: 'a', pos: fromTo(1, 2)},
       right: {label: 'b', pos: fromTo(5, 6)},
@@ -97,7 +97,7 @@ unittest('parsing binary expressions ast', () => {
     pos: fromTo(1, 10)
   }))
 
-  assert(includes(parse('a ** b ** c'), {
+  assert(() => includes(parse('a ** b ** c'), {
     left: {label: 'a', pos: fromTo(1, 2)},
     right: {
       left: {label: 'b', pos: fromTo(6, 7)},

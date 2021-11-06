@@ -2,12 +2,12 @@ import {inspect} from 'util'
 import {CodePointer} from './CodePointer.js'
 import {charInRange, charRepeat, char, exceptChar, string} from './searchers.js'
 import {any, sequenceToString, repeatToString, sequence, repeat} from './combiners.js'
-import {logger, makeLoggable} from './logging.js'
+import {makeLoggable} from './logging.js'
 import {optional, skip, transform, transformResult} from './parserBase.js'
 import {represent} from './represent.js'
+import {unitLogger} from './unittests.js'
 
-const log = logger()
-const loggable = makeLoggable(log)
+const loggable = makeLoggable(unitLogger, '. ')
 
 const WS = skip(charRepeat(' ', 1))
 const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n')), 1)))

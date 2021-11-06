@@ -34,17 +34,17 @@ world`
 
   let p = CodePointer(code)
 
-  assert(p.pos === 0)
-  assert(p.row === 1)
-  assert(p.col === 1)
+  assert(() => p.pos === 0)
+  assert(() => p.row === 1)
+  assert(() => p.col === 1)
 
   let char
   ;[p, char] = getNextChar(p)
 
-  assert(p.pos === 1)
-  assert(p.row === 1)
-  assert(p.col === 2)
-  assert(char === 'h')
+  assert(() => p.pos === 1)
+  assert(() => p.row === 1)
+  assert(() => p.col === 2)
+  assert(() => char === 'h')
 
   for (let i = 0; i < 10; i += 1) {
     const r = getNextChar(p)
@@ -52,15 +52,15 @@ world`
     char = r[1]
   }
 
-  assert(char === 'd')
-  assert(p.pos === 11)
-  assert(p.row === 2)
-  assert(p.col === 5)
+  assert(() => char === 'd')
+  assert(() => p.pos === 11)
+  assert(() => p.row === 2)
+  assert(() => p.col === 5)
 
   ;[p, char] = getNextChar(p)
 
-  assert(char === undefined)
-  assert(p.pos === 12)
-  assert(p.row === 2)
-  assert(p.col === 6)
+  assert(() => char === undefined)
+  assert(() => p.pos === 12)
+  assert(() => p.row === 2)
+  assert(() => p.col === 6)
 })

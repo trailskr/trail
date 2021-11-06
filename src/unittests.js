@@ -1,9 +1,9 @@
 import fs from 'fs'
-import {inspect} from 'util'
+import {callWithLogs, logger} from './logging.js'
 
 const unittestEnabled = process.env.NODE_ENV === 'test' || process.argv.includes('--test')
 
-const Group = (description) => ({description, children: [], success: true})
+const Group = (description) => ({description, children: [], isSuccessful: true})
 
 const root = Group('root')
 let currentResult = root
@@ -14,7 +14,7 @@ export const unittest = unittestEnabled
     currentResult = Group(description)
     topResult.children.push(currentResult)
     fn() // __TEST_CALL__
-    currentResult.success = currentResult.children.every(resultOrGroup => resultOrGroup.success)
+    currentResult.isSuccessful = currentResult.children.every(resultOrGroup => resultOrGroup.isSuccessful)
     currentResult = topResult
   }
   : () => {}
@@ -85,39 +85,64 @@ const parseStack = (stack) => {
     })
 }
 
-export const assert = (expression) => {
-  const stackLine = getTestStackLine(parseStack(new Error().stack))
+let currentLog
 
-  currentResult.children.push({
-    success: expression === true,
-    at: stackLine.path + ':' + stackLine.row + ':' + stackLine.col,
-    code: stackLine.code
+const unitLog = (data) => {
+  currentLog.push(data)
+}
+
+export const unitLogger = logger(unitLog)
+
+export const assert = (expressionFn) => {
+  currentLog = []
+  callWithLogs(() => {
+    const isSuccessful = expressionFn() === true
+    const stackLine = getTestStackLine(parseStack(new Error().stack))
+
+    currentResult.children.push({
+      isSuccessful,
+      at: stackLine.path + ':' + stackLine.row + ':' + stackLine.col,
+      code: stackLine.code,
+      log: isSuccessful ? undefined : currentLog.join('\n')
+    })
   })
+}
+
+const addIndent = (str) => str.split('\n').map(line => indent + line).join('\n')
+const printSuccess = (data) => console.log('\x1b[32m%s\x1b[0m', addIndent(data))
+const printError = (data) => console.log('\x1b[31m%s\x1b[0m', addIndent(data))
+const print = (data, isSuccessful) => {
+  if (isSuccessful == null) console.log(addIndent(data))
+  else if (isSuccessful) printSuccess(data)
+  else printError(data)
 }
 
 const tab = '  '
 let indent = ''
-const addIndent = (str) => str.split('\n').map(line => indent + line).join('\n')
-const printSuccess = (data) => console.log('\x1b[32m%s\x1b[0m', addIndent(data))
-const printError = (data) => console.log('\x1b[31m%s\x1b[0m', addIndent(data))
-const print = (data, success) => {
-  if (success) printSuccess(data)
-  else printError(data)
+
+const withIndent = (fn) => {
+  indent += tab
+  fn()
+  indent = indent.slice(tab.length)
 }
 
 const printGroupOrResult = (resultOrGroup) => {
   if (resultOrGroup.children) {
     if (resultOrGroup.children.length === 0) return
-    print(resultOrGroup.description + ':', resultOrGroup.success)
-    indent += tab
-    resultOrGroup.children.forEach(printGroupOrResult)
-    indent = indent.slice(tab.length)
+    print(resultOrGroup.description + ':', resultOrGroup.isSuccessful)
+    withIndent(() => {
+      resultOrGroup.children.forEach(printGroupOrResult)
+    })
   } else {
-    if (resultOrGroup.success) {
-      print(resultOrGroup.code.split('\n')[0], true)
+    if (resultOrGroup.isSuccessful) {
+      const codeLines = resultOrGroup.code.split('\n')
+      print(codeLines[0] + (codeLines.length > 1 ? ' ...' : ''), true)
     } else {
       print(resultOrGroup.code, false)
-      print(tab + resultOrGroup.at, false)
+      withIndent(() => {
+        print(resultOrGroup.at, false)
+        print('------------------- LOG --------------------\n' + resultOrGroup.log)
+      })
     }
   }
 }
