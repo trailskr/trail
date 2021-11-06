@@ -27,7 +27,7 @@ export const getNextChar = (codePointer) => {
   ]
 }
 
-unittest(() => {
+unittest('code pointer', () => {
   const code = `\
 hello
 world`

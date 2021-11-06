@@ -5,14 +5,12 @@ import {any, sequenceToString, repeatToString, sequence, repeat} from './combine
 import {logger, makeLoggable} from './logging.js'
 import {optional, skip, transform, transformResult} from './parserBase.js'
 import {represent} from './represent.js'
-import {assert, unittest} from './unittests.js'
-import {includes} from './utils.js'
 
 const log = logger()
 const loggable = makeLoggable(log)
 
-const LE = skip(repeatToString(any(char('\r'), char('\n')), 1))
 const WS = skip(charRepeat(' ', 1))
+const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n')), 1)))
 const UPPER = charInRange('A', 'Z')
 const LOWER = charInRange('a', 'z')
 
@@ -192,73 +190,78 @@ const pString = loggable('string', transform(
 
 const pLiteral = loggable('literal', any(pBoolean, pFractional, pInteger, pString))
 
-const pParensExpression = loggable('parens expression', transform(
+const pParensExpression = loggable('parens-expression', transform(
   sequence(LEFT_PAREN, pExpression, RIGHT_PAREN),
   ([content], pos) => ({type: 'parensExpression', content, pos})
 ))
 
 const pAtom = loggable('atom', any(pLiteral, pIdentifier, pParensExpression))
 
-const pAssignment = loggable('assignment', transform(
-  sequence(
-    pAtom,
-    optional(
-      sequence(
-        loggable('equality', skip(char(':'))),
+const pIdentifierSeries = loggable('identifier-series', series(pIdentifier, sequence(char(','), WS)))
+const pExpressionSeries = loggable('expression-series', series(pExpression, sequence(char(','), WS)))
+
+const pAssignment = loggable('assignment', any(
+  transform(
+    sequence(
+      pIdentifierSeries,
+      loggable('equality', sequence(
         WS,
-        pExpression
-      )
-    )
-  ),
-  ([identifier, values], pos) => {
-    return values === undefined
-      ? identifier
-      : values.reduceRight((identifier, value) => {
+        skip(char('=')),
+        WS,
+        pExpressionSeries
+      ))
+    ),
+    ([identifier, values], pos) => {
+      values.reduceRight((identifier, value) => {
         return {type: 'assignment', identifier, value, pos}
       }, identifier)
-  }
+    }
+  ),
+  pAtom
 ))
 
-const pFunctionCall = loggable('function call', transform(
-  sequence(
-    pAssignment,
-    optional(
-      sequence(
+const pFunctionCall = loggable('function-call', any(
+  transform(
+    sequence(
+      loggable('function-name', any(
+        pIdentifier,
+        pParensExpression
+      )),
+      loggable('function-arguments', sequence(
         skip(char('(')),
-        loggable('arguments', series(pExpression, sequence(char(','), WS))),
+        loggable('arguments', pExpressionSeries),
         skip(char(')'))
-      )
-    )
+      ))
+    ),
+    ([identifier, [args]], pos) => ({type: 'functionCall', identifier, args, pos})
   ),
-  ([identifier, args], pos) => {
-    return args === undefined
-      ? identifier
-      : {type: 'functionCall', identifier, args: args[0], pos}
-  }
+  pAssignment
 ))
 
-const pPrefixOperator = loggable('prefix operator', transform(
-  sequence(
-    repeat(
-      any(
-        PLUS,
-        MINUS,
-        BITWISE_NOT,
-        transformResult(
-          sequence(NOT, WS),
-          ([op]) => op
-        )
-      )
+const pPrefixOperator = loggable('prefix-operator', any(
+  transform(
+    sequence(
+      repeat(
+        any(
+          PLUS,
+          MINUS,
+          BITWISE_NOT,
+          transformResult(
+            sequence(NOT, WS),
+            ([op]) => op
+          )
+        ),
+        1
+      ),
+      pFunctionCall
     ),
-    pFunctionCall
-  ),
-  ([ops, right], pos) => {
-    return ops.length === 0
-      ? right
-      : ops.reduceRight((right, op) => {
+    ([ops, right], pos) => {
+      return ops.reduceRight((right, op) => {
         return {type: 'prefixOperator', op, right, pos}
       }, right)
-  }
+    }
+  ),
+  pFunctionCall
 ))
 
 // const Associativity = {
@@ -352,7 +355,7 @@ const opPrecedence = [
   }
 }, {})
 
-const pBinaryOperator = loggable('binary operator', (codePointer) => {
+const pBinaryOperator = loggable('binary-operator', (codePointer) => {
   const recursive = (ptrLeft, left, precedence = 0) => {
     const [ptrWs, ws] = WS(ptrLeft)
     if (!ws) {
@@ -398,7 +401,7 @@ const pBinaryOperator = loggable('binary operator', (codePointer) => {
 
 pExpression.parsers.push(pBinaryOperator)
 
-const pBlock = loggable('block code', transform(
+export const pBlock = loggable('block-code', transform(
   series(pExpression, loggable('line end', LE)),
   (expressions, pos) => {
     return expressions.length === 1
@@ -407,124 +410,22 @@ const pBlock = loggable('block code', transform(
   }
 ))
 
-const parse = (code) => pBlock(CodePointer(code))[1]
-
-// const testAst = (sourceCode, resultAst) => {
-//   assert(includes(parse(sourceCode), resultAst))
-// }
-
-// unittest(() => {
-//   testAst('true', {type: 'boolean', value: true, pos: {from: {col: 1}, to: {col: 5}}})
-//   testAst('false', {type: 'boolean', value: false})
-//
-//   testAst('1', {type: 'integer', value: 1})
-//   testAst('1050', {type: 'integer', value: 1050})
-//
-//   testAst('.1', {type: 'fractional', value: 0.1})
-//   testAst('1e3', {type: 'fractional', value: 1000})
-//   testAst('0.5e-1', {type: 'fractional', value: 0.05})
-//
-//   testAst(`'string'`, {type: 'string', value: 'string', pos: {from: {col: 1}, to: {col: 9}}})
-//   testAst(`"string"`, {type: 'string', value: 'string'})
-//   testAst(`'\n'`, {type: 'string', value: '\n'})
-//   testAst(`'"'`, {type: 'string', value: '"'})
-//   testAst(`"'"`, {type: 'string', value: '\''})
-//   testAst(`"a\\"b"`, {type: 'string', value: 'a"b'})
-//   testAst(`'a\\'b'`, {type: 'string', value: 'a\'b'})
-//
-//   testAst(`alpha`, {type: 'identifier', label: 'alpha'})
-//   testAst(`$this-is_ID`, {type: 'identifier', label: '$this-is_ID'})
-// })
-
-const testRepr = (sourceCode, resultCode) => {
-  assert(resultCode === represent(parse(sourceCode)))
-}
-
-const fromTo = (from, to) => ({from: {col: from}, to: {col: to}})
-
-unittest(() => {
-  assert(includes(parse('a + b + c'), {
-    left: {
-      left: {label: 'a', pos: fromTo(1, 2)},
-      right: {label: 'b', pos: fromTo(5, 6)},
-      pos: fromTo(1, 6)
-    },
-    right: {label: 'c', pos: fromTo(9, 10)},
-    pos: fromTo(1, 10)
-  }))
-
-  assert(includes(parse('a ** b ** c'), {
-    left: {label: 'a', pos: fromTo(1, 2)},
-    right: {
-      left: {label: 'b', pos: fromTo(6, 7)},
-      right: {label: 'c', pos: fromTo(11, 12)},
-      pos: fromTo(6, 12)
-    },
-    pos: fromTo(1, 12)
-  }))
-})
-
-unittest(() => {
-  testRepr('(1)', '(1)')
-
-  testRepr('not 1', 'not 1')
-  testRepr('~1', '~1')
-  testRepr('not ~-1', 'not (~(-1))')
-
-  testRepr('a + b', 'a + b')
-  testRepr('a + b + c', '(a + b) + c')
-
-  testRepr('a + b + c - d', '((a + b) + c) - d')
-
-  testRepr('a * b / c mod d div e', '(((a * b) / c) mod d) div e')
-
-  testRepr('a << b >> c >>> d', '((a << b) >> c) >>> d')
-
-  testRepr('a << b >> c >>> d', '((a << b) >> c) >>> d')
-
-  testRepr('a << b >> c >>> d', '((a << b) >> c) >>> d')
-
-  testRepr('a == b != c == d', '((a == b) != c) == d')
-
-  testRepr('a < b > c <= d >= e', '(((a < b) > c) <= d) >= e')
-
-  testRepr('a & b & c', '(a & b) & c')
-  testRepr('a | b | c', '(a | b) | c')
-  testRepr('a ^ b ^ c', '(a ^ b) ^ c')
-  testRepr('a & b | c ^ d', '((a & b) | c) ^ d')
-  testRepr('a ^ b | c & d', 'a ^ (b | (c & d))')
-  testRepr('a | b ^ c & d', '(a | b) ^ (c & d)')
-
-  testRepr('a ** b ** c ** d', 'a ** (b ** (c ** d))')
-
-  testRepr('1 and 2 and 3', '(1 and 2) and 3')
-  testRepr('1 or 2 and 3', '1 or (2 and 3)')
-  testRepr('1 and 2 or 3', '(1 and 2) or 3')
-
-  testRepr('1 + 2 * 3', '1 + (2 * 3)')
-  testRepr('(1 + 2) * 3)', '(1 + 2) * 3')
-  testRepr('1 * 2 + 3', '(1 * 2) + 3')
-  testRepr('1 * (2 + 3)', '1 * (2 + 3)')
-
-  testRepr('1 or 2 and 3 ^ 4 | 5 & 6 < 7 == 8 << 9 + 10 * 11 ** 12', '1 or (2 and (3 ^ (4 | (5 & (6 < (7 == (8 << (9 + (10 * (11 ** 12))))))))))')
-  testRepr('1 ** 2 * 3 + 4 << 5 == 6 < 7 & 8 | 9 ^ 10 and 11 or 12', '((((((((((1 ** 2) * 3) + 4) << 5) == 6) < 7) & 8) | 9) ^ 10) and 11) or 12')
-  testRepr('1 & 2 and 3 + 4 or 5 ^ 6 < 7 ** 8 | 9 == 10 * 11 << 12', '((1 & 2) and (3 + 4)) or (5 ^ ((6 < (7 ** 8)) | (9 == ((10 * 11) << 12))))')
-})
-
-const code = `\
+const run = () => {
+  const code = `\
 a: 10 + 5 - 10 + 20
 print('hello')`
 
-let p = CodePointer(code)
-let res
-console.time('parsing time')
-;[p, res] = pBlock(p)
-console.log('')
-console.timeEnd('parsing time')
+  let p = CodePointer(code)
+  let res
+  console.time('parsing time')
+  ;[p, res] = pBlock(p)
+  console.log('')
+  console.timeEnd('parsing time')
 
-if (res) {
-  console.log('')
-  console.log(inspect(res, {depth: Infinity}))
-  console.log('')
-  console.log(represent(res))
+  if (res) {
+    console.log('')
+    console.log(inspect(res, {depth: Infinity}))
+    console.log('')
+    console.log(represent(res))
+  }
 }
