@@ -105,10 +105,10 @@ const BINARY_OPERATOR = any(
   SHIFT_RIGHT_SIGNED,
   EQUAL,
   NOT_EQUAL,
-  LESS_THAN,
-  GREATER_THAN,
   LESS_THAN_OR_EQUAL_TO,
   GREATER_THAN_OR_EQUAL_TO,
+  LESS_THAN,
+  GREATER_THAN,
   BITWISE_AND,
   BITWISE_OR,
   BITWISE_XOR,
@@ -264,77 +264,7 @@ const pPrefixOperator = loggable('prefix-operator', any(
   pFunctionCall
 ))
 
-// const Associativity = {
-//   left: 0,
-//   right: 1
-// }
-//
-// const associativityBinaryTransforms = [
-//   ([left, repeat]) => {
-//     return repeat.length === 0
-//       ? left
-//       : repeat.reduce((left, [op, right]) => {
-//         return {
-//           type: 'binaryOperator',
-//           op,
-//           left,
-//           right,
-//           pos: {from: left.pos.from, to: right.pos.to}
-//         }
-//       }, left)
-//   },
-//   ([left, repeat]) => {
-//     const recursive = (left, index) => {
-//       if (index === repeat.length) return left
-//
-//       const [op, next] = repeat[index]
-//       const right = recursive(next, index + 1)
-//       return {
-//         type: 'binaryOperator',
-//         op,
-//         left,
-//         right,
-//         pos: {from: left.pos.from, to: right.pos.to}
-//       }
-//     }
-//
-//     return recursive(left, 0)
-//   }
-// ]
-
-// const makeBinary = (higherPriorityParser, operatorsParser, associativity = Associativity.left) => {
-//   return transform(
-//     sequence(
-//       loggable('left argument', higherPriorityParser),
-//       repeat(
-//         sequence(
-//           WS,
-//           loggable('operator', operatorsParser),
-//           WS,
-//           higherPriorityParser
-//         )
-//       )
-//     ),
-//     associativityBinaryTransforms[associativity]
-//   )
-// }
-
-// const pPowerOperator = loggable('power operator', makeBinary(pPrefixOperator, POW, Associativity.right))
-// const pMultiplicativeOperator = loggable('multiplicative operator', makeBinary(pPowerOperator, any(MUL, DIV, MODULO, DIV_FLOOR)))
-// const pAdditiveOperator = loggable('additive operator', makeBinary(pMultiplicativeOperator, any(PLUS, MINUS)))
-//
-// const pBitShiftOperator = loggable('bit shift operator', makeBinary(pAdditiveOperator, any(SHIFT_LEFT_ZERO, SHIFT_RIGHT_ZERO, SHIFT_RIGHT_SIGNED)))
-// const pEqualityOperator = loggable('equality operator', makeBinary(pBitShiftOperator, any(EQUAL, NOT_EQUAL)))
-// const pComparisonOperator = loggable('comparison operator', makeBinary(pEqualityOperator, any(LESS_THAN_OR_EQUAL_TO, GREATER_THAN_OR_EQUAL_TO, LESS_THAN, GREATER_THAN)))
-//
-// const pBitwiseAndOperator = loggable('bitwise and operator', makeBinary(pComparisonOperator, BITWISE_AND))
-// const pBitwiseOrOperator = loggable('bitwise or operator', makeBinary(pBitwiseAndOperator, BITWISE_OR))
-// const pBitwiseXorOperator = loggable('bitwise xor operator', makeBinary(pBitwiseOrOperator, BITWISE_XOR))
-//
-// const pLogicalAndOperator = loggable('logical and operator', makeBinary(pBitwiseXorOperator, LOGICAL_AND))
-// const pLogicalOrOperator = loggable('logical or operator', makeBinary(pLogicalAndOperator, LOGICAL_OR))
-
-const opPrecedence = [
+const operators = [
   ['**'],
   ['*', '/', 'mod', 'div'],
   ['+', '-'],
@@ -346,7 +276,9 @@ const opPrecedence = [
   ['^'],
   ['and'],
   ['or']
-].reduce((res, ops, ind, arr) => {
+]
+
+const opPrecedence = operators.reduce((res, ops, ind, arr) => {
   return {
     ...res,
     ...ops.reduce((res, op) => {
@@ -354,6 +286,13 @@ const opPrecedence = [
     }, {})
   }
 }, {})
+
+const Associativity = {
+  left: 0,
+  right: 1
+}
+
+const opAssociativity = (op) => op === '**' ? Associativity.right : Associativity.left
 
 const pBinaryOperator = loggable('binary-operator', (codePointer) => {
   const recursive = (ptrLeft, left, precedence = 0) => {
@@ -366,8 +305,8 @@ const pBinaryOperator = loggable('binary-operator', (codePointer) => {
       return [ptrLeft, left]
     }
 
-    const prec = opPrecedence[op]
-    if (prec > precedence) {
+    const newPrecedence = opPrecedence[op]
+    if (newPrecedence > precedence) {
       const [ptrWs2, ws2] = WS(ptrOp)
       if (!ws2) {
         return [ptrLeft, left]
@@ -377,7 +316,9 @@ const pBinaryOperator = loggable('binary-operator', (codePointer) => {
         return [ptrLeft, left]
       }
 
-      const [rightPtr, right] = recursive(newLeftPtr, newLeft, prec)
+      const isLeftAssociativity = opAssociativity(op) === Associativity.left
+
+      const [rightPtr, right] = recursive(newLeftPtr, newLeft, newPrecedence - (isLeftAssociativity ? 0 : 1))
 
       return recursive(rightPtr, {
         type: 'binaryOperator',
@@ -393,11 +334,6 @@ const pBinaryOperator = loggable('binary-operator', (codePointer) => {
 
   return recursive(ptrLeft, left, 0)
 })
-//
-// const ast = pBinaryOperator(CodePointer('a + b / c * 10'))
-// console.log(inspect(ast, {depth: Infinity}))
-//
-// process.exit(0)
 
 pExpression.parsers.push(pBinaryOperator)
 
