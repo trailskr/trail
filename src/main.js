@@ -294,45 +294,37 @@ const Associativity = {
 
 const opAssociativity = (op) => op === '**' ? Associativity.right : Associativity.left
 
-const pBinaryOperator = loggable('binary-operator', (codePointer) => {
-  const recursive = (ptrLeft, left, precedence = 0) => {
-    const [ptrWs, ws] = WS(ptrLeft)
-    if (!ws) {
-      return [ptrLeft, left]
-    }
-    const [ptrOp, op] = BINARY_OPERATOR(ptrWs)
-    if (!op) {
-      return [ptrLeft, left]
-    }
+const pBinaryRight = (ptrLeft, left, precedence = 0) => {
+  const [ptrWs, ws] = WS(ptrLeft)
+  if (!ws) return [ptrLeft, left]
+  const [ptrOp, op] = BINARY_OPERATOR(ptrWs)
+  if (!op) return [ptrLeft, left]
 
-    const newPrecedence = opPrecedence[op]
-    if (newPrecedence > precedence) {
-      const [ptrWs2, ws2] = WS(ptrOp)
-      if (!ws2) {
-        return [ptrLeft, left]
-      }
-      const [newLeftPtr, newLeft] = pPrefixOperator(ptrWs2)
-      if (!newLeft) {
-        return [ptrLeft, left]
-      }
+  const newPrecedence = opPrecedence[op]
+  if (newPrecedence > precedence) {
+    const [ptrWs2, ws2] = WS(ptrOp)
+    if (!ws2) return [ptrLeft, left]
+    const [newLeftPtr, newLeft] = pPrefixOperator(ptrWs2)
+    if (!newLeft) return [ptrLeft, left]
 
-      const isLeftAssociativity = opAssociativity(op) === Associativity.left
+    const isLeftAssociativity = opAssociativity(op) === Associativity.left
 
-      const [rightPtr, right] = recursive(newLeftPtr, newLeft, newPrecedence - (isLeftAssociativity ? 0 : 1))
+    const [rightPtr, right] = pBinaryRight(newLeftPtr, newLeft, newPrecedence - (isLeftAssociativity ? 0 : 1))
 
-      return recursive(rightPtr, {
-        type: 'binaryOperator',
-        op,
-        left,
-        right,
-        pos: {from: left.pos.from, to: right.pos.to}
-      }, precedence)
-    }
-    return [ptrLeft, left]
+    return pBinaryRight(rightPtr, {
+      type: 'binaryOperator',
+      op,
+      left,
+      right,
+      pos: {from: left.pos.from, to: right.pos.to}
+    }, precedence)
   }
-  const [ptrLeft, left] = pPrefixOperator(codePointer)
+  return [ptrLeft, left]
+}
 
-  return recursive(ptrLeft, left, 0)
+const pBinaryOperator = loggable('binary-operator', (codePointer) => {
+  const [ptrLeft, left] = pPrefixOperator(codePointer)
+  return pBinaryRight(ptrLeft, left, 0)
 })
 
 pExpression.parsers.push(pBinaryOperator)
