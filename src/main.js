@@ -1,16 +1,13 @@
-import {inspect} from 'util'
-import {CodePointer} from './CodePointer.js'
 import {charInRange, charRepeat, char, exceptChar, string} from './searchers.js'
 import {any, sequenceToString, repeatToString, sequence, repeat} from './combiners.js'
 import {makeLoggable} from './logging.js'
 import {optional, skip, transform, transformResult} from './parserBase.js'
-import {represent} from './represent.js'
 import {unitLogger} from './unittests.js'
 
 const loggable = makeLoggable(unitLogger, '. ')
 
 const WS = skip(charRepeat(' ', 1))
-const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n')), 1)))
+const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n'))), 1))
 const UPPER = charInRange('A', 'Z')
 const LOWER = charInRange('a', 'z')
 
@@ -204,17 +201,15 @@ const pAssignment = loggable('assignment', any(
   transform(
     sequence(
       pIdentifierSeries,
-      loggable('equality', sequence(
+      skip(loggable('equality', sequence(
         WS,
-        skip(char('=')),
-        WS,
-        pExpressionSeries
-      ))
+        char('='),
+        WS
+      ))),
+      pExpressionSeries
     ),
-    ([identifier, values], pos) => {
-      values.reduceRight((identifier, value) => {
-        return {type: 'assignment', identifier, value, pos}
-      }, identifier)
+    ([identifiers, values], pos) => {
+      return {type: 'assignment', identifiers, values, pos}
     }
   ),
   pAtom
@@ -337,23 +332,3 @@ export const pBlock = loggable('block-code', transform(
       : {type: 'block', expressions, pos}
   }
 ))
-
-const run = () => {
-  const code = `\
-a: 10 + 5 - 10 + 20
-print('hello')`
-
-  let p = CodePointer(code)
-  let res
-  console.time('parsing time')
-  ;[p, res] = pBlock(p)
-  console.log('')
-  console.timeEnd('parsing time')
-
-  if (res) {
-    console.log('')
-    console.log(inspect(res, {depth: Infinity}))
-    console.log('')
-    console.log(represent(res))
-  }
-}

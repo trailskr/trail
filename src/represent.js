@@ -28,7 +28,7 @@ export const represent = (expr, needParens = false) => {
     case 'block':
       return expr.expressions.map(represent).join('\n')
     case 'assignment':
-      return `${represent(expr.identifier)}: ${represent(expr.value)}`
+      return `${expr.identifiers.map(represent).join(', ')} = ${expr.values.map(represent).join(', ')}`
     case 'functionCall':
       return `${represent(expr.identifier)}(${expr.args.map(represent).join(', ')})`
     case 'parensExpression':

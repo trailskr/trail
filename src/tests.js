@@ -3,6 +3,7 @@ import {includes} from './utils.js'
 import {CodePointer} from './CodePointer.js'
 import {represent} from './represent.js'
 import {pBlock} from './main.js'
+import {inspect} from 'util'
 
 const parse = (code) => pBlock(CodePointer(code))[1]
 
@@ -36,16 +37,24 @@ unittest('parsing atoms', () => {
 const fromTo = (from, to) => ({from: {col: from}, to: {col: to}})
 
 const testRepr = (sourceCode, resultCode) => {
-  assert(() => resultCode === represent(parse(sourceCode)))
+  assert(() => {
+    const representation = represent(parse(sourceCode))
+    const isEqual = resultCode === representation
+    if (!isEqual) console.log(`"${sourceCode}" != "${representation}"`)
+    return isEqual
+  })
 }
 
-unittest('parsing binary expressions', () => {
+unittest('parsing unary expressions', () => {
   testRepr('(1)', '(1)')
 
   testRepr('not 1', 'not 1')
   testRepr('~1', '~1')
   testRepr('not ~-1', 'not (~(-1))')
+  testRepr('10 + -1', '10 + (-1)')
+})
 
+unittest('parsing binary expressions', () => {
   testRepr('a + b', 'a + b')
   testRepr('a + b + c', '(a + b) + c')
 
@@ -84,6 +93,26 @@ unittest('parsing binary expressions', () => {
   testRepr('1 or 2 and 3 ^ 4 | 5 & 6 < 7 == 8 << 9 + 10 * 11 ** 12', '1 or (2 and (3 ^ (4 | (5 & (6 < (7 == (8 << (9 + (10 * (11 ** 12))))))))))')
   testRepr('1 ** 2 * 3 + 4 << 5 == 6 < 7 & 8 | 9 ^ 10 and 11 or 12', '((((((((((1 ** 2) * 3) + 4) << 5) == 6) < 7) & 8) | 9) ^ 10) and 11) or 12')
   testRepr('1 & 2 and 3 + 4 or 5 ^ 6 < 7 ** 8 | 9 == 10 * 11 << 12', '((1 & 2) and (3 + 4)) or (5 ^ ((6 < (7 ** 8)) | (9 == ((10 * 11) << 12))))')
+})
+
+unittest('parsing functions', () => {
+  testRepr('fun(1)', 'fun(1)')
+  testRepr('-fun(1)', '-fun(1)')
+  testRepr('1 + -fun(1)', '1 + (-fun(1))')
+})
+
+unittest('parsing assignment', () => {
+  testRepr('a = 10', 'a = 10')
+  testRepr('a, b = 10, 11', 'a, b = 10, 11')
+  testRepr('a, b = b + "sun", fun()', "a, b = b + 'sun', fun()")
+})
+
+unittest('parsing block', () => {
+  testRepr(`\
+a = 10
+callMe(10 ** 2)`, `\
+a = 10
+callMe(10 ** 2)`)
 })
 
 unittest('parsing binary expressions ast', () => {
