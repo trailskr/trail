@@ -1,10 +1,10 @@
-import {charInRange, charRepeat, char, exceptChar, string} from './searchers.js'
-import {any, sequenceToString, repeatToString, sequence, repeat} from './combiners.js'
-import {makeLoggable} from './logging.js'
-import {optional, skip, transform, transformResult} from './parserBase.js'
+import {charInRange, charRepeat, char, exceptChar, string} from './parser/searchers.js'
+import {any, sequenceToString, repeatToString, sequence, repeat} from './parser/combiners.js'
+import {makeLoggableParserWrapper} from './parser/makeLoggableParserWrapper.js'
+import {optional, skip, transform, transformResult} from './parser/parserBase.js'
 import {unitLogger} from './unittests.js'
 
-const loggable = makeLoggable(unitLogger, '. ')
+const loggable = makeLoggableParserWrapper(unitLogger, '. ')
 
 const WS = skip(charRepeat(' ', 1))
 const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n'))), 1))

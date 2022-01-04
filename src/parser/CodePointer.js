@@ -1,4 +1,4 @@
-import {assert, unittest} from './unittests.js'
+import {assert, unittest} from '../unittests.js'
 
 export const CodePointer = (code) => {
   return {

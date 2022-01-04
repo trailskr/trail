@@ -1,9 +1,8 @@
-import {assert, unittest} from './unittests.js'
+import {assert, unittest, unitLogger} from './unittests.js'
 import {includes} from './utils.js'
-import {CodePointer} from './CodePointer.js'
+import {CodePointer} from './parser/CodePointer.js'
 import {represent} from './represent.js'
 import {pBlock} from './main.js'
-import {inspect} from 'util'
 
 const parse = (code) => pBlock(CodePointer(code))[1]
 
@@ -39,14 +38,14 @@ const fromTo = (from, to) => ({from: {col: from}, to: {col: to}})
 const testRepr = (sourceCode, resultCode) => {
   assert(() => {
     const representation = represent(parse(sourceCode))
-    const isEqual = resultCode === representation
-    if (!isEqual) console.log(`"${sourceCode}" != "${representation}"`)
+    const isEqual = representation === resultCode
+    if (!isEqual) unitLogger(false, `\x1b[31mrepresentation\n${representation}\nis not equal to\n${resultCode}\x1b[0m`)
     return isEqual
   })
 }
 
 unittest('parsing unary expressions', () => {
-  testRepr('(1)', '(1)')
+  testRepr('(1)', '(2)')
 
   testRepr('not 1', 'not 1')
   testRepr('~1', '~1')

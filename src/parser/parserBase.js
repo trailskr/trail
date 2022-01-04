@@ -1,11 +1,7 @@
 const makeBinding = (target, source, property) => {
   Object.defineProperty(target, property, {
-    get() {
-      return source[property]
-    },
-    set(v) {
-      source[property] = v
-    }
+    get() { return source[property] },
+    set(v) { source[property] = v }
   })
 }
 
@@ -14,6 +10,22 @@ export const wrapParser = (parser, wrapperParser) => {
   makeBinding(wrapperParser, parser, 'optional')
   makeBinding(wrapperParser, parser, 'skip')
   return wrapperParser
+}
+
+export const switchableWrapParser = (parser, wrapperParser) => {
+  let isEnabled
+
+  const resultParser = wrapParser(parser, (codePointer) => {
+    if (!isEnabled) return parser(codePointer)
+    return wrapperParser(codePointer)
+  })
+
+  Object.defineProperty(resultParser, 'enabled', {
+    get() { return isEnabled },
+    set(v) { isEnabled = v }
+  })
+
+  return resultParser
 }
 
 export const optional = (parser) => {

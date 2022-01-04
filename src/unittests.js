@@ -1,5 +1,5 @@
 import fs from 'fs'
-import {callWithLogs, logger} from './logging.js'
+import {logger} from './logging.js'
 
 const unittestEnabled = process.env.NODE_ENV === 'test' || process.argv.includes('--test')
 
@@ -92,6 +92,11 @@ const unitLog = (data) => {
 }
 
 export const unitLogger = logger(unitLog)
+const callWithLogs = (fn) => {
+  unitLogger.enabled = true
+  fn()
+  unitLogger.enabled = false
+}
 
 export const assert = (expressionFn) => {
   currentLog = []
@@ -141,7 +146,9 @@ const printGroupOrResult = (resultOrGroup) => {
       print(resultOrGroup.code, false)
       withIndent(() => {
         print(resultOrGroup.at, false)
-        print('------------------- LOG --------------------\n' + resultOrGroup.log)
+        if (resultOrGroup.log) {
+          print('------------------- LOG --------------------\n' + resultOrGroup.log)
+        }
       })
     }
   }

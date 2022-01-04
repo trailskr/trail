@@ -1,6 +1,3 @@
-import {inspect} from 'util'
-import {wrapParser} from './parserBase.js'
-
 const maxPrintedLines = 1e5
 
 export const logger = (logFn = (data) => console.log(data), tab = '  ') => {
@@ -23,25 +20,4 @@ export const logger = (logFn = (data) => console.log(data), tab = '  ') => {
       indent += tab
     }
   }
-}
-
-let enabled = false
-
-export const makeLoggable = (logger) => (name, parser) => wrapParser(parser, (codePointer) => {
-  if (!enabled) return parser(codePointer)
-  logger(true, `parsing ${name} ${codePointer.row}:${codePointer.col}`)
-  const result = parser(codePointer)
-  const [ptr, res] = result
-  if (res === undefined) {
-    logger(false, `not parsed ${name}`)
-  } else {
-    logger(false, `parsed ${name} ${ptr.row}:${ptr.col} ${inspect(res, {depth: Infinity, breakLength: Infinity})}`)
-  }
-  return result
-})
-
-export const callWithLogs = (fn) => {
-  enabled = true
-  fn()
-  enabled = false
 }
