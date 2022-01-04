@@ -101,7 +101,15 @@ const callWithLogs = (fn) => {
 export const assert = (expressionFn) => {
   currentLog = []
   callWithLogs(() => {
-    const isSuccessful = expressionFn() === true
+    let isSuccessful
+    try {
+      isSuccessful = expressionFn() === true
+    } catch (err) {
+      isSuccessful = false
+      err.stack.split('\n').forEach((stackItem) => {
+        unitLogger(false, stackItem)
+      })
+    }
     const stackLine = getTestStackLine(parseStack(new Error().stack))
 
     currentResult.children.push({
