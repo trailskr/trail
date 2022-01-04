@@ -45,7 +45,7 @@ const testRepr = (sourceCode, resultCode) => {
 }
 
 unittest('parsing unary expressions', () => {
-  testRepr('(1)', '(2)')
+  testRepr('(1)', '(1)')
 
   testRepr('not 1', 'not 1')
   testRepr('~1', '~1')
