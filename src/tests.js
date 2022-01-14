@@ -50,11 +50,11 @@ unittest('parsing unary expressions', () => {
   testRepr('not 1', 'not 1')
   testRepr('~1', '~1')
   testRepr('not ~-1', 'not (~(-1))')
-  testRepr('10 + -1', '10 + (-1)')
 })
 
 unittest('parsing binary expressions', () => {
   testRepr('a + b', 'a + b')
+
   testRepr('a + b + c', '(a + b) + c')
 
   testRepr('a + b + c - d', '((a + b) + c) - d')

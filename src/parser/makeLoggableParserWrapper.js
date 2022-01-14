@@ -1,7 +1,7 @@
-import {switchableWrapParser} from './parserBase.js'
+import {wrapParser} from './parserBase.js'
 import {inspect} from 'util'
 
-export const makeLoggableParserWrapper = (logger) => (name, parser) => switchableWrapParser(parser, (codePointer) => {
+export const makeLoggableParserWrapper = (logger) => (name, parser) => wrapParser(parser, (codePointer) => {
   logger(true, `parsing ${name} ${codePointer.row}:${codePointer.col}`)
   const result = parser(codePointer)
   const [ptr, res] = result

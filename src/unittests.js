@@ -87,15 +87,16 @@ const parseStack = (stack) => {
 
 let currentLog
 
+let isLogEnabled = false
 const unitLog = (data) => {
-  currentLog.push(data)
+  if (isLogEnabled) currentLog.push(data)
 }
 
 export const unitLogger = logger(unitLog)
 const callWithLogs = (fn) => {
-  unitLogger.enabled = true
+  isLogEnabled = true
   fn()
-  unitLogger.enabled = false
+  isLogEnabled = false
 }
 
 export const assert = (expressionFn) => {
