@@ -5,7 +5,7 @@ export const logger = (logFn = (data) => console.log(data), tab = '  ') => {
   let printedLines = 0
 
   return (increaseIndent, ...args) => {
-    if (!increaseIndent) {
+    if (increaseIndent === false) {
       indent = indent.slice(0, indent.length - tab.length)
     }
     args.forEach(arg => {

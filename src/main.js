@@ -1,10 +1,17 @@
 import {charInRange, charRepeat, char, exceptChar, string} from './parser/searchers.js'
 import {any, sequenceToString, repeatToString, sequence, repeat} from './parser/combiners.js'
 import {makeLoggableParserWrapper} from './parser/makeLoggableParserWrapper.js'
+import {makePathTrackingParserWrapper} from './parser/makePathTrackingParserWrapper.js'
 import {optional, skip, transform, transformResult} from './parser/parserBase.js'
 import {unitLogger} from './unittests.js'
 
 const loggable = makeLoggableParserWrapper(unitLogger, '. ')
+const pathTracking = []
+export const resetPathTracking = () => {
+  pathTracking.length = 0
+}
+const pathTrackable = makePathTrackingParserWrapper(unitLogger, pathTracking)
+const loggableAndPathTrackable = (name, parser) => loggable(name, pathTrackable(name, parser))
 
 const WS = skip(charRepeat(' ', 1))
 const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n'))), 1))
@@ -125,12 +132,12 @@ const series = (parser, divider) => transform(
     transform(
       sequence(
         parser,
-        loggable('repeat', repeat(
+        repeat(
           transform(
             sequence(divider.skip ? divider : skip(divider), parser),
             ([first]) => first
           )
-        ))
+        )
       ),
       ([first, rest]) => [first, ...rest]
     )
@@ -155,9 +162,9 @@ const STRING_DOUBLE_QUOTE = sequenceToString(
   skip(char('"'))
 )
 
-const pExpression = loggable('expression', any())
+const pExpression = loggableAndPathTrackable('expression', any())
 
-const pIdentifier = loggable('identifier', transform(
+const pIdentifier = loggableAndPathTrackable('identifier', transform(
   sequenceToString(
     IDENTIFIER_FIRST_LETTER,
     repeatToString(IDENTIFIER_REST_LETTER)
@@ -165,43 +172,43 @@ const pIdentifier = loggable('identifier', transform(
   (res, pos) => ({type: 'identifier', label: res, pos})
 ))
 
-const pBoolean = loggable('boolean', transform(
+const pBoolean = loggableAndPathTrackable('boolean', transform(
   any(TRUE, FALSE),
   (res, pos) => ({type: 'boolean', value: res === 'true', pos})
 ))
 
-const pInteger = loggable('integer', transform(
+const pInteger = loggableAndPathTrackable('integer', transform(
   DECIMAL_INTEGER,
   (res, pos) => ({type: 'integer', value: +res, pos})
 ))
 
-const pFractional = loggable('fractional', transform(
+const pFractional = loggableAndPathTrackable('fractional', transform(
   DECIMAL_FRACTIONAL,
   (res, pos) => ({type: 'fractional', value: +res, pos})
 ))
 
-const pString = loggable('string', transform(
+const pString = loggableAndPathTrackable('string', transform(
   any(STRING_SINGLE_QUOTE, STRING_DOUBLE_QUOTE),
   (res, pos) => ({type: 'string', value: res, pos})
 ))
 
-const pLiteral = loggable('literal', any(pBoolean, pFractional, pInteger, pString))
+const pLiteral = loggableAndPathTrackable('literal', any(pBoolean, pFractional, pInteger, pString))
 
-const pParensExpression = loggable('parens-expression', transform(
+const pParensExpression = loggableAndPathTrackable('parens-expression', transform(
   sequence(LEFT_PAREN, pExpression, RIGHT_PAREN),
   ([content], pos) => ({type: 'parensExpression', content, pos})
 ))
 
-const pAtom = loggable('atom', any(pLiteral, pIdentifier, pParensExpression))
+const pAtom = loggableAndPathTrackable('atom', any(pLiteral, pIdentifier, pParensExpression))
 
-const pIdentifierSeries = loggable('identifier-series', series(pIdentifier, sequence(char(','), WS)))
-const pExpressionSeries = loggable('expression-series', series(pExpression, sequence(char(','), WS)))
+const pIdentifierSeries = loggableAndPathTrackable('identifier-series', series(pIdentifier, sequence(char(','), WS)))
+const pExpressionSeries = loggableAndPathTrackable('expression-series', series(pExpression, sequence(char(','), WS)))
 
-const pAssignment = loggable('assignment', any(
+const pAssignment = loggableAndPathTrackable('assignment', any(
   transform(
     sequence(
       pIdentifierSeries,
-      skip(loggable('equality', sequence(
+      skip(loggableAndPathTrackable('equality', sequence(
         WS,
         char('='),
         WS
@@ -215,16 +222,16 @@ const pAssignment = loggable('assignment', any(
   pAtom
 ))
 
-const pFunctionCall = loggable('function-call', any(
+const pFunctionCall = loggableAndPathTrackable('function-call', any(
   transform(
     sequence(
-      loggable('function-name', any(
+      loggableAndPathTrackable('function-name', any(
         pIdentifier,
         pParensExpression
       )),
-      loggable('function-arguments', sequence(
+      loggableAndPathTrackable('function-arguments', sequence(
         skip(char('(')),
-        loggable('arguments', pExpressionSeries),
+        loggableAndPathTrackable('arguments', pExpressionSeries),
         skip(char(')'))
       ))
     ),
@@ -233,7 +240,7 @@ const pFunctionCall = loggable('function-call', any(
   pAssignment
 ))
 
-const pPrefixOperator = loggable('prefix-operator', any(
+const pPrefixOperator = loggableAndPathTrackable('prefix-operator', any(
   transform(
     sequence(
       repeat(
@@ -317,15 +324,15 @@ const pBinaryRight = (ptrLeft, left, precedence = 0) => {
   return [ptrLeft, left]
 }
 
-const pBinaryOperator = loggable('binary-operator', (codePointer) => {
+const pBinaryOperator = loggableAndPathTrackable('binary-operator', (codePointer) => {
   const [ptrLeft, left] = pPrefixOperator(codePointer)
   return pBinaryRight(ptrLeft, left, 0)
 })
 
 pExpression.parsers.push(pBinaryOperator)
 
-export const pBlock = loggable('block-code', transform(
-  series(pExpression, loggable('line end', LE)),
+export const pBlock = loggableAndPathTrackable('block-code', transform(
+  series(pExpression, loggableAndPathTrackable('line end', LE)),
   (expressions, pos) => {
     return expressions.length === 1
       ? expressions[0]

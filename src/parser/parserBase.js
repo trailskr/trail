@@ -64,16 +64,3 @@ export const transformResult = (parser, transformerFn) => wrapParser(parser, (co
     ? [codePointer, undefined]
     : [ptr, transformerFn(res)]
 })
-
-export const cacheable = (parser) => {
-  let cachePtr
-  let cacheRes
-  return wrapParser(parser, (codePointer) => {
-    if (cachePtr && cachePtr.code === codePointer.code && cachePtr.pos === codePointer.pos) {
-      return cacheRes
-    }
-    cachePtr = codePointer
-    cacheRes = parser(codePointer)
-    return cacheRes
-  })
-}

@@ -1,13 +1,22 @@
+// import {inspect} from 'util'
 import {assert, unittest, unitLogger} from './unittests.js'
 import {includes} from './utils.js'
 import {CodePointer} from './parser/CodePointer.js'
 import {represent} from './represent.js'
-import {pBlock} from './main.js'
+import {pBlock, resetPathTracking} from './main.js'
 
-const parse = (code) => pBlock(CodePointer(code))[1]
+const parse = (code) => {
+  resetPathTracking()
+  return pBlock(CodePointer(code))[1]
+}
 
-const testAst = (sourceCode, resultAst) => {
-  assert(() => includes(parse(sourceCode), resultAst))
+const testAst = (sourceCode, resultCode) => {
+  assert(() => {
+    const result = parse(sourceCode)
+    const isIncludes = includes(result, resultCode)
+    if (!isIncludes) unitLogger(undefined, `\x1b[31mparsed result\n${inspect(result)}\nis not includes \n${inspect(resultCode)}\x1b[0m`)
+    return isIncludes
+  })
 }
 
 unittest('parsing atoms', () => {
@@ -39,7 +48,7 @@ const testRepr = (sourceCode, resultCode) => {
   assert(() => {
     const representation = represent(parse(sourceCode))
     const isEqual = representation === resultCode
-    if (!isEqual) unitLogger(false, `\x1b[31mrepresentation\n${representation}\nis not equal to\n${resultCode}\x1b[0m`)
+    if (!isEqual) unitLogger(undefined, `\x1b[31mrepresentation\n${representation}\nis not equal to\n${resultCode}\x1b[0m`)
     return isEqual
   })
 }
