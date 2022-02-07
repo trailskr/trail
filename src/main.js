@@ -6,9 +6,10 @@ import {optional, skip, transform, transformResult} from './parser/parserBase.js
 import {unitLogger} from './unittests.js'
 
 const loggable = makeLoggableParserWrapper(unitLogger, '. ')
-const pathTracking = []
+const pathTracking = {order: [], nameMaps: []}
 export const resetPathTracking = () => {
-  pathTracking.length = 0
+  pathTracking.order.length = 0
+  pathTracking.nameMaps.length = 0
 }
 const pathTrackable = makePathTrackingParserWrapper(unitLogger, pathTracking)
 const loggableAndPathTrackable = (name, parser) => loggable(name, pathTrackable(name, parser))
@@ -199,71 +200,60 @@ const pParensExpression = loggableAndPathTrackable('parens-expression', transfor
   ([content], pos) => ({type: 'parensExpression', content, pos})
 ))
 
-const pAtom = loggableAndPathTrackable('atom', any(pLiteral, pIdentifier, pParensExpression))
-
 const pIdentifierSeries = loggableAndPathTrackable('identifier-series', series(pIdentifier, sequence(char(','), WS)))
 const pExpressionSeries = loggableAndPathTrackable('expression-series', series(pExpression, sequence(char(','), WS)))
 
-const pAssignment = loggableAndPathTrackable('assignment', any(
-  transform(
-    sequence(
-      pIdentifierSeries,
-      skip(loggableAndPathTrackable('equality', sequence(
-        WS,
-        char('='),
-        WS
-      ))),
-      pExpressionSeries
-    ),
-    ([identifiers, values], pos) => {
-      return {type: 'assignment', identifiers, values, pos}
-    }
+const pAssignment = loggableAndPathTrackable('assignment', transform(
+  sequence(
+    pIdentifierSeries,
+    skip(loggableAndPathTrackable('equality', sequence(
+      WS,
+      char('='),
+      WS
+    ))),
+    pExpressionSeries
   ),
-  pAtom
+  ([identifiers, values], pos) => {
+    return {type: 'assignment', identifiers, values, pos}
+  }
 ))
 
-const pFunctionCall = loggableAndPathTrackable('function-call', any(
-  transform(
-    sequence(
-      loggableAndPathTrackable('function-name', any(
-        pIdentifier,
-        pParensExpression
-      )),
-      loggableAndPathTrackable('function-arguments', sequence(
-        skip(char('(')),
-        loggableAndPathTrackable('arguments', pExpressionSeries),
-        skip(char(')'))
-      ))
-    ),
-    ([identifier, [args]], pos) => ({type: 'functionCall', identifier, args, pos})
+const pFunctionCall = loggableAndPathTrackable('function-call', transform(
+  sequence(
+    loggableAndPathTrackable('function-name', any(
+      pIdentifier,
+      pParensExpression
+    )),
+    loggableAndPathTrackable('function-arguments', sequence(
+      skip(char('(')),
+      loggableAndPathTrackable('arguments', pExpressionSeries),
+      skip(char(')'))
+    ))
   ),
-  pAssignment
+  ([identifier, [args]], pos) => ({type: 'functionCall', identifier, args, pos})
 ))
 
-const pPrefixOperator = loggableAndPathTrackable('prefix-operator', any(
-  transform(
-    sequence(
-      repeat(
-        any(
-          PLUS,
-          MINUS,
-          BITWISE_NOT,
-          transformResult(
-            sequence(NOT, WS),
-            ([op]) => op
-          )
-        ),
-        1
+const pPrefixOperator = loggableAndPathTrackable('prefix-operator', transform(
+  sequence(
+    repeat(
+      any(
+        PLUS,
+        MINUS,
+        BITWISE_NOT,
+        transformResult(
+          sequence(NOT, WS),
+          ([op]) => op
+        )
       ),
-      pFunctionCall
+      1
     ),
-    ([ops, right], pos) => {
-      return ops.reduceRight((right, op) => {
-        return {type: 'prefixOperator', op, right, pos}
-      }, right)
-    }
+    pExpression
   ),
-  pFunctionCall
+  ([ops, right], pos) => {
+    return ops.reduceRight((right, op) => {
+      return {type: 'prefixOperator', op, right, pos}
+    }, right)
+  }
 ))
 
 const operators = [
@@ -272,7 +262,7 @@ const operators = [
   ['+', '-'],
   ['<<', '>>', '>>>'],
   ['==', '!='],
-  ['<', '>', '<=', '>='],
+  ['<=', '>=', '<', '>'],
   ['&'],
   ['|'],
   ['^'],
@@ -306,7 +296,7 @@ const pBinaryRight = (ptrLeft, left, precedence = 0) => {
   if (newPrecedence > precedence) {
     const [ptrWs2, ws2] = WS(ptrOp)
     if (!ws2) return [ptrLeft, left]
-    const [newLeftPtr, newLeft] = pPrefixOperator(ptrWs2)
+    const [newLeftPtr, newLeft] = pExpression(ptrWs2)
     if (!newLeft) return [ptrLeft, left]
 
     const isLeftAssociativity = opAssociativity(op) === Associativity.left
@@ -325,11 +315,19 @@ const pBinaryRight = (ptrLeft, left, precedence = 0) => {
 }
 
 const pBinaryOperator = loggableAndPathTrackable('binary-operator', (codePointer) => {
-  const [ptrLeft, left] = pPrefixOperator(codePointer)
+  const [ptrLeft, left] = pExpression(codePointer)
   return pBinaryRight(ptrLeft, left, 0)
 })
 
-pExpression.parsers.push(pBinaryOperator)
+pExpression.parsers.push(
+  pBinaryOperator,
+  pParensExpression,
+  pFunctionCall,
+  pPrefixOperator,
+  pAssignment,
+  pLiteral,
+  pIdentifier
+)
 
 export const pBlock = loggableAndPathTrackable('block-code', transform(
   series(pExpression, loggableAndPathTrackable('line end', LE)),
