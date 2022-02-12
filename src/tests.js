@@ -3,11 +3,11 @@ import {assert, unittest, unitLogger} from './unittests.js'
 import {includes} from './utils.js'
 import {CodePointer} from './parser/CodePointer.js'
 import {represent} from './represent.js'
-import {pBlock, resetPathTracking} from './main.js'
+import {pBlockLines, resetPathTracking} from './main.js'
 
 const parse = (code) => {
   resetPathTracking()
-  return pBlock(CodePointer(code))[1]
+  return pBlockLines(CodePointer(code))[1]
 }
 
 const testAst = (sourceCode, resultCode) => {
@@ -105,8 +105,11 @@ unittest('parsing binary expressions', () => {
 
 unittest('parsing functions', () => {
   testRepr('fun(1)', 'fun(1)')
+  testRepr('fun(1, 2, "str")', "fun(1, 2, 'str')")
   testRepr('-fun(1)', '-fun(1)')
   testRepr('1 + -fun(1)', '1 + (-fun(1))')
+  testRepr('(fun)()', '(fun)()')
+  testRepr('fun()()()', 'fun()()()')
 })
 
 unittest('parsing assignment', () => {

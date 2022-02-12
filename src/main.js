@@ -206,11 +206,11 @@ const pExpressionSeries = loggableAndPathTrackable('expression-series', series(p
 const pAssignment = loggableAndPathTrackable('assignment', transform(
   sequence(
     pIdentifierSeries,
-    skip(loggableAndPathTrackable('equality', sequence(
+    skip(sequence(
       WS,
       char('='),
       WS
-    ))),
+    )),
     pExpressionSeries
   ),
   ([identifiers, values], pos) => {
@@ -220,17 +220,14 @@ const pAssignment = loggableAndPathTrackable('assignment', transform(
 
 const pFunctionCall = loggableAndPathTrackable('function-call', transform(
   sequence(
-    loggableAndPathTrackable('function-name', any(
-      pIdentifier,
-      pParensExpression
-    )),
-    loggableAndPathTrackable('function-arguments', sequence(
+    pExpression,
+    sequence(
       skip(char('(')),
-      loggableAndPathTrackable('arguments', pExpressionSeries),
+      pExpressionSeries,
       skip(char(')'))
-    ))
+    )
   ),
-  ([identifier, [args]], pos) => ({type: 'functionCall', identifier, args, pos})
+  ([callee, [args]], pos) => ({type: 'functionCall', callee, args, pos})
 ))
 
 const pPrefixOperator = loggableAndPathTrackable('prefix-operator', transform(
@@ -319,17 +316,30 @@ const pBinaryOperator = loggableAndPathTrackable('binary-operator', (codePointer
   return pBinaryRight(ptrLeft, left, 0)
 })
 
+// const pDotAccess = loggableAndPathTrackable('dot-access', transform(
+//   sequence(
+//     pExpression,
+//     skip(sequence(
+//       char('.')
+//     )),
+//     pExpression
+//   ),
+//   ([identifiers, values], pos) => {
+//     return {type: 'assignment', identifiers, values, pos}
+//   }
+// ))
+
 pExpression.parsers.push(
   pBinaryOperator,
-  pParensExpression,
   pFunctionCall,
+  pParensExpression,
   pPrefixOperator,
   pAssignment,
   pLiteral,
   pIdentifier
 )
 
-export const pBlock = loggableAndPathTrackable('block-code', transform(
+export const pBlockLines = loggableAndPathTrackable('block-code', transform(
   series(pExpression, loggableAndPathTrackable('line end', LE)),
   (expressions, pos) => {
     return expressions.length === 1
