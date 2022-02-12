@@ -229,8 +229,9 @@ assert([3..0] == [3, 2, 1])
 assert([0...32, 8] == [0, 8, 16, 24, 32])
 
 // cicles
-// there is no cicle operators, only recursive function calls
-\ self = i => \
+// there is no cycle operators, only recursive function calls
+\
+  self = i => \
     out(i)
     if i < 10 then self(i + 1) else 0
   self(0)
@@ -254,9 +255,9 @@ map = arr, iter => \
   loop(arr, 0)
   => res
 
-filter = arr, iter => {
+filter = arr, iter => \
   res = []
-  loop = slice, index => {
+  loop = slice, index => \
     if slice.empty then => _
     sliced, item = slice.popLast
     if iter(item, index) then res.push(item)
