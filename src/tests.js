@@ -128,6 +128,14 @@ unittest('parsing dot access', () => {
   testRepr('fun.field()().field', 'fun.field()().field')
 })
 
+unittest('parsing index access', () => {
+  testRepr('a[b]', 'a[b]')
+  testRepr("'10'[0]", "'10'[0]")
+  testRepr("'10'[0].length", "'10'[0].length")
+  testRepr("'10'.length[fun()]", "'10'.length[fun()]")
+  testRepr("'10'.fun()[fun()]", "'10'.fun()[fun()]")
+})
+
 unittest('parsing block', () => {
   testRepr(`\
 a = 10

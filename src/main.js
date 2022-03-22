@@ -82,6 +82,7 @@ const SHIFT_LEFT_ZERO = string('<<')
 const SHIFT_RIGHT_ZERO = string('>>>')
 const SHIFT_RIGHT_SIGNED = string('>>')
 
+const ASSIGN = char('=')
 const EQUAL = string('==')
 const NOT_EQUAL = string('!=')
 
@@ -125,8 +126,16 @@ const BITWISE_NOT = char('~')
 
 const NOT = string('not')
 
+const DOT = skip(char('.'))
+
 const LEFT_PAREN = skip(char('('))
 const RIGHT_PAREN = skip(char(')'))
+
+const LEFT_SQUARE_BRACKET = skip(char('['))
+const RIGHT_SQUARE_BRACKET = skip(char(']'))
+
+// const LEFT_BRACKET = skip(char('{'))
+// const RIGHT_BRACKET = skip(char('}'))
 
 const series = (parser, divider) => transform(
   optional(
@@ -208,7 +217,7 @@ const pAssignment = loggableAndPathTrackable('assignment', transform(
     pIdentifierSeries,
     skip(sequence(
       WS,
-      char('='),
+      ASSIGN,
       WS
     )),
     pExpressionSeries
@@ -224,9 +233,9 @@ const pFunctionCall = loggableAndPathTrackable('function-call', transform(
     repeat(
       transformResult(
         sequence(
-          skip(char('(')),
+          LEFT_PAREN,
           pExpressionSeries,
-          skip(char(')'))
+          RIGHT_PAREN
         ),
         ([args]) => {
           return args
@@ -331,17 +340,30 @@ const pBinaryOperator = loggableAndPathTrackable('binary-operator', (codePointer
 const pDotAccess = loggableAndPathTrackable('dot-access', transform(
   sequence(
     pExpression,
-    skip(char('.')),
+    DOT,
     pExpression
   ),
-  ([left, right], pos) => {
-    return {type: 'dotAccess', left, right, pos}
+  ([target, member], pos) => {
+    return {type: 'dotAccess', target, member, pos}
+  }
+))
+
+const pIndexAccess = loggableAndPathTrackable('index-access', transform(
+  sequence(
+    pExpression,
+    LEFT_SQUARE_BRACKET,
+    pExpression,
+    RIGHT_SQUARE_BRACKET
+  ),
+  ([target, index], pos) => {
+    return {type: 'indexAccess', target, index, pos}
   }
 ))
 
 pExpression.parsers.push(
   pBinaryOperator,
   pDotAccess,
+  pIndexAccess,
   pFunctionCall,
   pParensExpression,
   pPrefixOperator,
