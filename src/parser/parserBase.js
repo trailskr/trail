@@ -60,7 +60,7 @@ export const transform = (parser, transformerFn) => wrapParser(parser, (codePoin
 
 export const transformResult = (parser, transformerFn) => wrapParser(parser, (codePointer) => {
   const [ptr, res] = parser(codePointer)
-  return res === undefined
+  return res === undefined && !parser.optional
     ? [codePointer, undefined]
     : [ptr, transformerFn(res)]
 })

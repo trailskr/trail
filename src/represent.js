@@ -31,6 +31,8 @@ export const represent = (expr, needParens = false) => {
       return `${expr.identifiers.map(represent).join(', ')} = ${expr.values.map(represent).join(', ')}`
     case 'functionCall':
       return `${represent(expr.callee)}(${expr.args.map(represent).join(', ')})`
+    case 'dotAccess':
+      return `${represent(expr.left)}.${represent(expr.right)}`
     case 'parensExpression':
       return `(${represent(expr.content)})`
     case 'binaryOperator':

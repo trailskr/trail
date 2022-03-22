@@ -13,7 +13,6 @@ export const logger = (logFn = (data) => console.log(data), tab = '  ') => {
       printedLines += 1
       if (printedLines === maxPrintedLines) {
         printedLines = 0
-        debugger
       }
     })
     if (increaseIndent === true) {

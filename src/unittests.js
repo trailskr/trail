@@ -117,7 +117,7 @@ export const assert = (expressionFn) => {
       isSuccessful,
       at: stackLine.path + ':' + stackLine.row + ':' + stackLine.col,
       code: stackLine.code,
-      log: isSuccessful ? undefined : currentLog.join('\n')
+      log: isSuccessful ? undefined : currentLog
     })
   })
 }
@@ -156,7 +156,10 @@ const printGroupOrResult = (resultOrGroup) => {
       withIndent(() => {
         print(resultOrGroup.at, false)
         if (resultOrGroup.log) {
-          print('------------------- LOG --------------------\n' + resultOrGroup.log)
+          print('------------------- LOG --------------------\n')
+          resultOrGroup.log.forEach(line => {
+            print(line)
+          })
         }
       })
     }

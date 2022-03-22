@@ -118,6 +118,16 @@ unittest('parsing assignment', () => {
   testRepr('a, b = b + "sun", fun()', "a, b = b + 'sun', fun()")
 })
 
+unittest('parsing dot access', () => {
+  testRepr('a.b', 'a.b')
+  testRepr("'10'.len", "'10'.len")
+  testRepr('10.size', '10.size')
+  testRepr('a.b.c', 'a.b.c')
+  testRepr('a.field()', 'a.field()')
+  testRepr('fun().field', 'fun().field')
+  testRepr('fun.field()().field', 'fun.field()().field')
+})
+
 unittest('parsing block', () => {
   testRepr(`\
 a = 10

@@ -15,7 +15,7 @@ const pathTrackable = makePathTrackingParserWrapper(unitLogger, pathTracking)
 const loggableAndPathTrackable = (name, parser) => loggable(name, pathTrackable(name, parser))
 
 const WS = skip(charRepeat(' ', 1))
-const LE = skip(repeatToString(sequenceToString(charRepeat(' '), any(char('\r'), char('\n'))), 1))
+const LE = skip(sequenceToString(charRepeat(' '), optional(char('\r')), char('\n')), 1)
 const UPPER = charInRange('A', 'Z')
 const LOWER = charInRange('a', 'z')
 
@@ -45,7 +45,7 @@ const DECIMAL_FRACTIONAL = any(
   sequenceToString(
     DECIMAL_INTEGER,
     char('.'),
-    repeatToString(DECIMAL_DIGIT),
+    repeatToString(DECIMAL_DIGIT, 1),
     optional(EXPONENT_PART)
   ),
   sequenceToString(
@@ -221,13 +221,25 @@ const pAssignment = loggableAndPathTrackable('assignment', transform(
 const pFunctionCall = loggableAndPathTrackable('function-call', transform(
   sequence(
     pExpression,
-    sequence(
-      skip(char('(')),
-      pExpressionSeries,
-      skip(char(')'))
+    repeat(
+      transformResult(
+        sequence(
+          skip(char('(')),
+          pExpressionSeries,
+          skip(char(')'))
+        ),
+        ([args]) => {
+          return args
+        }
+      ),
+      1
     )
   ),
-  ([callee, [args]], pos) => ({type: 'functionCall', callee, args, pos})
+  ([lastCallee, calls], pos) => {
+    return calls.reduceRight((callee, args) => {
+      return {type: 'functionCall', callee, args, pos}
+    }, lastCallee)
+  }
 ))
 
 const pPrefixOperator = loggableAndPathTrackable('prefix-operator', transform(
@@ -316,21 +328,20 @@ const pBinaryOperator = loggableAndPathTrackable('binary-operator', (codePointer
   return pBinaryRight(ptrLeft, left, 0)
 })
 
-// const pDotAccess = loggableAndPathTrackable('dot-access', transform(
-//   sequence(
-//     pExpression,
-//     skip(sequence(
-//       char('.')
-//     )),
-//     pExpression
-//   ),
-//   ([identifiers, values], pos) => {
-//     return {type: 'assignment', identifiers, values, pos}
-//   }
-// ))
+const pDotAccess = loggableAndPathTrackable('dot-access', transform(
+  sequence(
+    pExpression,
+    skip(char('.')),
+    pExpression
+  ),
+  ([left, right], pos) => {
+    return {type: 'dotAccess', left, right, pos}
+  }
+))
 
 pExpression.parsers.push(
   pBinaryOperator,
+  pDotAccess,
   pFunctionCall,
   pParensExpression,
   pPrefixOperator,
