@@ -1,24 +1,24 @@
-// all spaces a significant
-// all types deduced automatically
+// All spaces a significant
+// All types deduced automatically
 a = 5
 b = a + 1
-assert(b == 6) // assert function call for unit testing
+assert(b == 6) // Assert function call for unit testing
 assert(
-  b == 6 // multiline function call doesn't have closing bracket controls over indentation
+  b == 6 // Multiline function call doesn't have closing bracket. It controls over indentation
 
-// list of declarations
+// List of declarations
 a1, a2 = 5
 b1, b2, b3 = 1, 2, 3
 c1, c2 = b2, b1
 
-// constant names can be dashed and it is default naming style
+// Names can be dashed and it is default naming style
 some-const = 10
 
-// type constructors (functions)
+// Type constructors (functions)
 assert(int(5) == 5)
-// assert(true == !false) // error, by default equalities for booleans should be replaced with "is" operator (see below)
+// assert(true == !false) // Error. By default equalities for booleans should be replaced with "is" operator (see below)
 
-// all types is initialized by their default value
+// All types is initialized by their default value
 assert(int() == 0)
 
 // ??? "instance of" operator returns suitabillity of values for types
