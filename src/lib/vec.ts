@@ -49,6 +49,10 @@ export class Vec<T> implements Rng<usize, T>  {
         return this._arr.every(fn)
     }
 
+    some (fn: (item: T, key: usize) => bool): bool {
+        return this._arr.some(fn)
+    }
+
     fold<R> (initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
         return this._arr.reduce<R>(fn, initialValue)
     }
@@ -69,10 +73,6 @@ export class Vec<T> implements Rng<usize, T>  {
         const key = this._arr.findIndex(fn)
         return key === -1 ? und : [this._arr[key], key]
     }
-    
-    findRange (fn: (a: Vec<T>) => bool): Vec<T> | Und {
-        
-    }
 
     includes (item: T): bool {
         return this.find((a) => a === item) != und
@@ -91,14 +91,14 @@ export class Vec<T> implements Rng<usize, T>  {
     }
 
     join (val: Str): Str {
-        return Str.new(this._arr.join(val.internal()))
+        return Str.new(this._arr.join(val._()))
     }
 
     concat (val: Vec<T>): Vec<T> {
-        return Vec.new([...this._arr, ...val.internal()])
+        return Vec.new([...this._arr, ...val._()])
     }
 
-    internal (): T[] {
+    _ (): T[] {
         return this._arr
     }
 }

@@ -40,6 +40,10 @@ export class Str implements Rng<usize, char> {
         return [...this._str].every(fn)
     }
 
+    some (fn: (item: string, key: usize) => bool): bool {
+        return [...this._str].some(fn)
+    }
+
     fold<R> (initialValue: R, fn: (acc: R, item: char, index: usize) => R): R {
         return [...this._str].reduce<R>(fn, initialValue)
     }
@@ -74,10 +78,10 @@ export class Str implements Rng<usize, char> {
     }
 
     concat (val: Str): Str {
-        return Str.new(this._str + val.internal())
+        return Str.new(this._str + val._())
     }
 
-    internal (): string {
+    _ (): string {
         return this._str
     }
 

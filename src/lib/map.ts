@@ -42,6 +42,10 @@ export class Map<K, T> implements Rng<K, T> {
         return [...this._map.entries()].every(([key, val]) => fn(val, key))
     }
 
+    some (fn: (item: T, key: K) => bool): bool {
+        return [...this._map.entries()].some(([key, val]) => fn(val, key))
+    }
+
     fold<R> (initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
         return [...this._map.values()].reduce<R>(fn, initialValue)
     }
@@ -84,7 +88,7 @@ export class Map<K, T> implements Rng<K, T> {
         return newMap
     }
 
-    internal ():  globalThis.Map<K, T> {
+    _ ():  globalThis.Map<K, T> {
         return this._map
     }
 }

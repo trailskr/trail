@@ -9,49 +9,66 @@ interface TestNodeResult {
 }
 
 class TestNodeContext implements TestNodeResult {
-  private _description: Str
+  private _at: Str
   private _isSuccessfull: bool
+  private _code: Vec<Str>
+  // private _log: Vec<Str>
 
-  constructor (description: Str, isSuccessful: bool) {
-    this._description = description
+  constructor (at: Str, isSuccessful: bool, code: Vec<Str>) {
+    this._at = at
     this._isSuccessfull = isSuccessful
+    this._code = code
   }
 
-  static new (description: Str, isSuccessful = true): TestNodeContext {
-    return new TestNodeContext(description, isSuccessful)
+  static new (at: Str, isSuccessful = true, code: Vec<Str>): TestNodeContext {
+    return new TestNodeContext(at, isSuccessful, code)
   }
 
   withState (isSuccessful: bool): TestNodeContext {
-    return (this.constructor as typeof TestGroupContext).new(
-      this._description,
+    return TestNodeContext.new(
+      this._at,
       isSuccessful,
+      this._code,
     )
   }
 
-  description (): Str {
-    return this._description
+  at (): Str {
+    return this._at
   }
 
   isSuccessfull (): bool {
     return this._isSuccessfull
   }
+
+  code (): bool {
+    return this._code
+  }
 }
 
-class TestGroupContext extends TestNodeContext {
-  children: Vec<TestNodeContext> = Vec.new([])
+class TestGroupContext implements TestNodeResult {
+  private _description: Str
+  private _children: Vec<TestNodeResult> = Vec.new([])
 
-  static new (description: Str, isSuccessful = true): TestGroupContext {
-    return new TestGroupContext(description, isSuccessful)
+  constructor (description: Str) {
+    this._description = description
   }
 
-  addChild (child: TestNodeContext): TestGroupContext {
+  static new (description: Str): TestGroupContext {
+    return new TestGroupContext(description)
+  }
+
+  addChild (child: TestNodeResult): TestGroupContext {
     const node = TestGroupContext.new(this.description())
-    node.children = node.children.push(child)
+    node._children = node._children.push(child)
     return node
+  }
+
+  description (): Str {
+    return this._description
   }
   
   isSuccessfull (): bool {
-    return this.children.every((child) => child.isSuccessfull())
+    return this._children.every((child) => child.isSuccessfull())
   }
 }
 
@@ -74,13 +91,13 @@ export const unittest = unittestEnabled
 const readFileLines = (path: Str): Vec<Str> => {
   const alreadyLines = filesRead.get(path)
   if (alreadyLines) return alreadyLines
-  const fileString = fs.readFileSync(path.internal()).toString()
+  const fileString = fs.readFileSync(path._()).toString()
   return Str.new(fileString).split(/\r | Und\n/)
 }
 
 const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
   const commonIndent = lines.fold(Infinity, (minIndent, line) => {
-    const m = line.internal().match(/\S/)
+    const m = line._().match(/\S/)
     if (!m) return minIndent
     return Math.min(minIndent, m.index!)
   })
@@ -88,18 +105,11 @@ const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
   return lines.map((line) => line.slice(commonIndent))
 }
 
-interface FileCodePointer {
-  path: Str
-  code: Str
-  row: usize
-  col: usize
-}
-
 const filesRead = new Map()
 
 const openClosedParensMap = {'{': 1, '(': 1, '[': 1}
 const closedOpenParensMap = {'}': 1, ')': 1, ']': 1}
-const getCode = ({path, row, col}: FileCodePointer): Vec<Str> => {
+const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
   const lines = readFileLines(path)
   let pos = 0
   let lineIndex = row - 1
@@ -128,57 +138,76 @@ const getCode = ({path, row, col}: FileCodePointer): Vec<Str> => {
   }
 }
 
+interface FileCodePointer {
+  path: Str
+  code: Vec<Str>
+  col: usize
+  row: usize
+}
+
 const getTestStackLine = (stack: Vec<FileCodePointer>): FileCodePointer => {
-  const testCallIndex = stack.find((stackLine) => stackLine.code.includes('// __TEST_CALL__') !== und)
-  return stack.at(testCallIndex - 1)
+  const testCallIndex = stack.find((filePointer) => filePointer.code.some((line) => {
+    return line._().includes('// __TEST_CALL__') !== und
+  }))!
+  return stack.at(testCallIndex[1] - 1)!
 }
 
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
   return stack.split(/\n/)
     .filter((line) => line.includes('file:///'))
     .map((line) => {
-      const m = line.match(/file:\/\/\/(.*):(\d+):(\d+)/)
-      const file: FileCodePointer = {path: m[1], row: +m[2], col: +m[3]}
-      file.code = removeCommonIndent(getCode(file)).join('\n')
+      const m = line._().match(/file:\/\/\/(.*):(\d+):(\d+)/)!
+      const path = Str.new(m[1])
+      const row = +m[2]
+      const col = +m[3]
+      const code = removeCommonIndent(getCode(path, col, row))
+      const file: FileCodePointer = { path, code, row, col }
       return file
     })
 }
 
-let currentLog
+// const currentLog = sig()
 
-let isLogEnabled = false
-const unitLog = (data) => {
-  if (isLogEnabled) currentLog.push(data)
-}
+// const isLogEnabled = false
+// const unitLog = (data) => {
+//   if (isLogEnabled) currentLog.push(data)
+// }
 
-export const unitLogger = logger(unitLog)
-const callWithLogs = (fn) => {
-  isLogEnabled = true
-  fn()
-  isLogEnabled = false
-}
+// export const unitLogger = logger(unitLog)
+// const callWithLogs = (fn) => {
+//   isLogEnabled = true
+//   fn()
+//   isLogEnabled = false
+// }
 
 export const assert = (fn: () => bool): bool => {
   const isSuccessful = Sig.new(false)
   try {
     isSuccessful.set(fn())
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      if (err.stack) {
-        err.stack.split('\n').forEach((stackItem) => {
-          unitLogger(false, stackItem)
-        })
-      }
-    }
+    // if (err instanceof Error) {
+    //   if (err.stack) {
+    //     err.stack.split('\n').forEach((stackItem) => {
+    //       unitLogger(false, stackItem)
+    //     })
+    //   }
+    // }
   }
-  const stackLine = getTestStackLine(parseStack(new Error().stack))
 
-  currentResult.children.push({
-    isSuccessful,
-    at: stackLine.path + ':' + stackLine.row + ':' + stackLine.col,
-    code: stackLine.code,
-    log: isSuccessful ? undefined : currentLog
-  })
+  const stackLine = getTestStackLine(parseStack(Str.new(new Error().stack!)))
+
+  const row = Str.new(stackLine.row.toString())
+  const col = Str.new(stackLine.col.toString())
+  const colon = Str.new(':')
+  const path = stackLine.path.concat(colon).concat(row).concat(colon).concat(col)
+  const newChild = TestNodeContext.new(
+    path,
+    isSuccessful.get(),
+    stackLine.code,
+    // log: isSuccessful ? undefined : currentLog
+  )
+  const node = currentNode.get().addChild(newChild)
+  currentNode.set(node)
 
   return isSuccessful.get()
 }
