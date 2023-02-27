@@ -23,6 +23,15 @@
   },
   "homepage": "https://github.com/iagafonov/trail#readme",
   "devDependencies": {
-    "esbuild-register": "^3.4.2"
+    "@types/node": "^18.14.2",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
+    "esbuild-register": "^3.4.2",
+    "eslint": "^8.35.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
+    "eslint-plugin-promise": "^6.1.1",
+    "eslint-plugin-unused-imports": "^2.0.0"
   }
 }
