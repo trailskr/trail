@@ -213,7 +213,7 @@ export const assert = (fn: () => bool): bool => {
       path,
       isSuccessful.get(),
       stackLine.code,
-      log: isSuccessful ? undefined : currentLog.get()
+      isSuccessful ? undefined : currentLog.get(),
     )
     const node = currentNode.get().addChild(newChild)
     currentNode.set(node)
