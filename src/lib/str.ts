@@ -1,7 +1,7 @@
 import { Rng, Vec } from '.'
 
 export class Str implements Rng<usize, char> {
-    private _str: string
+    private readonly _str: string
 
     constructor (str: string) {
         this._str = str
@@ -30,6 +30,10 @@ export class Str implements Rng<usize, char> {
 
     at (key: usize): char | Und {
         return this._str[key]
+    }
+
+    len (): usize {
+        return this._str.length
     }
 
     right (): char | Und {

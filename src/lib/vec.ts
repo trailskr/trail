@@ -1,7 +1,7 @@
 import { Rng, Str } from '.'
 
 export class Vec<T> implements Rng<usize, T>  {
-    private _arr: T[]
+    private readonly _arr: T[]
 
     constructor (arrOrSize: T[] | usize) {
         if (Array.isArray(arrOrSize)) {
@@ -43,6 +43,10 @@ export class Vec<T> implements Rng<usize, T>  {
 
     at (key: usize): T | Und {
         return this._arr[key]
+    }
+
+    len (): usize {
+        return this._arr.length
     }
 
     every (fn: (item: T, key: usize) => bool): bool {

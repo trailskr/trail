@@ -1,7 +1,7 @@
 import { Rng } from '.'
 
 export class Map<K, T> implements Rng<K, T> {
-    private _map: globalThis.Map<K, T>
+    private readonly _map: globalThis.Map<K, T>
 
     constructor (map: [key: K, val: T][]) {
         this._map = new globalThis.Map<K, T>(map)
@@ -36,6 +36,10 @@ export class Map<K, T> implements Rng<K, T> {
 
     at (key: K): T | Und {
         return this._map.get(key)
+    }
+
+    len (): usize {
+        return this._map.size
     }
 
     every (fn: (item: T, key: K) => bool): bool {

@@ -1,4 +1,14 @@
-export class Sig<T> {
+
+export interface ReadSig<T> {
+    get (): T
+}
+
+export interface WriteSig<T> {
+    set (val: T): Und
+    setWith (fnUpdate: (val: T) => T): Und
+}
+
+export class Sig<T> implements ReadSig<T>, WriteSig<T> {
     private _val: T
 
     constructor (val: T) {
@@ -15,5 +25,9 @@ export class Sig<T> {
 
     set (val: T): Und {
         this._val = val
+    }
+
+    setWith (fnUpdate: (val: T) => T): Und {
+        this._val = fnUpdate(this.get())
     }
 }

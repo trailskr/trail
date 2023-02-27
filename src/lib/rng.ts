@@ -6,6 +6,7 @@ export interface Rng<K, T> {
     left (): T | Und
     right (): T | Und
     at (key: K): T | Und
+    len(): usize
 
     every (fn: (item: T, key: K) => bool): bool
     some (fn: (item: T, key: K) => bool): bool
