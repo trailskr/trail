@@ -1,6 +1,6 @@
-import { Rng } from './rng'
+import { Rng } from '.'
 
-export class Vec<T> implements Rng<T> {
+export class Vec<T> implements Rng<usize, T>  {
     private _arr: T[]
 
     constructor (arr: T[]) {
@@ -33,11 +33,23 @@ export class Vec<T> implements Rng<T> {
         return this._arr[this._arr.length - 1]
     }
 
-    every (fn: (item: T, key: usize) => bool): bool {
+    all (fn: (item: T, key: usize) => bool): bool {
         return this._arr.every(fn)
+    }
+
+    fold<R> (initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
+        return this._arr.reduce<R>(fn, initialValue)
+    }
+
+    reduce (fn: (a: T, b: T, index: usize) => T): T {
+        return this._arr.reduce(fn)
     }
 
     push (val: T): Vec<T> {
         return Vec.new([...this._arr, val])
+    }
+
+    internal (): T[] {
+        return this._arr
     }
 }

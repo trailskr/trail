@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 import { Sig, Str, Vec } from '.'
 
 const unittestEnabled = process.env.NODE_ENV === 'test' || process.argv.includes('--test')
@@ -49,7 +51,7 @@ class TestGroupContext extends TestNodeContext {
   }
   
   isSuccessfull (): bool {
-    return this.children.every((child) => child.isSuccessfull())
+    return this.children.all((child) => child.isSuccessfull())
   }
 }
 
@@ -64,21 +66,19 @@ const test = (description: Str, fn: () => Und): Und => {
 }
 
 export const unittest = unittestEnabled
-   | Und test
+  ? test
   : (): Und => {}
 
 // ASSERT
 
-const filesRead = new Map()
-const readFileLines = (path) => {
+const readFileLines = (path: Str): Vec<Str> => {
   const alreadyLines = filesRead.get(path)
   if (alreadyLines) return alreadyLines
-  const fileLines = fs.readFileSync(path).tochar().split(/\r | Und\n/)
-  filesRead.set(path, fileLines)
-  return fileLines
+  const fileString = fs.readFileSync(path.internal()).toString()
+  return Str.new(fileString).split(/\r | Und\n/)
 }
 
-const removeCommonIndent = (lines) => {
+const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
   const commonIndent = lines.reduce((minIndent, line) => {
     const m = line.match(/\S/)
     if (!m) return minIndent
@@ -87,6 +87,8 @@ const removeCommonIndent = (lines) => {
   if (!isFinite(commonIndent)) return lines
   return lines.map((line) => line.slice(commonIndent))
 }
+
+const filesRead = new Map()
 
 const openClosedParensMap = {'{': 1, '(': 1, '[': 1}
 const closedOpenParensMap = {'}': 1, ')': 1, ']': 1}

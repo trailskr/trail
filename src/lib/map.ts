@@ -1,6 +1,6 @@
 import { Rng } from '.'
 
-export class Map<K, T> implements Rng<T, K> {
+export class Map<K, T> implements Rng<K, T> {
     private _map: globalThis.Map<K, T>
 
     constructor (map: [key: K, val: T][]) {
@@ -34,13 +34,25 @@ export class Map<K, T> implements Rng<T, K> {
         return all[all.length - 1][1]
     }
 
-    every (fn: (item: T, key: K) => bool): bool {
+    all (fn: (item: T, key: K) => bool): bool {
         return [...this._map.entries()].every(([key, val]) => fn(val, key))
+    }
+
+    fold<R> (initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
+        return [...this._map.values()].reduce<R>(fn, initialValue)
+    }
+
+    reduce (fn: (a: T, b: T, index: usize) => T): T {
+        return [...this._map.values()].reduce(fn)
     }
 
     set (key: K, val: T): Map<K, T> {
         const newMap = Map.new([...this._map])
         newMap.set(key, val)
         return newMap
+    }
+
+    internal ():  globalThis.Map<K, T> {
+        return this._map
     }
 }
