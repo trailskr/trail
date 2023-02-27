@@ -6,7 +6,7 @@
   "scripts": {
     "ts": "node -r esbuild-register",
     "main": "npm run ts src/main.ts",
-    "test": "npm run ts src/test.ts"
+    "test": "npm run ts src/main.ts -- --test"
   },
   "repository": {
     "type": "git",

@@ -40,7 +40,7 @@ class TestNodeContext implements TestNodeResult {
     return this._isSuccessfull
   }
 
-  code (): bool {
+  code (): Vec<Str> {
     return this._code
   }
 }
@@ -92,7 +92,7 @@ const readFileLines = (path: Str): Vec<Str> => {
   const alreadyLines = filesRead.get(path)
   if (alreadyLines) return alreadyLines
   const fileString = fs.readFileSync(path._()).toString()
-  return Str.new(fileString).split(/\r | Und\n/)
+  return Str.new(fileString).split(/\r?\n/)
 }
 
 const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
@@ -115,7 +115,7 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
   let lineIndex = row - 1
   let line = lines.at(lineIndex)!
   // remove code before start
-  line = Vec.len(3).join(Str.new(' ')).concat(line.slice(col - 1))
+  line = Vec.len(col).join(Str.new(' ')).concat(line.slice(col - 1))
   // const startIndent = line.match(/\S/).index
   const result = Vec.new<Str>()
   const parensStack = []
@@ -154,9 +154,9 @@ const getTestStackLine = (stack: Vec<FileCodePointer>): FileCodePointer => {
 
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
   return stack.split(/\n/)
-    .filter((line) => line.includes('file:///'))
+    .filter((line) => line._().includes('.ts:'))
     .map((line) => {
-      const m = line._().match(/file:\/\/\/(.*):(\d+):(\d+)/)!
+      const m = line._().match(/.*\((.*?\.ts):(\d+):(\d+)/)!
       const path = Str.new(m[1])
       const row = +m[2]
       const col = +m[3]
