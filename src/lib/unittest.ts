@@ -51,7 +51,7 @@ class TestGroupContext extends TestNodeContext {
   }
   
   isSuccessfull (): bool {
-    return this.children.all((child) => child.isSuccessfull())
+    return this.children.every((child) => child.isSuccessfull())
   }
 }
 
@@ -79,36 +79,43 @@ const readFileLines = (path: Str): Vec<Str> => {
 }
 
 const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
-  const commonIndent = lines.reduce((minIndent, line) => {
-    const m = line.match(/\S/)
+  const commonIndent = lines.fold(Infinity, (minIndent, line) => {
+    const m = line.internal().match(/\S/)
     if (!m) return minIndent
-    return Math.min(minIndent, m.index)
-  }, Infinity)
+    return Math.min(minIndent, m.index!)
+  })
   if (!isFinite(commonIndent)) return lines
   return lines.map((line) => line.slice(commonIndent))
+}
+
+interface FileCodePointer {
+  path: Str
+  code: Str
+  row: usize
+  col: usize
 }
 
 const filesRead = new Map()
 
 const openClosedParensMap = {'{': 1, '(': 1, '[': 1}
 const closedOpenParensMap = {'}': 1, ')': 1, ']': 1}
-const getCode = ({path, row, col}) => {
+const getCode = ({path, row, col}: FileCodePointer): Vec<Str> => {
   const lines = readFileLines(path)
   let pos = 0
   let lineIndex = row - 1
-  let line = lines[lineIndex]
+  let line = lines.at(lineIndex)!
   // remove code before start
-  line = new Array(col).join(' ') + line.slice(col - 1)
+  line = Vec.len(3).join(Str.new(' ')).concat(line.slice(col - 1))
   // const startIndent = line.match(/\S/).index
-  const result = []
+  const result = Vec.new<Str>()
   const parensStack = []
-  while (true) {
-    const char = line[pos]
+  for (;;) {
+    const char = line.at(pos)
     if (char === undefined) {
       result.push(line)
       if (parensStack.length === 0) return result
       lineIndex++
-      line = lines[lineIndex]
+      line = lines.at(lineIndex)!
       if (line === undefined) return result
       pos = 0
       continue
@@ -121,17 +128,17 @@ const getCode = ({path, row, col}) => {
   }
 }
 
-const getTestStackLine = (stack) => {
-  const testCallIndex = stack.findIndex((stackLine) => stackLine.code.includes('// __TEST_CALL__'))
-  return stack[testCallIndex - 1]
+const getTestStackLine = (stack: Vec<FileCodePointer>): FileCodePointer => {
+  const testCallIndex = stack.find((stackLine) => stackLine.code.includes('// __TEST_CALL__') !== und)
+  return stack.at(testCallIndex - 1)
 }
 
-const parseStack = (stack) => {
+const parseStack = (stack: Str): Vec<FileCodePointer> => {
   return stack.split(/\n/)
     .filter((line) => line.includes('file:///'))
     .map((line) => {
       const m = line.match(/file:\/\/\/(.*):(\d+):(\d+)/)
-      const file = {path: m[1], row: +m[2], col: +m[3]}
+      const file: FileCodePointer = {path: m[1], row: +m[2], col: +m[3]}
       file.code = removeCommonIndent(getCode(file)).join('\n')
       return file
     })
@@ -164,5 +171,14 @@ export const assert = (fn: () => bool): bool => {
       }
     }
   }
+  const stackLine = getTestStackLine(parseStack(new Error().stack))
+
+  currentResult.children.push({
+    isSuccessful,
+    at: stackLine.path + ':' + stackLine.row + ':' + stackLine.col,
+    code: stackLine.code,
+    log: isSuccessful ? undefined : currentLog
+  })
+
   return isSuccessful.get()
 }

@@ -14,5 +14,5 @@ declare type isize = number
 declare type f32 = number
 declare type f64 = number
 
-declare type bool = boolean
+declare type bool = bool
 declare type char = string

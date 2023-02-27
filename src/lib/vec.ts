@@ -1,14 +1,22 @@
-import { Rng } from '.'
+import { Rng, Str } from '.'
 
 export class Vec<T> implements Rng<usize, T>  {
     private _arr: T[]
 
-    constructor (arr: T[]) {
-        this._arr = arr
+    constructor (arrOrSize: T[] | usize) {
+        if (Array.isArray(arrOrSize)) {
+            this._arr = arrOrSize
+        } else {
+            this._arr = [...new Array(arrOrSize)]
+        }
     }
 
-    static new<T> (arr: T[]): Vec<T> {
+    static new<T> (arr: T[] = []): Vec<T> {
         return new Vec<T>(arr)
+    }
+
+    static len<T> (len: usize): Vec<T> {
+        return new Vec<T>(len)
     }
 
     popLeft (): [Vec<T>, T | Und] {
@@ -33,7 +41,11 @@ export class Vec<T> implements Rng<usize, T>  {
         return this._arr[this._arr.length - 1]
     }
 
-    all (fn: (item: T, key: usize) => bool): bool {
+    at (key: usize): T | Und {
+        return this._arr[key]
+    }
+
+    every (fn: (item: T, key: usize) => bool): bool {
         return this._arr.every(fn)
     }
 
@@ -45,8 +57,45 @@ export class Vec<T> implements Rng<usize, T>  {
         return this._arr.reduce(fn)
     }
 
+    map<R> (fn: (a: T, key: usize) => R): Vec<R> {
+        return Vec.new(this._arr.map(fn))
+    }
+
+    filter (fn: (a: T, key: usize) => bool): Vec<T> {
+        return Vec.new(this._arr.filter(fn))
+    }
+
+    find (fn: (a: T, key: usize) => bool): [value: T, key: usize] | Und {
+        const key = this._arr.findIndex(fn)
+        return key === -1 ? und : [this._arr[key], key]
+    }
+    
+    findRange (fn: (a: Vec<T>) => bool): Vec<T> | Und {
+        
+    }
+
+    includes (item: T): bool {
+        return this.find((a) => a === item) != und
+    }
+
+    for<R> (fn: (a: T, key: usize) => R): Und {
+        return this._arr.forEach(fn)
+    }
+
+    slice (start: usize | Und, end: usize | Und): Vec<T> {
+        return Vec.new(this._arr.slice(start!, end!))
+    }
+
     push (val: T): Vec<T> {
         return Vec.new([...this._arr, val])
+    }
+
+    join (val: Str): Str {
+        return Str.new(this._arr.join(val.internal()))
+    }
+
+    concat (val: Vec<T>): Vec<T> {
+        return Vec.new([...this._arr, ...val.internal()])
     }
 
     internal (): T[] {
