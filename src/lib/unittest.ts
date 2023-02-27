@@ -117,16 +117,16 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
   // remove code before start
   line = Vec.len(col).join(Str.new(' ')).concat(line.slice(col - 1))
   // const startIndent = line.match(/\S/).index
-  const result = Vec.new<Str>()
+  const result = Sig.new(Vec.new<Str>())
   const parensStack = []
   for (;;) {
     const char = line.at(pos)
     if (char === undefined) {
-      result.push(line)
-      if (parensStack.length === 0) return result
+      result.set(result.get().push(line))
+      if (parensStack.length === 0) return result.get()
       lineIndex++
       line = lines.at(lineIndex)!
-      if (line === undefined) return result
+      if (line === undefined) return result.get()
       pos = 0
       continue
     } else if (char in openClosedParensMap) {
@@ -147,7 +147,7 @@ interface FileCodePointer {
 
 const getTestStackLine = (stack: Vec<FileCodePointer>): FileCodePointer => {
   const testCallIndex = stack.find((filePointer) => filePointer.code.some((line) => {
-    return line._().includes('// __TEST_CALL__') !== und
+    return line._().includes('// __TEST_CALL__')
   }))!
   return stack.at(testCallIndex[1] - 1)!
 }
@@ -160,7 +160,8 @@ const parseStack = (stack: Str): Vec<FileCodePointer> => {
       const path = Str.new(m[1])
       const row = +m[2]
       const col = +m[3]
-      const code = removeCommonIndent(getCode(path, col, row))
+      const codeWithIndent = getCode(path, col, row)
+      const code = removeCommonIndent(codeWithIndent)
       const file: FileCodePointer = { path, code, row, col }
       return file
     })
@@ -194,7 +195,8 @@ export const assert = (fn: () => bool): bool => {
     // }
   }
 
-  const stackLine = getTestStackLine(parseStack(Str.new(new Error().stack!)))
+  const stackLines = parseStack(Str.new(new Error().stack!))
+  const stackLine = getTestStackLine(stackLines)
 
   const row = Str.new(stackLine.row.toString())
   const col = Str.new(stackLine.col.toString())
