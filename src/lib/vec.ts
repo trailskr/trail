@@ -82,7 +82,7 @@ export class Vec<T> implements Rng<usize, T>  {
         return this.find((a) => a === item) != und
     }
 
-    for<R> (fn: (a: T, key: usize) => R): Und {
+    each<R> (fn: (a: T, key: usize) => R): Und {
         return this._arr.forEach(fn)
     }
 
@@ -104,5 +104,13 @@ export class Vec<T> implements Rng<usize, T>  {
 
     _ (): T[] {
         return this._arr
+    }
+
+    valueOf (): T[] {
+        return this._()
+    }
+
+    toString (): T[] {
+        return this._()
     }
 }

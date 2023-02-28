@@ -16,6 +16,6 @@ export interface Rng<K, T> {
     filter (fn: (a: T, key: K) => bool): Rng<K, T>
     find (fn: (a: T, key: K) => bool): [value: T, key: K] | Und
     includes (item: T): bool
-    for (fn: (a: T, key: K) => Und): Und
+    each (fn: (a: T, key: K) => Und): Und
     slice(start: usize | Und, end: usize | Und): Rng<K, T>
 }

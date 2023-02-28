@@ -78,7 +78,7 @@ export class Map<K, T> implements Rng<K, T> {
         return this.find((a) => a === item) != und
     }
 
-    for<R> (fn: (a: T, key: K) => R): Und {
+    each<R> (fn: (a: T, key: K) => R): Und {
         return this._map.forEach(fn)
     }
 
@@ -92,7 +92,15 @@ export class Map<K, T> implements Rng<K, T> {
         return newMap
     }
 
-    _ ():  globalThis.Map<K, T> {
+    _ (): globalThis.Map<K, T> {
         return this._map
+    }
+
+    valueOf (): globalThis.Map<K, T> {
+        return this._()
+    }
+
+    toString (): globalThis.Map<K, T> {
+        return this._()
     }
 }

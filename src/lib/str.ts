@@ -73,7 +73,7 @@ export class Str implements Rng<usize, char> {
         return this.find((a) => a === item) != und
     }
 
-    for<R> (fn: (a: char, key: usize) => R): Und {
+    each<R> (fn: (a: char, key: usize) => R): Und {
         [...this._str].forEach(fn)
     }
 
@@ -87,6 +87,14 @@ export class Str implements Rng<usize, char> {
 
     _ (): string {
         return this._str
+    }
+
+    valueOf (): string {
+        return this._()
+    }
+
+    toString (): string {
+        return this._()
     }
 
     split (regExp: RegExp): Vec<Str> {

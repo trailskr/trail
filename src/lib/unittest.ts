@@ -11,13 +11,13 @@ interface TestNodeResult {
 }
 
 class TestNodeContext implements TestNodeResult {
-  private readonly _at: Str
+  private readonly _path: Str
   private readonly _isSuccessfull: bool
   private readonly _code: Vec<Str>
   private _log: Vec<Str> | Und
 
-  constructor (at: Str, isSuccessful: bool, code: Vec<Str>, log: Vec<Str> | Und) {
-    this._at = at
+  constructor (path: Str, isSuccessful: bool, code: Vec<Str>, log: Vec<Str> | Und) {
+    this._path = path
     this._isSuccessfull = isSuccessful
     this._code = code
     this._log = log
@@ -29,15 +29,15 @@ class TestNodeContext implements TestNodeResult {
 
   withState (isSuccessful: bool): TestNodeContext {
     return TestNodeContext.new(
-      this._at,
+      this._path,
       isSuccessful,
       this._code,
       this._log,
     )
   }
 
-  at (): Str {
-    return this._at
+  path (): Str {
+    return this._path
   }
 
   isSuccessfull (): bool {
@@ -46,6 +46,10 @@ class TestNodeContext implements TestNodeResult {
 
   code (): Vec<Str> {
     return this._code
+  }
+
+  log (): Vec<Str> | Und {
+    return this._log
   }
 }
 
@@ -76,15 +80,25 @@ class TestGroupContext implements TestNodeResult {
   isSuccessfull (): bool {
     return this._children.every((child) => child.isSuccessfull())
   }
+
+  children (): Vec<TestNodeResult> {
+    return this._children
+  }
 }
 
-const root = TestGroupContext.new(Str.new('root'))
-const currentNode = Sig.new(root)
+const rootGroup = TestGroupContext.new(Str.new('root'))
+const currentNode = Sig.new(rootGroup)
+const root = currentNode
 
 const test = (description: Str, fn: () => Und): Und => {
   const topNode = currentNode.get()
+  const isRoot = root.get() === topNode
   const newNode = TestGroupContext.new(description)
-  currentNode.set(topNode.addChild(newNode))
+  const newTop = topNode.addChild(newNode)
+  currentNode.set(newTop)
+  if (isRoot) {
+    root.set(newTop)
+  }
   fn() // __TEST_CALL__
 }
 
@@ -219,4 +233,65 @@ export const assert = (fn: () => bool): bool => {
     currentNode.set(node)
   })
   return isSuccessful.get()
+}
+
+const tab = Str.new('  ')
+const indent = Sig.new(Str.new(''))
+
+const addIndent = (str: Str): Str => {
+  return str.split(/\n/).map((line) => line.concat(indent.get())).join(Str.new('\n'))
+}
+
+const printSuccess = (data: Str): Und => {
+  console.log('\x1b[32m%s\x1b[0m', addIndent(data))
+}
+
+const printError = (data: Str): Und => {
+  console.log('\x1b[31m%s\x1b[0m', addIndent(data))
+}
+
+const print = (data: any): Und => {
+  console.log(addIndent(data))
+}
+
+const withIndent = (fn: () => Und): Und => {
+  indent.setWith((indent) => indent.concat(tab))
+  fn()
+  indent.setWith((indent) => indent.slice(tab.len()))
+}
+
+const printGroupOrResult = (resultOrGroup: TestNodeResult): Und => {
+  if (resultOrGroup instanceof TestGroupContext) {
+    if (resultOrGroup.children().len() === 0) return
+    if (resultOrGroup.isSuccessfull()) {
+      printSuccess(resultOrGroup.description().concat(Str.new(':')))
+    } else {
+      printError(resultOrGroup.description().concat(Str.new(':')))
+    }
+    withIndent(() => {
+      resultOrGroup.children().each(printGroupOrResult)
+    })
+  } else if (resultOrGroup instanceof TestNodeContext) {
+    const codeLines = resultOrGroup.code()
+    if (resultOrGroup.isSuccessfull()) {
+      printSuccess(codeLines.at(0)!.concat(Str.new(codeLines.len() > 1 ? ' ...' : '')))
+    } else {
+      codeLines.each(printError)
+      withIndent(() => {
+        printError(resultOrGroup.path())
+        const log = resultOrGroup.log()
+        if (log !== und) {
+          print('------------------- LOG --------------------\n')
+          log.each(print)
+        }
+      })
+    }
+  }
+}
+
+if (unittestEnabled) {
+  process.on('beforeExit', () => {
+    console.log('unittest results: \n')
+    root.get().children().each(printGroupOrResult)
+  })
 }

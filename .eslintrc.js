@@ -43,7 +43,7 @@ module.exports = {
     '@typescript-eslint/no-unused-expressions': ['error'],
     '@typescript-eslint/no-unused-vars': 'off', // used 'unused-imports/no-unused-vars-ts' instead
     '@typescript-eslint/semi': ['error', 'never'],
-    '@typescript-eslint/no-shadow': 'error',
+    '@typescript-eslint/no-shadow': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-empty-function': 'off',
 
