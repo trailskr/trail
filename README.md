@@ -1,2 +1,0 @@
-# trail
-trail programming language
