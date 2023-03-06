@@ -1,4 +1,4 @@
-use super::opt::Opt;
+use super::opt::*;
 
 pub struct Vec<T> {
     arr: std::vec::Vec<T>,
@@ -20,12 +20,12 @@ impl<usize, T> Rng<usize, T> for Vec<T> {
     fn right(&self) -> Opt<T> {
         return self.arr.get(self.arr.len() - 1);
     }
-}
 
-//     popLeft (): [Vec<T>, T | Und] {
-//         const [first, ...rest] = this._arr
-//         return [Vec.new(rest), first]
-//     }
+    fn popLeft() -> (Vec<T>, Opt<T>) {
+        let first = this.arr[0];
+        return (Vec.new(rest), first);
+    }
+}
 
 //     popRight (): [Vec<T>, T | Und] {
 //         const last = this._arr[this._arr.length - 1]

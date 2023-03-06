@@ -4,4 +4,7 @@ pub enum Opt<T> {
     Some(T),
 }
 
+pub use Opt::None;
+pub use Opt::Some;
+
 impl<T> Opt<T> {}
