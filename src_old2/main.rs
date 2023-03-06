@@ -1,4 +1,7 @@
 #![no_implicit_prelude]
+#![feature(rustc_attrs)]
+#![feature(core_intrinsics)]
+#![feature(negative_impls)]
 
 mod trl;
 

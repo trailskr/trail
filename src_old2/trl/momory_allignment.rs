@@ -1,12 +1,11 @@
 #[cfg(target_pointer_width = "16")]
-type MemoryAlignment = MemoryAlignment16;
+pub type MemoryAlignment = MemoryAlignment16;
 #[cfg(target_pointer_width = "32")]
-type MemoryAlignment = MemoryAlignment32;
+pub type MemoryAlignment = MemoryAlignment32;
 #[cfg(target_pointer_width = "64")]
-type MemoryAlignment = MemoryAlignment64;
+pub type MemoryAlignment = MemoryAlignment64;
 
-#[derive(Copy, Clone, Eq)]
-#[derive_const(PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u16)]
 enum MemoryAlignment16 {
     Allign0 = 1 << 0,
@@ -27,8 +26,7 @@ enum MemoryAlignment16 {
     Allign15 = 1 << 15,
 }
 
-#[derive(Copy, Clone, Eq)]
-#[derive_const(PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
 enum MemoryAlignment32 {
     Allign0 = 1 << 0,
@@ -65,8 +63,7 @@ enum MemoryAlignment32 {
     Allign31 = 1 << 31,
 }
 
-#[derive(Copy, Clone, Eq)]
-#[derive_const(PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u64)]
 enum MemoryAlignment64 {
     Allign0 = 1 << 0,
