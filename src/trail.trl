@@ -1,0 +1,44 @@
+// Memory = (T, Z) => { size = T, block = Z }
+// Memory = (T, Z) => {
+//     size = T
+//     block = Z
+// 
+// MemoryNumber = Memory(u32, i32)
+// 
+// mem = MemoryNumber { size = 31, block = -15 }
+// mem = MemoryNumber {
+//     size = 31
+//     block = -15
+// 
+// SomeEnum = (T) => | Some { val = T }, None |
+// SomeEnum = (T) => |
+//     Some { val = T }
+//     None
+// SomeEnum = (T) => | Some(T), None |
+
+Opt = (T, E = Und) => |
+    Ok(T)
+    No(E)
+
+isOk = (T, E = Und) = (self: T, val: V): T => \
+    => if self == Opt::Ok then self.val else val
+
+isOk = (T, E = Und) = (
+    self: Opt(T, E)
+    val: T
+: T => \
+    => if self == Opt::Ok then self.val else val
+
+{ isOk, okOr } = (T, E) => {
+    isOk = (self: Opt(T, E)): bool => self == Opt::Ok
+
+    okOr = (self: Opt(T, E), val: V) => \
+        => if self.isOk then self.val else val
+
+impl (T, E) => {
+    isOk = (self: Opt(T, E)): bool => self == Opt::Ok
+
+    okOr = (self: Opt(T, E), val: V) => \
+        => if self.isOk then self.val else val
+
+a = Opt::Ok(val)
