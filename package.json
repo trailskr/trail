@@ -1,0 +1,37 @@
+{
+    "name": "trail",
+    "version": "0.0.1",
+    "description": "Trail programming language",
+    "main": "src/main.ts",
+    "scripts": {
+        "ts": "node -r esbuild-register",
+        "main": "npm run ts src/main.ts",
+        "test": "npm run ts src/main.ts -- --test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/iagafonov/trail.git"
+    },
+    "keywords": [
+        "programming",
+        "language"
+    ],
+    "author": "Ivan Agafonov",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/iagafonov/trail/issues"
+    },
+    "homepage": "https://github.com/iagafonov/trail#readme",
+    "devDependencies": {
+        "@types/node": "^18.14.2",
+        "@typescript-eslint/eslint-plugin": "^5.53.0",
+        "@typescript-eslint/parser": "^5.53.0",
+        "esbuild-register": "^3.4.2",
+        "eslint": "^8.35.0",
+        "eslint-plugin-import": "^2.27.5",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-prefer-arrow": "^1.2.3",
+        "eslint-plugin-promise": "^6.1.1",
+        "eslint-plugin-unused-imports": "^2.0.0"
+    }
+}
