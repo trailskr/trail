@@ -2,7 +2,7 @@ pub struct Str {}
 
 impl Str {
     pub fn new() -> Self {
-        return Str {};
+        Str {}
     }
 }
 
