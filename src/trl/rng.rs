@@ -2,44 +2,42 @@ use super::opt::Opt;
 use ::core::marker::Sized;
 use ::core::ops::{Fn, Index};
 
-pub trait Rng<K>: Index<K> {
-    type T: Sized;
-
-    fn left() -> Opt<Self::T>;
-    fn right() -> Opt<Self::T>;
-    fn popLeft() -> (Self, Opt<Self::T>);
-    fn popRight() -> (Self, Opt<Self::T>);
-    fn pop() -> (Self, Opt<Self::T>);
-    fn at(key: K) -> Opt<Self::T>;
+pub trait Rng<K, T>: Index<K> {
+    fn left() -> Opt<T>;
+    fn right() -> Opt<T>;
+    fn popLeft() -> (Self, Opt<T>);
+    fn popRight() -> (Self, Opt<T>);
+    fn pop() -> (Self, Opt<T>);
+    fn at(key: K) -> Opt<T>;
 
     fn len() -> usize;
 
     fn every<F>(f: F) -> bool
     where
         Self: Sized,
-        F: Fn(Self::T, K) -> bool;
+        F: Fn(T, K) -> bool;
 
     fn some<F>(f: F) -> bool
     where
         Self: Sized,
-        F: Fn(Self::T, K) -> bool;
+        F: Fn(T, K) -> bool;
 
-    fn fold<F, R>(initialValue: R, f: F) -> R
+    fn fold<F, R>(initial_value: R, f: F) -> R
     where
         Self: Sized,
-        F: Fn(R, Self::T, usize) -> R;
+        F: Fn(R, T, usize) -> R;
 
-    fn reduce<F>(f: F) -> Self::T
+    fn reduce<F>(f: F) -> T
     where
         Self: Sized,
-        F: Fn(Self::T, Self::T, usize) -> Self::T;
+        F: Fn(T, T, usize) -> T;
 
-    fn map<F, R>(f: F) -> dyn Rng<K, T = R, Output = K>
+    fn map<F, R>(f: F) -> dyn Rng<K, R, Output = K>
     where
         Self: Sized,
-        F: Fn(Self::T, K) -> R;
+        F: Fn(T, K) -> R;
 
-    fn filter<F>(f: F) -> Self<K, T>
+    fn filter<F>(f: F) -> Self
     where
         Self: Sized,
         F: Fn(T, K) -> bool;
@@ -51,8 +49,8 @@ pub trait Rng<K>: Index<K> {
 
     fn includes(item: T) -> bool;
 
-    fn each<F>(f: F) -> Und
+    fn each<F>(f: F)
     where
         Self: Sized,
-        F: Fn(T, K) -> Und;
+        F: Fn(T, K);
 }

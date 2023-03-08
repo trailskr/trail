@@ -1,3 +1,5 @@
+use super::rng::Rng;
+
 pub struct Str {}
 
 impl Str {

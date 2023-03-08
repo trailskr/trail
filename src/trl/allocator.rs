@@ -2,7 +2,7 @@ use super::err::Err;
 use super::memory_allocator::GlobalMemoryAllocator;
 use super::memory_layout::MemoryLayout;
 use super::non_null::NonNull;
-use super::res::*;
+use super::opt::*;
 
 #[derive(Debug)]
 pub struct AllocError;
@@ -10,7 +10,7 @@ pub struct AllocError;
 impl Err for AllocError {}
 
 pub trait Allocator {
-    fn alloc(&self, layout: MemoryLayout, zeroed: bool) -> Res<NonNull<[u8]>, AllocError>;
+    fn alloc(&self, layout: MemoryLayout, zeroed: bool) -> Opt<NonNull<[u8]>, AllocError>;
 
     fn grow(
         &self,
@@ -18,13 +18,13 @@ pub trait Allocator {
         old_layout: MemoryLayout,
         new_layout: MemoryLayout,
         zeroed: bool,
-    ) -> Res<NonNull<[u8]>, AllocError>;
+    ) -> Opt<NonNull<[u8]>, AllocError>;
 }
 
-struct GlobalAllocator;
+pub struct GlobalAllocator;
 
 impl Allocator for GlobalAllocator {
-    fn alloc(&self, layout: MemoryLayout, zeroed: bool) -> Res<NonNull<[u8]>, AllocError> {
+    fn alloc(&self, layout: MemoryLayout, zeroed: bool) -> Opt<NonNull<[u8]>, AllocError> {
         match layout.size() {
             0 => Ok(NonNull::slice_from_raw_parts(layout.dangling(), 0)),
             // SAFETY: `layout` is non-zero in size,

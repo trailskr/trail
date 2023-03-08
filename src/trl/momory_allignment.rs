@@ -1,13 +1,29 @@
+use ::core::intrinsics;
+
+pub struct MemoryAlignment(MemoryAlignmentEnum);
+
+impl MemoryAlignment {
+    pub unsafe fn new_unchecked(align: usize) -> Self {
+        // SAFETY: By precondition, this must be a power of two, and
+        // our variants encompass all possible powers of two.
+        unsafe { intrinsics::transmute::<usize, MemoryAlignment>(align) }
+    }
+
+    pub fn of<T>() -> Self {
+        unsafe { MemoryAlignment::new_unchecked(intrinsics::min_align_of::<T>()) }
+    }
+}
+
 #[cfg(target_pointer_width = "16")]
-pub type MemoryAlignment = MemoryAlignment16;
+pub type MemoryAlignmentEnum = MemoryAlignmentEnum16;
 #[cfg(target_pointer_width = "32")]
-pub type MemoryAlignment = MemoryAlignment32;
+pub type MemoryAlignmentEnum = MemoryAlignmentEnum32;
 #[cfg(target_pointer_width = "64")]
-pub type MemoryAlignment = MemoryAlignment64;
+pub type MemoryAlignmentEnum = MemoryAlignmentEnum64;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u16)]
-enum MemoryAlignment16 {
+enum MemoryAlignmentEnum16 {
     Allign0 = 1 << 0,
     Allign1 = 1 << 1,
     Allign2 = 1 << 2,
@@ -28,7 +44,7 @@ enum MemoryAlignment16 {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u32)]
-enum MemoryAlignment32 {
+enum MemoryAlignmentEnum32 {
     Allign0 = 1 << 0,
     Allign1 = 1 << 1,
     Allign2 = 1 << 2,
@@ -65,7 +81,7 @@ enum MemoryAlignment32 {
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 #[repr(u64)]
-enum MemoryAlignment64 {
+enum MemoryAlignmentEnum64 {
     Allign0 = 1 << 0,
     Allign1 = 1 << 1,
     Allign2 = 1 << 2,

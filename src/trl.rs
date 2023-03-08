@@ -1,16 +1,17 @@
 #![no_implicit_prelude]
 
-mod allocator;
-mod err;
-mod map;
-mod memory_allocator;
-mod memory_layout;
-mod momory_allignment;
-mod non_null;
-mod opt;
-mod res;
-mod rng;
-mod sig;
-mod str;
-mod unittest;
-mod vec;
+pub mod allocator;
+pub mod err;
+pub mod map;
+pub mod memory_allocator;
+pub mod memory_layout;
+pub mod momory_allignment;
+pub mod non_null;
+pub mod opt;
+pub mod raw_vec;
+pub mod rng;
+pub mod sig;
+pub mod str;
+pub mod unique;
+pub mod unittest;
+pub mod vec;

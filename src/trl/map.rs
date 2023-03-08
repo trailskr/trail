@@ -1,12 +1,17 @@
-pub struct Map {}
+use super::rng::Rng;
 
-impl Map<K, T> {
-    pub fn new() -> Self {
-        Map {}
+pub struct Map<K, T> {
+    key: K,
+    val: T,
+}
+
+impl<K, T> Map<K, T> {
+    pub fn new(key: K, val: T) -> Self {
+        Self { key, val }
     }
 }
 
-impl Rng<K, T> for Map<K, T> {
+impl<K, T> Rng<K, T> for Map<K, T> {
     // private readonly _map: globalThis.Map<K, T>
 
     // constructor (map: [key: K, val: T][]) {

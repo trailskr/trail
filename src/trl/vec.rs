@@ -1,30 +1,43 @@
-use super::opt::*;
+use super::allocator::{Allocator, GlobalAllocator};
+use super::raw_vec::RawVec;
+use super::rng::Rng;
 
-pub struct Vec<T> {
-    arr: std::vec::Vec<T>,
+pub struct Vec<T, A: Allocator = GlobalAllocator> {
+    buf: RawVec<T>,
+    len: usize,
 }
 
-impl<usize, T> Rng<usize, T> for Vec<T> {
-    fn new<T>(arr: [T]) -> Self {
-        return Vec::from(arr);
+impl<T> Vec<T> {
+    pub fn new(arr: [T]) -> Self {
+        Vec {
+            buf: RawVec::new(),
+            len: 0,
+        }
     }
 
-    fn len<T>(len: usize, default: T) -> Self {
-        return vec![default; len];
+    pub fn new(arr: [T]) -> Self {
+        Vec::from(arr)
     }
 
-    fn left(&self) -> Opt<T> {
-        return self.arr.get(0);
+    pub fn with_len(len: usize, default: T) -> Self {
+        let buf = RawVec::with_capacity(len);
+        Vec { buf, len }
     }
+}
 
-    fn right(&self) -> Opt<T> {
-        return self.arr.get(self.arr.len() - 1);
-    }
+impl<T> Rng<usize, T> for Vec<T> {
+    // fn left(&self) -> Opt<T> {
+    //     return self.arr.get(0);
+    // }
 
-    fn popLeft() -> (Vec<T>, Opt<T>) {
-        let first = this.arr[0];
-        return (Vec.new(rest), first);
-    }
+    // fn right(&self) -> Opt<T> {
+    //     return self.arr.get(self.arr.len() - 1);
+    // }
+
+    // fn popLeft() -> (Vec<T>, Opt<T>) {
+    //     let first = this.arr[0];
+    //     return (Vec.new(rest), first);
+    // }
 }
 
 //     popRight (): [Vec<T>, T | Und] {

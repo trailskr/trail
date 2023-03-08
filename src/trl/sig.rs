@@ -1,20 +1,23 @@
+use ::core::ops::Fn;
+
 pub trait ReadSig<T> {
-    fn get() -> T
+    fn get() -> T;
 }
 
 pub trait WriteSig<T> {
-    fn set(val: T) -> Und
-    fn setWith<F>(fnUpdate: F) -> Und
-    where F: Fn(val: T) -> T
+    fn set(val: T);
+    fn set_width<F>(fn_update: F)
+    where
+        F: Fn(T) -> T;
 }
 
-pub struct Sig<T>: ReadSig<T> + WriteSig<T> {
-    val: T
+pub struct Sig<T> {
+    val: T,
 }
 
-impl Sig {
-    fn new<T> (val: T) -> Self {
-        Sig<T> { val }
+impl<T> Sig<T> {
+    fn new(val: T) -> Self {
+        Self { val }
     }
 }
 
@@ -29,8 +32,10 @@ impl<T> WriteSig<T> for Sig<T> {
         self.val = val
     }
 
-    fn setWith<F>(fnUpdate: F)
-    where F: Fn(val: T) => T {
-        this._val = fnUpdate(this.get())
+    fn set_width<F>(&self, fn_update: F)
+    where
+        F: Fn(T) -> T,
+    {
+        self.val = fn_update(self.val)
     }
 }
