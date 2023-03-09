@@ -1,4 +1,5 @@
 use super::allocator::{Allocator, GlobalAllocator};
+use super::opt::Opt;
 use super::raw_vec::RawVec;
 use super::rng::Rng;
 
@@ -8,15 +9,19 @@ pub struct Vec<T, A: Allocator = GlobalAllocator> {
 }
 
 impl<T> Vec<T> {
-    pub fn new(arr: [T]) -> Self {
+    pub fn new() -> Self {
         Vec {
             buf: RawVec::new(),
             len: 0,
         }
     }
 
-    pub fn new(arr: [T]) -> Self {
-        Vec::from(arr)
+    pub fn from(arr: [T]) {
+        let buf = RawVec::with_capacity(arr.len());
+        Vec {
+            buf,
+            len: arr.len(),
+        }
     }
 
     pub fn with_len(len: usize, default: T) -> Self {
@@ -25,9 +30,9 @@ impl<T> Vec<T> {
     }
 }
 
-impl<T> Rng<usize, T> for Vec<T> {
+impl<T> Rng for Vec<T> {
     // fn left(&self) -> Opt<T> {
-    //     return self.arr.get(0);
+    //     return self.buf.get(0);
     // }
 
     // fn right(&self) -> Opt<T> {

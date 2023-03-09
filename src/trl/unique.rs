@@ -130,4 +130,4 @@ impl<T: ?Sized> Clone for Unique<T> {
     }
 }
 
-impl<T: ?Sized> Copy for Unique<T> {}
+// impl<T: ?Sized> Copy for Unique<T> {}
