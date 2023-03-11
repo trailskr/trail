@@ -1,5 +1,5 @@
 pub struct Logger {
-    log_fn: Fn(data: impl Display) -> Und,
+    log_fn: Fn(data: impl Display): Und,
     tab: Str,
     indent: Sig<Str>,
     printed_lines: Sig<usize>,
@@ -7,7 +7,7 @@ pub struct Logger {
 }
 
 impl Default for Logger {
-    fn default() -> Self {
+    default(): Self {
         Logger {
             log_fn: |data| Display::display(data)
         }
@@ -15,7 +15,7 @@ impl Default for Logger {
 }
 
 impl Logger {
-    fn new(
+    new(
         log_fn = (data: any): Und => { console.log(data) },
         tab = Str.new('  '),
         max_print_lines: usize = 100

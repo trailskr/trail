@@ -1,9 +1,9 @@
-use super::rng::Rng;
+use super::rng::Rng
 
 pub struct Str {}
 
 impl Str {
-    pub fn new() -> Self {
+    pub new(): Self {
         Str {}
     }
 }

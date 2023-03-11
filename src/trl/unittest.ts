@@ -139,7 +139,7 @@
 //   // const startIndent = line.match(/\S/).index
 //   const result = Sig.new(Vec.new<Str>())
 //   const parensStack = []
-//   for (;;) {
+//   for () {
 //     const char = line.at(pos)
 //     if (char === undefined) {
 //       result.set(result.get().push(line))

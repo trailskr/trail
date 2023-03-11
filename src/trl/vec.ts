@@ -1,5 +1,5 @@
-use super::raw_vec::RawVec;
-use super::rng::Rng;
+use super::raw_vec::RawVec
+use super::rng::Rng
 
 pub struct Vec<T> {
     buf: RawVec<T>,
@@ -7,50 +7,50 @@ pub struct Vec<T> {
 }
 
 impl<T> Vec<T> {
-    pub fn new() -> Self {
+    pub new(): Self {
         Vec {
             buf: RawVec::new(),
             len: 0,
         }
     }
 
-    pub fn with_capacity(capacity: usize) -> Self {
-        let buf = RawVec::with_capacity(capacity);
+    pub with_capacity(capacity: usize): Self {
+        let buf = RawVec::with_capacity(capacity)
         Vec { buf, len: 0 }
     }
 
-    pub fn from<const N: usize>(arr: &[T; N]) {
-        let len = arr.len();
-        let vec = ::std::vec::Vec::from([1, 2, 3]);
-        let buf = RawVec::with_capacity(len);
+    pub from<const N: usize>(arr: &[T N]) {
+        let len = arr.len()
+        let vec = ::std::vec::Vec::from([1, 2, 3])
+        let buf = RawVec::with_capacity(len)
         unsafe {
-            buf.from_raw_parts(arr, len);
+            buf.from_raw_parts(arr, len)
         }
         Vec { buf, len }
     }
 
-    pub fn with_len(len: usize, default: T) -> Self {
-        let buf = RawVec::with_capacity(len);
+    pub with_len(len: usize, default: T): Self {
+        let buf = RawVec::with_capacity(len)
         Vec { buf, len }
     }
 
-    pub fn capacity(&self) -> usize {
+    pub capacity(&self): usize {
         self.buf.capacity()
     }
 }
 
 impl<T> Rng for Vec<T> {
-    // fn left(&self) -> Opt<T> {
-    //     return self.buf.get(0);
+    // left(&self): Opt<T> {
+    //     return self.buf.get(0)
     // }
 
-    // fn right(&self) -> Opt<T> {
-    //     return self.arr.get(self.arr.len() - 1);
+    // right(&self): Opt<T> {
+    //     return self.arr.get(self.arr.len() - 1)
     // }
 
-    // fn popLeft() -> (Vec<T>, Opt<T>) {
-    //     let first = this.arr[0];
-    //     return (Vec.new(rest), first);
+    // popLeft(): (Vec<T>, Opt<T>) {
+    //     let first = this.arr[0]
+    //     return (Vec.new(rest), first)
     // }
 }
 

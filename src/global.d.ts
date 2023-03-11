@@ -1,6 +1,3 @@
-declare const und = undefined
-declare type Und = void
-
 declare type u8 = number
 declare type u16 = number
 declare type u64 = number

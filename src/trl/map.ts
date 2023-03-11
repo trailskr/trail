@@ -1,4 +1,4 @@
-use super::rng::Rng;
+use super::rng::Rng
 
 pub struct Map<K, T> {
     key: K,
@@ -6,7 +6,7 @@ pub struct Map<K, T> {
 }
 
 impl<K, T> Map<K, T> {
-    pub fn new(key: K, val: T) -> Self {
+    pub new(key: K, val: T): Self {
         Self { key, val }
     }
 }
