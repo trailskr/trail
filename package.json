@@ -2,11 +2,11 @@
     "name": "trail",
     "version": "0.0.1",
     "description": "Trail programming language",
-    "main": "src/main.ts",
+    "main": "src/trail.ts",
     "scripts": {
         "ts": "node -r esbuild-register",
-        "main": "npm run ts src/main.ts",
-        "test": "npm run ts src/main.ts -- --test"
+        "trail": "npm run ts src/trail.ts",
+        "test": "npm run ts src/trail.ts -- --test"
     },
     "repository": {
         "type": "git",
@@ -26,6 +26,7 @@
         "@types/node": "^18.14.2",
         "@typescript-eslint/eslint-plugin": "^5.53.0",
         "@typescript-eslint/parser": "^5.53.0",
+        "esbuild": "^0.17.11",
         "esbuild-register": "^3.4.2",
         "eslint": "^8.35.0",
         "eslint-plugin-import": "^2.27.5",

@@ -15,7 +15,7 @@
                 "-r",
                 "esbuild-register"
             ],
-            "program": "${workspaceFolder}\\src\\main.ts",
+            "program": "${workspaceFolder}\\src\\trail.ts",
             "args": [
                 "--test"
             ]
