@@ -1,6 +1,6 @@
 use super::{non_null::NonNull, opt::*};
 use ::core::clone::Clone;
-use ::core::marker::{Copy, PhantomData, Send, Sized, Sync};
+use ::core::marker::{PhantomData, Send, Sized, Sync};
 
 /// A wrapper around a raw non-null `*mut T` that indicates that the possessor
 /// of this wrapper owns the referent. Useful for building abstractions like

@@ -50,6 +50,11 @@ impl<T> RawVec<T, GlobalAllocator> {
     pub fn with_capacity_zeroed(capacity: usize) -> Self {
         Self::with_capacity_zeroed_in(capacity, GlobalAllocator)
     }
+
+    #[must_use]
+    pub unsafe fn from_raw_parts(ptr: *mut T, capacity: usize) -> Self {
+        Self::from_raw_parts_in(ptr, capacity, GlobalAllocator)
+    }
 }
 
 impl<T, A: Allocator> RawVec<T, A> {
@@ -97,6 +102,14 @@ impl<T, A: Allocator> RawVec<T, A> {
                 cap: capacity,
                 alloc,
             }
+        }
+    }
+
+    pub unsafe fn from_raw_parts_in(ptr: *mut T, capacity: usize, alloc: A) -> Self {
+        Self {
+            ptr: unsafe { Unique::new_unchecked(ptr) },
+            cap: capacity,
+            alloc,
         }
     }
 }

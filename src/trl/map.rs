@@ -11,7 +11,7 @@ impl<K, T> Map<K, T> {
     }
 }
 
-impl<K, T> Rng<K, T> for Map<K, T> {
+impl<K, T> Rng for Map<K, T> {
     // private readonly _map: globalThis.Map<K, T>
 
     // constructor (map: [key: K, val: T][]) {

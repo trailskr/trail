@@ -9,5 +9,5 @@ mod trl;
 use trl::vec::Vec;
 
 fn main() {
-    let arr = Vec::new([1, 2, 3]);
+    let arr = Vec::from([1, 2, 3]);
 }

@@ -1,9 +1,7 @@
-use super::allocator::{Allocator, GlobalAllocator};
-use super::opt::Opt;
 use super::raw_vec::RawVec;
 use super::rng::Rng;
 
-pub struct Vec<T, A: Allocator = GlobalAllocator> {
+pub struct Vec<T> {
     buf: RawVec<T>,
     len: usize,
 }
@@ -16,17 +14,28 @@ impl<T> Vec<T> {
         }
     }
 
-    pub fn from(arr: [T]) {
-        let buf = RawVec::with_capacity(arr.len());
-        Vec {
-            buf,
-            len: arr.len(),
+    pub fn with_capacity(capacity: usize) -> Self {
+        let buf = RawVec::with_capacity(capacity);
+        Vec { buf, len: 0 }
+    }
+
+    pub fn from<const N: usize>(arr: &[T; N]) {
+        let len = arr.len();
+        let vec = ::std::vec::Vec::from([1, 2, 3]);
+        let buf = RawVec::with_capacity(len);
+        unsafe {
+            buf.from_raw_parts(arr, len);
         }
+        Vec { buf, len }
     }
 
     pub fn with_len(len: usize, default: T) -> Self {
         let buf = RawVec::with_capacity(len);
         Vec { buf, len }
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.buf.capacity()
     }
 }
 

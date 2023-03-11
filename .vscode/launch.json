@@ -5,20 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "node",
+            "type": "lldb",
             "request": "launch",
-            "name": "Launch Program",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "runtimeArgs": [
-                "-r",
-                "esbuild-register"
-            ],
-            "program": "${workspaceFolder}\\src\\main.ts",
-            "args": [
-                "--test"
-            ]
+            "name": "Debug executable 'trail'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=trail",
+                    "--package=trail"
+                ],
+                "filter": {
+                    "name": "trail",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'trail'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=trail",
+                    "--package=trail"
+                ],
+                "filter": {
+                    "name": "trail",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

@@ -8,7 +8,7 @@ impl Str {
     }
 }
 
-impl Rng<usize, char> for Str {
+impl Rng for Str {
     // popLeft (): [Str, char | Und] {
     //     return [Str.new(this._str.slice(1)), this._str[0]]
     // }
