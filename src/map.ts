@@ -1,17 +1,15 @@
-use super::rng::Rng
+import { Map as ImmMap } from 'immutable'
 
-pub struct Map<K, T> {
-    key: K,
-    val: T,
-}
+import { Rng } from './rng'
 
-impl<K, T> Map<K, T> {
-    pub new(key: K, val: T): Self {
-        Self { key, val }
+export class Map<K, T> implements Rng<K, T> {
+    private readonly _map: ImmMap<K, T>
+    
+    constructor(rec: [key: K, val: T][]) {
+        this._map = ImmMap(rec)
     }
 }
 
-impl<K, T> Rng for Map<K, T> {
     // private readonly _map: globalThis.Map<K, T>
 
     // constructor (map: [key: K, val: T][]) {
@@ -114,4 +112,3 @@ impl<K, T> Rng for Map<K, T> {
     // toString (): globalThis.Map<K, T> {
     //     return this._()
     // }
-}

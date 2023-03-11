@@ -1,58 +1,31 @@
-use super::rawVec::RawVec
-use super::rng::Rng
+import { List } from 'immutable'
 
-pub struct Vec<T> {
-    buf: RawVec<T>,
-    len: usize,
-}
+import { Rng } from "./rng"
 
-impl<T> Vec<T> {
-    pub new(): Self {
-        Vec {
-            buf: RawVec::new(),
-            len: 0,
-        }
+export class Vec<T> implements Rng<usize, T> {
+    private readonly _arr: List<T>
+
+    constructor(arr: T[]) {
+        this._arr = List(arr)
     }
 
-    pub with_capacity(capacity: usize): Self {
-        let buf = RawVec::with_capacity(capacity)
-        Vec { buf, len: 0 }
-    }
-
-    pub from<const N: usize>(arr: &[T N]) {
-        let len = arr.len()
-        let vec = ::std::vec::Vec::from([1, 2, 3])
-        let buf = RawVec::with_capacity(len)
-        unsafe {
-            buf.from_raw_parts(arr, len)
-        }
-        Vec { buf, len }
-    }
-
-    pub with_len(len: usize, default: T): Self {
-        let buf = RawVec::with_capacity(len)
-        Vec { buf, len }
-    }
-
-    pub capacity(&self): usize {
-        self.buf.capacity()
-    }
-}
-
-impl<T> Rng for Vec<T> {
-    // left(&self): Opt<T> {
-    //     return self.buf.get(0)
-    // }
-
-    // right(&self): Opt<T> {
-    //     return self.arr.get(self.arr.len() - 1)
-    // }
-
-    // popLeft(): (Vec<T>, Opt<T>) {
-    //     let first = this.arr[0]
-    //     return (Vec.new(rest), first)
+    // arr(): T[] {
+    //     return this._arr.toArray()
     // }
 }
+
+//     left(&self): Opt<T> {
+//         return self.buf.get(0)
+//     }
+
+//     right(&self): Opt<T> {
+//         return self.arr.get(self.arr.len() - 1)
+//     }
+
+//     popLeft(): (Vec<T>, Opt<T>) {
+//         let first = this.arr[0]
+//         return (Vec.new(rest), first)
+//     }
 
 //     popRight (): [Vec<T>, T | Und] {
 //         const last = this._arr[this._arr.length - 1]
@@ -135,4 +108,3 @@ impl<T> Rng for Vec<T> {
 //     toString (): T[] {
 //         return this._()
 //     }
-// }

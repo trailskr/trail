@@ -1,58 +1,44 @@
-pub struct Logger {
-    logFn: Fn(data: impl Display): Und,
-    tab: Str,
-    indent: Sig<Str>,
-    printed_lines: Sig<usize>,
-    max_print_lines: usize,
-}
+import { Sig, WriteSig } from "./sig"
+import { Str } from "./str"
 
-impl Default for Logger {
-    default(): Self {
-        Logger {
-            log_fn: |data| Display::display(data)
-        }
+export class Logger {
+    private readonly _logFn: (data: any) => void
+    private readonly _tab: Str
+    private readonly _indent: () => Str
+    private readonly _setIndent: WriteSig<Str>
+    private readonly _printedLines: () => usize
+    private readonly _setPrintedLines: WriteSig<usize>
+    private readonly _maxPrintLines: usize
+
+    constructor (
+        logFn: (data: any) => void,
+        tab: Str,
+        maxPrintLines: usize
+    ) {
+        this._logFn = logFn
+        this._tab = tab
+        ;[this._indent, this._setIndent] = Sig(new Str(''))
+        ;[this._printedLines, this._setPrintedLines] = Sig(0)
+        this._maxPrintLines = maxPrintLines
+    }
+
+    log (...args: any[]): void {
+        args.forEach((arg) => {
+            this._logFn(this._indent + arg)
+            this._setPrintedLines.with((val) => val + 1)
+            if (this._printedLines() === this._maxPrintLines) {
+                this._setPrintedLines(0)
+            }
+        })
+    }
+
+    logInc (...args: any[]): void {
+        this.log(args)
+        this._setIndent.with((indent) => indent.slice(0, indent.len() - this._tab.len()))
+    }
+
+    logDec (...args: any[]): void {
+        this._setIndent.with((indent) => indent.concat(this._tab))
+        this.log(args)
     }
 }
-
-impl Logger {
-    new(
-        log_fn = (data: any): Und => { console.log(data) },
-        tab = Str.new('  '),
-        max_print_lines: usize = 100
-    ): Logger {
-        return new Logger(log_fn, tab, max_print_lines)
-    }
-}
-
-//     constructor (
-//         log_fn: (data: any) => Und,
-//         tab: Str,
-//         max_print_lines: usize
-//     ) {
-//         self.log_fn = log_fn
-//         self.tab = tab
-//         self.indent = Sig.new(Str.new(''))
-//         self.printed_lines = Sig.new(0)
-//         self.max_print_lines = max_print_lines
-//     }
-
-//     log (...args: any[]): Und {
-//         args.forEach((arg) => {
-//             self.log_fn(self.indent + arg)
-//             self.printed_lines.setWith((val) => val + 1)
-//             if (self.printed_lines.get() === self.max_print_lines) {
-//                 self.printed_lines.set(0)
-//             }
-//         })
-//     }
-
-//     logInc (...args: any[]): Und {
-//         self.log(args)
-//         self.indent.setWith((indent) => indent.slice(0, indent.len() - self.tab.len()))
-//     }
-
-//     logDec (...args: any[]): Und {
-//         self.indent.setWith((indent) => indent.concat(self.tab))
-//         self.log(args)
-//     }
-// }

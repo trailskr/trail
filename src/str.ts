@@ -1,14 +1,17 @@
-use super::rng::Rng
+import { Rng } from "./rng"
 
-pub struct Str {}
+export class Str implements Rng<usize, char> {
+    private readonly _str: string
 
-impl Str {
-    pub new(): Self {
-        Str {}
+    constructor(str: string) {
+        this._str = str
+    }
+
+    str(): string {
+        return this._str
     }
 }
 
-impl Rng for Str {
     // popLeft (): [Str, char | Und] {
     //     return [Str.new(this._str.slice(1)), this._str[0]]
     // }
@@ -98,4 +101,3 @@ impl Rng for Str {
     // split (regExp: RegExp): Vec<Str> {
     //     return Vec.new(this._str.split(regExp).map((str) => Str.new(str)))
     // }
-}

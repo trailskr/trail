@@ -12,6 +12,10 @@ specifiers:
   eslint-plugin-prefer-arrow: ^1.2.3
   eslint-plugin-promise: ^6.1.1
   eslint-plugin-unused-imports: ^2.0.0
+  immutable: ^4.3.0
+
+dependencies:
+  immutable: 4.3.0
 
 devDependencies:
   '@types/node': 18.14.6
@@ -1219,6 +1223,10 @@ packages:
     resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
     dev: true
+
+  /immutable/4.3.0:
+    resolution: {integrity: sha512-0AOCmOip+xgJwEVTQj1EfiDDOkPmuyllDuTuEX+DDXUgapLAsBIfkg3sxCYyCEA8mQqZrrxPUGjcOQ2JS3WLkg==}
+    dev: false
 
   /import-fresh/3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
