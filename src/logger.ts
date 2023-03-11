@@ -1,5 +1,5 @@
 pub struct Logger {
-    log_fn: Fn(data: impl Display): Und,
+    logFn: Fn(data: impl Display): Und,
     tab: Str,
     indent: Sig<Str>,
     printed_lines: Sig<usize>,

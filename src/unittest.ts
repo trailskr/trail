@@ -4,7 +4,7 @@ import { inspect } from 'util'
 import { Logger } from './logger'
 import { isEqual, isIncludes } from './utils'
 
-const unittestEnabled = process.env.NODE_ENV === 'test' || process.argv.includes('--test')
+const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
 interface TestNodeResult {
   isSuccessfull(): bool

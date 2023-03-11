@@ -11,7 +11,7 @@ export interface Rng<K, T> {
 
     every(fn: (val: T, key: K) => bool): bool
     some(fn: (val: T, key: K) => bool): bool
-    fold<R>(initial_value: R, fn: (val: R, acc: R, item: T) => R): R
+    fold<R>(initialValue: R, fn: (val: R, acc: R, item: T) => R): R
     reduce(fn: (a: T, b: T) => T): T
     map<R>(fn: (val: T, key: K) => R): Rng<K, R>
     filter(fn: (val: T, key: K) => bool): Rng<K, T>

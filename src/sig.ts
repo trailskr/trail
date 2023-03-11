@@ -6,7 +6,7 @@ export interface ReadSig<T> {
 
 export interface WriteSig<T> {
     set(val: T)
-    set_width<F>(fn_update: F)
+    setWidth<F>(fn_update: F)
     where
         F: Fn(T): T
 }

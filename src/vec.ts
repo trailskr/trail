@@ -1,4 +1,4 @@
-use super::raw_vec::RawVec
+use super::rawVec::RawVec
 use super::rng::Rng
 
 pub struct Vec<T> {
