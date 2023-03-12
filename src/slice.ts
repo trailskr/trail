@@ -7,6 +7,11 @@ export class Slice {
         this._right = right
     }
 
+    static new(len: usize, fn: (len: usize) => [left: usize, right: usize]): Slice {
+        const [left, right] = fn(len)
+        return new Slice(left, right)
+    }
+
     left (): usize {
         return this._left
     }

@@ -76,7 +76,9 @@ export class Str implements Rng<usize, char> {
         [...this._str].forEach(fn)
     }
 
-    slice (slice: Slice): Str {
+    slice (fn: (len: usize) => [left: usize, right: usize]): Str {
+        const len = this.len()
+        const slice = Slice.new(len, fn)
         return new Str(this._str.slice(slice.left(), slice.right()))
     }
 

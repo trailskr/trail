@@ -83,7 +83,9 @@ export class Vec<T> implements Rng<usize, T> {
         this._arr.forEach(fn)
     }
 
-    slice (slice: Slice): Vec<T> {
+    slice (fn: (len: usize) => [left: usize, right: usize]): Vec<T> {
+        const len = this.len()
+        const slice = Slice.new(len, fn)
         return new Vec(this._arr.slice(slice.left(), slice.right()))
     }
 

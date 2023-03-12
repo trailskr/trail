@@ -17,7 +17,7 @@ export class Logger {
     ) {
         this._logFn = logFn
         this._tab = tab
-        ;[this._indent, this._setIndent] = Sig(new Str(''))
+        ;[this._indent, this._setIndent] = Sig(Str.from(''))
         ;[this._printedLines, this._setPrintedLines] = Sig(0)
         this._maxPrintLines = maxPrintLines
     }
@@ -34,7 +34,7 @@ export class Logger {
 
     logInc (...args: any[]): void {
         this.log(args)
-        this._setIndent.with((indent) => indent.slice(0, indent.len() - this._tab.len()))
+        this._setIndent.with((indent) => indent.slice((len) => [0, len - this._tab.len()]))
     }
 
     logDec (...args: any[]): void {
