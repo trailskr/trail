@@ -10,6 +10,12 @@ export class Str implements Rng<usize, char> {
         this._str = str
     }
 
+    static new<T>(len = 0, init = ' '): Str {
+        const str = Array(len).join(init)
+        return new Str(str)
+    }
+
+
     static from (str: string) {
         return new Str(str)
     }
@@ -100,10 +106,6 @@ export class Str implements Rng<usize, char> {
 
     concat (val: Str): Str {
         return new Str(this._str + val.str())
-    }
-
-    toString (): string {
-        return this.str()
     }
 
     split (regExp: RegExp): Vec<Str> {

@@ -2,7 +2,7 @@ import { Sig, WriteSig } from "./sig"
 import { Str } from "./str"
 
 export class Logger {
-    private readonly _logFn: (data: any) => void
+    private readonly _logFn: (str: Str) => void
     private readonly _tab: Str
     private readonly _indent: () => Str
     private readonly _setIndent: WriteSig<Str>
@@ -10,16 +10,24 @@ export class Logger {
     private readonly _setPrintedLines: WriteSig<usize>
     private readonly _maxPrintLines: usize
 
-    constructor (
-        logFn: (data: any) => void,
-        tab: Str,
-        maxPrintLines: usize
+    private constructor (
+        logFn: (str: Str) => void = (str) => { console.log(str.str()) },
+        tab: Str = Str.from('  '),
+        maxPrintLines: usize = 1000
     ) {
         this._logFn = logFn
         this._tab = tab
         ;[this._indent, this._setIndent] = Sig(Str.from(''))
         ;[this._printedLines, this._setPrintedLines] = Sig(0)
         this._maxPrintLines = maxPrintLines
+    }
+
+    static new (
+        logFn: (str: Str) => void = (str) => { console.log(str.str()) },
+        tab: Str = Str.from('  '),
+        maxPrintLines: usize = 1000
+    ) {
+        return new Logger(logFn, tab, maxPrintLines)
     }
 
     log (...args: any[]): void {

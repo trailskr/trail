@@ -1,3 +1,5 @@
+import assert from "assert"
+
 export enum OptType {
     Ok,
     No,

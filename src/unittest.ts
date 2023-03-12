@@ -2,7 +2,11 @@ import fs from 'fs'
 import { inspect } from 'util'
 
 import { Logger } from './logger'
+import { isNo } from './opt'
+import { ReadSig, Sig, WriteSig } from './sig'
+import { Str } from './str'
 import { isEqual, isIncludes } from './utils'
+import { Vec } from './vec'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
@@ -11,19 +15,28 @@ interface TestNodeResult {
 }
 
 class TestNodeContext implements TestNodeResult {
-    private readonly _path: string
-    private readonly _code: string[]
-    private _isSuccessfull: bool
-    private _log: string[] | Und
+    private readonly _path: Str
+    private readonly _code: Vec<Str>
+    private readonly _isSuccessfull: bool
+    private readonly _logger: Logger
+    private readonly _log: ReadSig<Vec<Str>>
+    private readonly _setLog: WriteSig<Vec<Str>>
 
-    constructor(path: string, isSuccessful: bool, code: string[], log: string[] | Und) {
+    private constructor(path: Str, isSuccessful: bool, code: Vec<Str>) {
         this._path = path
         this._code = code
         this._isSuccessfull = isSuccessful
-        this._log = log
+        ;[this._log, this._setLog] = Sig(Vec.new<Str>())
+        this._logger = Logger.new((line: Str): void => {
+            this._setLog(this._log().pushRight(line))
+        })
     }
 
-    path(): string {
+    static new(path: Str, isSuccessful: bool, code: Vec<Str>): TestNodeContext {
+        return new TestNodeContext(path, isSuccessful, code)
+    }
+
+    path(): Str {
         return this._path
     }
 
@@ -31,48 +44,58 @@ class TestNodeContext implements TestNodeResult {
         return this._isSuccessfull
     }
 
-    code(): string[] {
+    code(): Vec<Str> {
         return this._code
     }
 
-    log(): string[] | Und {
-        return this._log
+    log(): Vec<Str> {
+        return this._log()
+    }
+    
+    logger(): Logger {
+        return this._logger
     }
 }
 
 class TestGroupContext implements TestNodeResult {
-    private readonly _description: string
-    private _children: TestNodeResult[]
+    private readonly _description: Str
+    private readonly _children: ReadSig<Vec<TestNodeResult>>
+    private readonly _setChildren: WriteSig<Vec<TestNodeResult>>
 
-    constructor(description: string, children: TestNodeResult[] = []) {
+    private constructor(description: Str, children: Vec<TestNodeResult> = Vec.new()) {
         this._description = description
-        this._children = children
+        ;[this._children, this._setChildren] = Sig(children)
+    }
+
+    static new(description: Str, children: Vec<TestNodeResult> = Vec.new()): TestGroupContext {
+        return new TestGroupContext(description, children)
     }
 
     addChild(child: TestNodeResult): void {
-        this._children.push(child)
+        this._setChildren(this._children().pushRight(child))
     }
 
-    description(): string {
+    description(): Str {
         return this._description
     }
 
     isSuccessfull(): bool {
-        return this._children.every((child) => child.isSuccessfull())
+        return this._children().every((child) => child.isSuccessfull())
     }
 
-    children(): TestNodeResult[] {
-        return this._children
+    children(): Vec<TestNodeResult> {
+        return this._children()
     }
 }
 
-const root = new TestGroupContext('root')
-const currentNode = root
+const root = TestGroupContext.new('root')
+const [currentNode, setCurrentNode] = Sig(root)
 
-const test = (description: string, fn: () => Und): void => {
-    const topNode = currentNode
-    const newNode = new TestGroupContext(description)
+const test = (description: Str, fn: () => void): void => {
+    const topNode = currentNode()
+    const newNode = TestGroupContext.new(description)
     topNode.addChild(newNode)
+    setCurrentNode(newNode)
     fn() // __TEST_CALL__
 }
 
@@ -82,59 +105,60 @@ export const unittest = unittestEnabled
 
 // ASSERT
 
-const readFileLines = (path: string): string[] => {
+const readFileLines = (path: Str): Vec<Str> => {
     const alreadyLines = filesRead.get(path)
     if (alreadyLines) return alreadyLines
-    const fileString = fs.readFileSync(path).toString()
+    const fileString = Str.from(fs.readFileSync(path.str()).toString())
     return fileString.split(/\r?\n/)
 }
 
-const removeCommonIndent = (lines: string[]): string[] => {
-    const commonIndent = lines.reduce((minIndent, line) => {
-        const m = line.match(/\S/)
+const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
+    const commonIndent = lines.fold(Infinity, (minIndent, line) => {
+        const m = line.str().match(/\S/)
         if (!m) return minIndent
         return Math.min(minIndent, m.index!)
-    }, Infinity)
+    })
     if (!isFinite(commonIndent)) return lines
-    return lines.map((line) => line.slice(commonIndent))
+    return lines.map((line) => line.slice((len) => [commonIndent, len]))
 }
 
 const filesRead = new Map()
 
 const openClosedParensMap = { '{': 1, '(': 1, '[': 1 }
 const closedOpenParensMap = { '}': 1, ')': 1, ']': 1 }
-const getCode = (path: string, col: usize, row: usize): string[] => {
+const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     const lines = readFileLines(path)
     let pos = 0
     let lineIndex = row - 1
-    let line = lines[lineIndex]
+    const lineOpt = lines.get(lineIndex)
+    if (isNo(lineOpt)) return Vec.new()
     // remove code before start
-    line = [...Array(col)].join(' ') + line.slice(col - 1)
+    const line = Str.new(col, ' ').concat(lineOpt.val.slice((len) => [col - 1, len]))
     // const startIndent = line.match(/\S/).index
-    const result: string[] = []
-    const parensStack = []
-    for (; ;) {
-        const char = line.at(pos)
-        if (char === undefined) {
-            result.push(line)
-            if (parensStack.length === 0) return result
+    let result: Vec<Str> = Vec.new()
+    let parensStack = Vec.new<Str>()
+    while (true) {
+        const char = line.get(pos)
+        if (isNo(char)) {
+            result = result.pushRight(line)
+            if (parensStack.len() === 0) return result
             lineIndex++
-            line = lines.at(lineIndex)!
+            line = lines.get(lineIndex)!
             if (line === undefined) return result
             pos = 0
             continue
-        } else if (char in openClosedParensMap) {
-            parensStack.push(char)
-        } else if (char in closedOpenParensMap) {
-            parensStack.pop()
+        } else if (char.val in openClosedParensMap) {
+            parensStack = parensStack.pushRight(char.val)
+        } else if (char.val in closedOpenParensMap) {
+            parensStack = parensStack.pop()
         }
         pos++
     }
 }
 
 interface FileCodePointer {
-  path: string
-  code: string[]
+  path: Str
+  code: Vec<Str>
   col: usize
   row: usize
 }
@@ -146,7 +170,7 @@ const getTestStackLine = (stack: FileCodePointer[]): FileCodePointer => {
     return stack[testCallIndex - 1]
 }
 
-const parseStack = (stack: string): FileCodePointer[] => {
+const parseStack = (stack: Str): FileCodePointer[] => {
     return stack.split(/\n/)
         .filter((line) => line.includes('.ts:'))
         .map((line) => {
@@ -161,49 +185,31 @@ const parseStack = (stack: string): FileCodePointer[] => {
         })
 }
 
-let currentLog: string[] = []
-let isLogEnabled = false
-const unitLog = (line: string): void => {
-    if (isLogEnabled) currentLog.push(line)
-}
-
-export const unitLogger = new Logger(unitLog)
-const callWithLogs = (fn: () => Und): void => {
-    isLogEnabled = true
-    fn()
-    isLogEnabled = false
-}
 
 export const assert = (fn: () => bool): bool => {
-    currentLog = []
     let isSuccessful = false
-    callWithLogs(() => {
-        try {
-            isSuccessful = fn()
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                if (err.stack) {
-                    err.stack.split('\n').forEach((stackItem) => {
-                        unitLogger.logDec(stackItem)
-                    })
-                }
+    try {
+        isSuccessful = fn()
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            if (err.stack) {
+                err.stack.split('\n').forEach((stackItem) => {
+                    unitLogger.logDec(stackItem)
+                })
             }
         }
+    }
 
-        const stackLines = parseStack(new Error().stack!)
-        const stackLine = getTestStackLine(stackLines)
+    const stackLines = parseStack(new Error().stack!)
+    const stackLine = getTestStackLine(stackLines)
 
-        const row = stackLine.row.toString()
-        const col = stackLine.col.toString()
-        const path = `${stackLine.path}:${row}:${col}`
-        const newChild = new TestNodeContext(
-            path,
-            isSuccessful,
-            stackLine.code,
-            isSuccessful ? undefined : currentLog,
-        )
-        currentNode.addChild(newChild)
-    })
+    const path = Str.from(`${stackLine.path}:${stackLine.row}:${stackLine.col}`)
+    const newChild = TestNodeContext.new(
+        path,
+        isSuccessful,
+        stackLine.code,
+    )
+    currentNode.addChild(newChild)
     return isSuccessful
 }
 
@@ -228,15 +234,15 @@ export const assertInc = (fn: () => [unknown, unknown]): bool => {
 const tab = '  '
 let indent = ''
 
-const addIndent = (str: string): string => {
+const addIndent = (str: Str): Str => {
     return str.split(/\n/).map((line) => line.concat(indent)).join('\n')
 }
 
-const printSuccess = (data: string): void => {
+const printSuccess = (data: Str): void => {
     console.log('\x1b[32m%s\x1b[0m', addIndent(data))
 }
 
-const printError = (data: string): void => {
+const printError = (data: Str): void => {
     console.log('\x1b[31m%s\x1b[0m', addIndent(data))
 }
 
@@ -272,7 +278,7 @@ const printGroupOrResult = (resultOrGroup: TestNodeResult): void => {
                 const log = resultOrGroup.log()
                 if (log !== undefined) {
                     print('------------------- LOG --------------------\n')
-                    log.forEach(print)
+                    log.each(print)
                 }
             })
         }

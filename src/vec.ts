@@ -12,6 +12,14 @@ export class Vec<T> implements Rng<usize, T> {
         this._arr = list
     }
 
+    static new<T>(len = 0, init = 0): Vec<T> {
+        const arr = Array(len)
+        for (let i = 0; i < len; i++) {
+            arr[i] = init
+        }
+        return new Vec(List(arr))
+    }
+
     static from<T>(arr: T[]): Vec<T> {
         return new Vec(List(arr))
     }
