@@ -20,30 +20,30 @@ export class Map<K, T> implements Rng<K, T> {
     //     return new Map<K, T>(map)
     // }
 
-    // popLeft (): [Map<K, T>, T | Und] {
+    // popLeft (): [Map<K, T>, Opt<T>] {
     //     const [first, ...rest] = this._map
     //     return [Map.new(rest), first[1]]
     // }
 
-    // popRight (): [Map<K, T>, T | Und] {
+    // popRight (): [Map<K, T>, Opt<T>] {
     //     const [...all] = this._map
-    //     return [Map.new(all.slice(1)), all[all.length - 1] as T | Und]
+    //     return [Map.new(all.slice(1)), all[all.length - 1] as Opt<T>]
     // }
 
-    // pop (): [Map<K, T>, T | Und] {
+    // pop (): [Map<K, T>, Opt<T>] {
     //     return this.popRight()
     // }
 
-    // left (): T | Und {
+    // left (): Opt<T> {
     //     return this._map[Symbol.iterator]().next().value
     // }
 
-    // right (): T | Und {
+    // right (): Opt<T> {
     //     const [...all] = this._map
     //     return all[all.length - 1][1]
     // }
 
-    // at (key: K): T | Und {
+    // at (key: K): Opt<T> {
     //     return this._map.get(key)
     // }
 
@@ -87,11 +87,11 @@ export class Map<K, T> implements Rng<K, T> {
     //     return this.find((a) => a === item) != und
     // }
 
-    // each<R> (fn: (a: T, key: K) => R): Und {
+    // each<R> (fn: (a: T, key: K) => R): void {
     //     return this._map.forEach(fn)
     // }
 
-    // slice (start: usize | Und, end: usize | Und): Map<K, T> {
+    // slice (start: Opt<usize>, end: Opt<usize>): Map<K, T> {
     //     return Map.new([...this._map.entries()].slice(start!, end!))
     // }
 

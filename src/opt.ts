@@ -13,24 +13,30 @@ export interface No<T = void> {
     val: T
 }
 
-export class Opt<Y, N = void> {
-    val: Ok<Y> | No<N>
+export type Opt<Y, N = void> = Ok<Y> | No<N>
 
-    constructor(val: Ok<Y> | No<N>) {
-        this.val = val
+export const ok = <Y, N = void>(val: Y): Opt<Y, N> => {
+    return {
+        type: OptType.Ok,
+        val
     }
 }
 
-export const Ok = <Y, N = void>(val: Y): Opt<Y, N> => {
-    return new Opt<Y, N>({
-        type: OptType.Ok,
-        val
-    })
-}
-
-export const No = <Y, N>(val?: N): Opt<Y, N> => {
-    return new Opt<Y, N>({
+export const no = <Y, N = void>(val?: N): Opt<Y, N> => {
+    return {
         type: OptType.No,
         val: val!
-    })
+    }
+}
+
+export const isOk = <Y, N = void>(val: Opt<Y, N>): val is Ok<Y> => {
+    return val.type === OptType.Ok
+}
+
+export const isNo = <Y, N = void>(val: Opt<Y, N>): val is No<N> => {
+    return val.type === OptType.No
+}
+
+export const optFrom = <T>(val: T | undefined): Opt<T, void> => {
+    return val === undefined ? no<T>() : ok<T>(val)
 }

@@ -69,7 +69,7 @@ class TestGroupContext implements TestNodeResult {
 const root = new TestGroupContext('root')
 const currentNode = root
 
-const test = (description: string, fn: () => Und): Und => {
+const test = (description: string, fn: () => Und): void => {
     const topNode = currentNode
     const newNode = new TestGroupContext(description)
     topNode.addChild(newNode)
@@ -78,7 +78,7 @@ const test = (description: string, fn: () => Und): Und => {
 
 export const unittest = unittestEnabled
     ? test
-    : (): Und => { }
+    : (): void => { }
 
 // ASSERT
 
@@ -163,12 +163,12 @@ const parseStack = (stack: string): FileCodePointer[] => {
 
 let currentLog: string[] = []
 let isLogEnabled = false
-const unitLog = (line: string): Und => {
+const unitLog = (line: string): void => {
     if (isLogEnabled) currentLog.push(line)
 }
 
 export const unitLogger = new Logger(unitLog)
-const callWithLogs = (fn: () => Und): Und => {
+const callWithLogs = (fn: () => Und): void => {
     isLogEnabled = true
     fn()
     isLogEnabled = false
@@ -232,25 +232,25 @@ const addIndent = (str: string): string => {
     return str.split(/\n/).map((line) => line.concat(indent)).join('\n')
 }
 
-const printSuccess = (data: string): Und => {
+const printSuccess = (data: string): void => {
     console.log('\x1b[32m%s\x1b[0m', addIndent(data))
 }
 
-const printError = (data: string): Und => {
+const printError = (data: string): void => {
     console.log('\x1b[31m%s\x1b[0m', addIndent(data))
 }
 
-const print = (data: any): Und => {
+const print = (data: any): void => {
     console.log(addIndent(data))
 }
 
-const withIndent = (fn: () => Und): Und => {
+const withIndent = (fn: () => Und): void => {
     indent = indent + tab
     fn()
     indent = indent.slice(tab.length)
 }
 
-const printGroupOrResult = (resultOrGroup: TestNodeResult): Und => {
+const printGroupOrResult = (resultOrGroup: TestNodeResult): void => {
     if (resultOrGroup instanceof TestGroupContext) {
         if (resultOrGroup.children().length === 0) return
         if (resultOrGroup.isSuccessfull()) {
