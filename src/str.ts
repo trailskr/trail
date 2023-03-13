@@ -36,8 +36,34 @@ export class Str implements Rng<usize, char> {
         return [new Str(this._str.slice(0, -1)), this.right()]
     }
 
+    skipLeft (amount: usize): Str {
+        return new Str(this._str.slice(0, amount))
+    }
+
+    skipRight (amount: usize): Str {
+        return new Str(this._str.slice(-amount))
+    }
+
+    slice (fn: (len: usize) => [left: usize, right: usize]): Str {
+        const len = this.len()
+        const slice = Slice.new(len, fn)
+        return new Str(this._str.slice(slice.left(), slice.right()))
+    }
+
+    has (item: char): bool {
+        return isOk(this.find((a) => a === item))
+    }
+
+    includes (rng: Str): bool {
+        return this._str.includes(rng._str)
+    }
+
     get (index: usize): Opt<char> {
         return optFrom(this._str[index])
+    }
+
+    set (index: usize, val: char): Str {
+        return Str.from(this._str.slice(0, index) + val + this._str.slice(index))
     }
 
     len (): usize {
@@ -60,32 +86,30 @@ export class Str implements Rng<usize, char> {
         return [...this._str].reduce(fn)
     }
 
-    map<R> (fn: (a: char, key: usize) => R): Vec<R> {
+    map<R> (fn: (val: char, key: usize) => R): Vec<R> {
         return Vec.from([...this._str].map(fn))
     }
 
-    filter (fn: (a: char, key: usize) => bool): Str {
+    filter (fn: (val: char, key: usize) => bool): Str {
         return new Str([...this._str].filter(fn).join(''))
     }
 
-    find (fn: (a: char, key: usize) => bool): Opt<[value: char, key: usize]> {
+    find (fn: (val: char, key: usize) => bool): Opt<char> {
+        return optFrom([...this._str].find(fn))
+    }
+
+    findEntry (fn: (val: char, key: usize) => bool): Opt<[value: char, key: usize]> {
         const index = [...this._str].findIndex(fn)
         if (index === -1) return no()
         return ok([this._str[index], index])
     }
 
-    includes (item: char): bool {
-        return isOk(this.find((a) => a === item))
+    findKey (fn: (val: char, key: usize) => bool): Opt<usize> {
+        return optFrom([...this._str].findIndex(fn))
     }
 
-    each<R> (fn: (a: char, key: usize) => R): void {
+    each<R> (fn: (val: char, key: usize) => R): void {
         [...this._str].forEach(fn)
-    }
-
-    slice (fn: (len: usize) => [left: usize, right: usize]): Str {
-        const len = this.len()
-        const slice = Slice.new(len, fn)
-        return new Str(this._str.slice(slice.left(), slice.right()))
     }
 
     pushRight (val: char): Str {
@@ -101,18 +125,22 @@ export class Str implements Rng<usize, char> {
     }
 
     join (val: Str): Str {
-        return Str.from([...this._str].join(val.str()))
+        return Str.from([...this._str].join(val.inner()))
     }
 
     concat (val: Str): Str {
-        return new Str(this._str + val.str())
+        return new Str(this._str + val.inner())
     }
 
     split (regExp: RegExp): Vec<Str> {
         return Vec.from(this._str.split(regExp).map((str) => new Str(str)))
     }
 
-    str(): string {
+    inner(): string {
+        return this._str
+    }
+
+    toString(): string {
         return this._str
     }
 }

@@ -32,24 +32,50 @@ export class Vec<T> implements Rng<usize, T> {
         return optFrom(this._arr.get(this.len() - 1))
     }
 
-    popLeft(): [Rng<usize, T>, Opt<T>] {
+    popLeft(): [Vec<T>, Opt<T>] {
         const first = optFrom(this._arr.first())
         const rest = new Vec(this._arr.shift())
         return [rest, first]
     }
 
-    popRight (): [Rng<usize, T>, Opt<T>] {
+    popRight (): [Vec<T>, Opt<T>] {
         const last = optFrom(this._arr.last())
         const rest = new Vec(this._arr.pop())
         return [rest, last]
+    }
+
+    skipLeft (amount: usize): Vec<T> {
+        return new Vec(this._arr.skip(amount))
+    }
+
+    skipRight (amount: usize): Vec<T> {
+        return new Vec(this._arr.skipLast(amount))
+    }
+
+    slice (fn: (len: usize) => [left: usize, right: usize]): Vec<T> {
+        const len = this.len()
+        const slice = Slice.new(len, fn)
+        return new Vec(this._arr.slice(slice.left(), slice.right()))
+    }
+
+    len (): usize {
+        return this._arr.size
+    }
+
+    has (item: T): bool {
+        return isOk(this.find((a) => a === item))
+    }
+
+    includes (rng: Vec<T>): bool {
+        return this._arr.isSuperset(rng._arr)
     }
 
     get (index: usize): Opt<T> {
         return optFrom(this._arr.get(index))
     }
 
-    len (): usize {
-        return this._arr.size
+    set (index: usize, val: T): Vec<T> {
+        return new Vec(this._arr.set(index, val))
     }
 
     every (fn: (item: T, key: usize) => bool): bool {
@@ -60,41 +86,39 @@ export class Vec<T> implements Rng<usize, T> {
         return this._arr.some(fn)
     }
 
-    fold <R>(initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
+    fold <R>(initialValue: R, fn: (acc: R, item: T, key: usize) => R): R {
         return this._arr.reduce<R>(fn, initialValue)
     }
 
-    reduce (fn: (a: T, b: T, index: usize) => T): T {
+    reduce (fn: (a: T, b: T, key: usize) => T): T {
         return this._arr.reduce(fn)
     }
 
-    map <R>(fn: (a: T, key: usize) => R): Vec<R> {
+    map <R>(fn: (val: T, key: usize) => R): Vec<R> {
         return new Vec(this._arr.map(fn))
     }
 
-    filter (fn: (a: T, key: usize) => bool): Vec<T> {
+    filter (fn: (val: T, key: usize) => bool): Vec<T> {
         return new Vec(this._arr.filter(fn))
     }
 
-    find (fn: (a: T, key: usize) => bool): Opt<[value: T, key: usize]> {
+    find (fn: (val: T, key: usize) => bool): Opt<T> {
+        return optFrom(this._arr.find(fn))
+    }
+
+    findEntry (fn: (aval: T, key: usize) => bool): Opt<[value: T, key: usize]> {
         const entry = this._arr.findEntry(fn)
         if (entry === undefined) return no()
         const [key, value] = entry
         return ok([value, key])
     }
 
-    includes (item: T): bool {
-        return isOk(this.find((a) => a === item))
+    findKey (fn: (val: T, key: usize) => bool): Opt<usize> {
+        return optFrom(this._arr.findIndex(fn))
     }
 
-    each<R> (fn: (a: T, key: usize) => R): void {
+    each<R> (fn: (val: T, key: usize) => R): void {
         this._arr.forEach(fn)
-    }
-
-    slice (fn: (len: usize) => [left: usize, right: usize]): Vec<T> {
-        const len = this.len()
-        const slice = Slice.new(len, fn)
-        return new Vec(this._arr.slice(slice.left(), slice.right()))
     }
 
     pushRight (val: T): Vec<T> {
@@ -106,18 +130,18 @@ export class Vec<T> implements Rng<usize, T> {
     }
 
     join (val: Str): Str {
-        return Str.from(this._arr.join(val.str()))
+        return Str.from(this._arr.join(val.inner()))
     }
 
     concat (val: Vec<T>): Vec<T> {
         return new Vec(this._arr.concat(val._arr))
     }
 
-    toString (): Str {
-        return Str.from(this._arr.toArray().toString())
+    inner(): T[] {
+        return this._arr.toArray()
     }
 
-    arr(): T[] {
-        return this._arr.toArray()
+    toString (): string {
+        return this._arr.toArray().toString()
     }
 }

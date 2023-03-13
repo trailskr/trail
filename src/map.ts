@@ -2,16 +2,22 @@ import { Map as ImmMap } from 'immutable'
 import { Opt, optFrom } from './opt'
 
 import { Rng } from './rng'
+import { Slice } from './slice'
+import { Str } from './str'
 
 export class Map<K, T> implements Rng<K, T> {
     private readonly _map: ImmMap<K, T>
     
-    private constructor(rec: [key: K, val: T][]) {
-        this._map = ImmMap(rec)
+    private constructor(map: ImmMap<K, T>) {
+        this._map = map
     }
 
     static new () {
-        return new Map([])
+        return Map.from([])
+    }
+
+    static from<K, T>(rec: [key: K, val: T][]): Map<K, T> {
+        return new Map(ImmMap(rec))
     }
 
     left (): Opt<T> {
@@ -23,17 +29,46 @@ export class Map<K, T> implements Rng<K, T> {
     }
 
     popLeft (): [Map<K, T>, Opt<T>] {
-        const [first, ...rest] = this._map
-        return [Map.new(rest), first[1]]
+        const last = optFrom(this._map.last())
+        const rest = new Map(this._map.skip(1))
+        return [rest, last]
     }
 
     popRight (): [Map<K, T>, Opt<T>] {
-        const [...all] = this._map
-        return [Map.new(all.slice(1)), all[all.length - 1] as Opt<T>]
+        const last = optFrom(this._map.last())
+        const rest = new Map(this._map.butLast())
+        return [rest, last]
+    }
+
+    skipLeft (amount: usize): Map<K, T> {
+        return new Map(this._map.skip(amount))
+    }
+
+    skipRight (amount: usize): Map<K, T> {
+        return new Map(this._map.skipLast(amount))
+    }
+
+    slice (fn: (len: usize) => [left: usize, right: usize]): Map<K, T> {
+        const len = this.len()
+        const slice = Slice.new(len, fn)
+        const sliced = this._map.slice(slice.left(), slice.right())
+        return new Map(sliced)
+    }
+
+    has (item: T): bool {
+        return this._map.includes(item)
+    }
+
+    includes (rng: Map<K, T>): bool {
+        return this._map.isSuperset(rng._map.values())
     }
 
     get (key: K): Opt<T> {
-        return this._map.get(key)
+        return optFrom(this._map.get(key))
+    }
+
+    set (key: K, val: T): Map<K, T> {
+        return new Map(this._map.set(key, val))
     }
 
     len (): usize {
@@ -41,64 +76,53 @@ export class Map<K, T> implements Rng<K, T> {
     }
 
     every (fn: (item: T, key: K) => bool): bool {
-        return [...this._map.entries()].every(([key, val]) => fn(val, key))
+        return this._map.every(fn)
     }
 
     some (fn: (item: T, key: K) => bool): bool {
-        return [...this._map.entries()].some(([key, val]) => fn(val, key))
+        return this._map.some(fn)
     }
 
-    fold<R> (initialValue: R, fn: (acc: R, item: T, index: usize) => R): R {
-        return [...this._map.values()].reduce<R>(fn, initialValue)
+    fold<R> (initialValue: R, fn: (acc: R, item: T, key: K) => R): R {
+        return this._map.reduce<R>(fn, initialValue)
     }
 
-    reduce (fn: (a: T, b: T, index: usize) => T): T {
-        return [...this._map.values()].reduce(fn)
+    reduce (fn: (a: T, b: T, key: K) => T): T {
+        return this._map.reduce(fn)
     }
 
-    map<R> (fn: (a: T, key: K) => R): Map<K, R> {
-        const entries = [...this._map.entries()].map(([key, val]) => {
-            return [key, fn(val, key)] as [K, R]
-        })
-        return Map.new(entries)
+    map<R> (fn: (val: T, key: K) => R): Map<K, R> {
+        const map = this._map.map(fn)
+        return new Map(map)
     }
 
-    filter (fn: (a: T, key: K) => bool): Map<K, T> {
-        return Map.new([...this._map.entries()].filter(([key, val]) => fn(val, key)))
+    filter (fn: (val: T, key: K) => bool): Map<K, T> {
+        const map = this._map.filter(fn)
+        return new Map(map)
     }
 
-    find (fn: (a: T, key: K) => bool): [value: T, key: K] | Und {
-        const entry = [...this._map.entries()].find(([key, val]) => fn(val, key))
-        return entry === und ? und : [entry[1], entry[0]]
+    find (fn: (val: T, key: K) => bool): Opt<T> {
+        return optFrom(this._map.find(fn))
     }
 
-    includes (item: T): bool {
-        return this.find((a) => a === item) != und
+    findEntry (fn: (val: T, key: K) => bool): Opt<[value: T, key: K]> {
+        const entry = this._map.findEntry(fn)
+        return optFrom(entry && [entry[1], entry[0]])
     }
 
-    each<R> (fn: (a: T, key: K) => R): void {
-        return this._map.forEach(fn)
+    findKey (fn: (val: T, key: K) => bool): Opt<K> {
+        return optFrom(this._map.findKey(fn))
     }
 
-    slice (start: Opt<usize>, end: Opt<usize>): Map<K, T> {
-        return Map.new([...this._map.entries()].slice(start!, end!))
+    each<R> (fn: (val: T, key: K) => R): void {
+        this._map.forEach(fn)
     }
 
-    set (key: K, val: T): Map<K, T> {
-        const newMap = Map.new([...this._map])
-        newMap.set(key, val)
-        return newMap
-    }
-
-    _ (): globalThis.Map<K, T> {
+    inner (): ImmMap<K, T> {
         return this._map
     }
 
-    valueOf (): globalThis.Map<K, T> {
-        return this._()
-    }
-
-    toString (): globalThis.Map<K, T> {
-        return this._()
+    toString (): string {
+        return this._map.toMap().toString()
     }
 }

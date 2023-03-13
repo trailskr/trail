@@ -2,58 +2,80 @@ import fs from 'fs'
 import { inspect } from 'util'
 
 import { Logger } from './logger'
-import { isNo } from './opt'
+import { isNo, unwrap } from './opt'
 import { ReadSig, Sig, WriteSig } from './sig'
 import { Str } from './str'
 import { isEqual, isIncludes } from './utils'
 import { Vec } from './vec'
+import { Set } from './set'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
 interface TestNodeResult {
   isSuccessfull(): bool
+  printResults(logger: Logger): void
 }
 
 class TestNodeContext implements TestNodeResult {
-    private readonly _path: Str
-    private readonly _code: Vec<Str>
-    private readonly _isSuccessfull: bool
+    private readonly _fileCodePointer: FileCodePointer
+    private readonly _isSuccessfull: ReadSig<bool>
+    private readonly _setIsSuccessfull: WriteSig<bool>
     private readonly _logger: Logger
     private readonly _log: ReadSig<Vec<Str>>
     private readonly _setLog: WriteSig<Vec<Str>>
 
-    private constructor(path: Str, isSuccessful: bool, code: Vec<Str>) {
-        this._path = path
-        this._code = code
-        this._isSuccessfull = isSuccessful
+    private constructor(fileCodePointer: FileCodePointer) {
+        this._fileCodePointer = fileCodePointer
+        ;[this._isSuccessfull, this._setIsSuccessfull] = Sig(false)
         ;[this._log, this._setLog] = Sig(Vec.new<Str>())
         this._logger = Logger.new((line: Str): void => {
             this._setLog(this._log().pushRight(line))
         })
     }
 
-    static new(path: Str, isSuccessful: bool, code: Vec<Str>): TestNodeContext {
-        return new TestNodeContext(path, isSuccessful, code)
-    }
-
-    path(): Str {
-        return this._path
+    static new(fileCodePointer: FileCodePointer): TestNodeContext {
+        return new TestNodeContext(fileCodePointer)
     }
 
     isSuccessfull(): bool {
-        return this._isSuccessfull
+        return this._isSuccessfull()
     }
 
-    code(): Vec<Str> {
-        return this._code
+    setIsSuccessfull(val: bool): void {
+        this._setIsSuccessfull(val)
     }
 
-    log(): Vec<Str> {
-        return this._log()
+    printResults(logger: Logger) {
+        const { code, fullPath, } = this._fileCodePointer
+        if (this.isSuccessfull()) {
+            logger.success(unwrap(code.get(0)).concat(Str.from(code.len() > 1 ? ' ...' : '')))
+        } else {
+            logger.error(fullPath)
+            logger.withIndent(() => {
+                code.each((line) => { logger.error(line) })
+                const log = this._log()
+                logger.log(Str.from('------------------- LOG --------------------\n'))
+                log.each(line => logger.log(line))
+            })
+        }
     }
-    
-    logger(): Logger {
-        return this._logger
+
+    run(fn: (logger: Logger) => boolean) {
+        try {
+            const result = fn(this._logger)
+            this.setIsSuccessfull(result)
+            return result
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                if (err.stack) {
+                    err.stack.split('\n').forEach((stackItem) => {
+                        this._logger.log(Str.from(stackItem))
+                    })
+                }
+            }
+            this.setIsSuccessfull(false)
+            return false
+        }
     }
 }
 
@@ -75,21 +97,27 @@ class TestGroupContext implements TestNodeResult {
         this._setChildren(this._children().pushRight(child))
     }
 
-    description(): Str {
-        return this._description
-    }
-
     isSuccessfull(): bool {
         return this._children().every((child) => child.isSuccessfull())
     }
 
-    children(): Vec<TestNodeResult> {
-        return this._children()
+    printResults(logger: Logger) {
+        if (this._children().len() === 0) return
+        const message = this._description.concat(Str.from(':'))
+        if (this.isSuccessfull()) {
+            logger.success(message)
+        } else {
+            logger.error(message)
+        }
+        logger.withIndent(() => {
+          this._children().each((child) => child.printResults(logger))
+        })
     }
 }
 
-const root = TestGroupContext.new('root')
-const [currentNode, setCurrentNode] = Sig(root)
+const unittestRoot = TestGroupContext.new(Str.from('root'))
+const getUnittestRootGroup = () => unittestRoot
+const [currentNode, setCurrentNode] = Sig(unittestRoot)
 
 const test = (description: Str, fn: () => void): void => {
     const topNode = currentNode()
@@ -108,13 +136,13 @@ export const unittest = unittestEnabled
 const readFileLines = (path: Str): Vec<Str> => {
     const alreadyLines = filesRead.get(path)
     if (alreadyLines) return alreadyLines
-    const fileString = Str.from(fs.readFileSync(path.str()).toString())
+    const fileString = Str.from(fs.readFileSync(path.inner()).toString())
     return fileString.split(/\r?\n/)
 }
 
 const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
     const commonIndent = lines.fold(Infinity, (minIndent, line) => {
-        const m = line.str().match(/\S/)
+        const m = line.inner().match(/\S/)
         if (!m) return minIndent
         return Math.min(minIndent, m.index!)
     })
@@ -124,33 +152,33 @@ const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
 
 const filesRead = new Map()
 
-const openClosedParensMap = { '{': 1, '(': 1, '[': 1 }
-const closedOpenParensMap = { '}': 1, ')': 1, ']': 1 }
+const openClosedParensSet = Set.from(['{', '(', '['])
+const closedOpenParensSet = Set.from(['}', ')', ']'])
 const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     const lines = readFileLines(path)
     let pos = 0
     let lineIndex = row - 1
     const lineOpt = lines.get(lineIndex)
     if (isNo(lineOpt)) return Vec.new()
-    // remove code before start
-    const line = Str.new(col, ' ').concat(lineOpt.val.slice((len) => [col - 1, len]))
-    // const startIndent = line.match(/\S/).index
+    // spaces before code start
+    let line = Str.new(col, ' ').concat(lineOpt.val.slice((len) => [col - 1, len]))
     let result: Vec<Str> = Vec.new()
-    let parensStack = Vec.new<Str>()
+    let parensStack = Vec.new<char>()
     while (true) {
         const char = line.get(pos)
         if (isNo(char)) {
             result = result.pushRight(line)
             if (parensStack.len() === 0) return result
             lineIndex++
-            line = lines.get(lineIndex)!
-            if (line === undefined) return result
+            const nextLine = lines.get(lineIndex)
+            if (isNo(nextLine)) return result
             pos = 0
+            line = nextLine.val
             continue
-        } else if (char.val in openClosedParensMap) {
+        } else if (openClosedParensSet.has(char.val)) {
             parensStack = parensStack.pushRight(char.val)
-        } else if (char.val in closedOpenParensMap) {
-            parensStack = parensStack.pop()
+        } else if (closedOpenParensSet.has(char.val)) {
+            parensStack = parensStack.skipRight(1)
         }
         pos++
     }
@@ -161,133 +189,67 @@ interface FileCodePointer {
   code: Vec<Str>
   col: usize
   row: usize
+  fullPath: Str
 }
 
-const getTestStackLine = (stack: FileCodePointer[]): FileCodePointer => {
-    const testCallIndex = stack.findIndex((filePointer) => filePointer.code.some((line) => {
-        return line.includes('// __TEST_CALL__')
-    }))!
-    return stack[testCallIndex - 1]
+const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePointer => {
+    const testCallIndex = unwrap(stack.findKey((filePointer) => filePointer.code.some((line) => {
+        return line.includes(Str.from('// __TEST_CALL__'))
+    })))
+    return unwrap(stack.get(testCallIndex - 1))
 }
 
-const parseStack = (stack: Str): FileCodePointer[] => {
+const parseStack = (stack: Str): Vec<FileCodePointer> => {
     return stack.split(/\n/)
-        .filter((line) => line.includes('.ts:'))
+        .filter((line) => line.includes(Str.from('.ts:')))
         .map((line) => {
-            const m = line.match(/.*\((.*?\.ts):(\d+):(\d+)/)!
-            const path = m[1]
+            const m = line.inner().match(/.*\((.*?\.ts):(\d+):(\d+)/)!
+            const path = Str.from(m[1])
             const row = +m[2]
             const col = +m[3]
             const codeWithIndent = getCode(path, col, row)
             const code = removeCommonIndent(codeWithIndent)
-            const file: FileCodePointer = { path, code, row, col }
+            const fullPath = Str.from(`${path.inner()}:${row}:${col}`)
+            const file: FileCodePointer = { path, code, row, col, fullPath }
             return file
         })
 }
 
-
-export const assert = (fn: () => bool): bool => {
-    let isSuccessful = false
-    try {
-        isSuccessful = fn()
-    } catch (err: unknown) {
-        if (err instanceof Error) {
-            if (err.stack) {
-                err.stack.split('\n').forEach((stackItem) => {
-                    unitLogger.logDec(stackItem)
-                })
-            }
-        }
-    }
-
-    const stackLines = parseStack(new Error().stack!)
-    const stackLine = getTestStackLine(stackLines)
-
-    const path = Str.from(`${stackLine.path}:${stackLine.row}:${stackLine.col}`)
-    const newChild = TestNodeContext.new(
-        path,
-        isSuccessful,
-        stackLine.code,
-    )
-    currentNode.addChild(newChild)
-    return isSuccessful
+export const assert = (fn: (logger: Logger) => bool): bool => {
+    const stackLines = parseStack(Str.from(new Error().stack!))
+    const stackLinePointer = getTestStackLineFilePointer(stackLines)
+    const testNodeContext = TestNodeContext.new(stackLinePointer)
+    currentNode().addChild(testNodeContext)
+    return testNodeContext.run(fn)
 }
 
-export const assertEq = (fn: () => [unknown, unknown]): bool => {
-    return assert(() => {
-        const [a, b] = fn()
+export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
+    return assert((logger) => {
+        const [a, b] = fn(logger)
+        logger.log(Str.from('----------------- END LOG ------------------\n'))
         const equal = isEqual(a, b)
-        if (!equal) unitLogger.log(`\x1b[31mparsed result\n${inspect(a)}\nis not equal to \n${inspect(b)}\x1b[0m`)
+        if (!equal) {
+            logger.error(Str.from(`parsed result\n${inspect(a)}\nis not equal to \n${inspect(b)}`))
+        }
         return equal
     })
 }
 
-export const assertInc = (fn: () => [unknown, unknown]): bool => {
-    return assert(() => {
-        const [a, b] = fn()
+export const assertInc = (fn: (logger: Logger) => [unknown, unknown]): bool => {
+    return assert((logger) => {
+        const [a, b] = fn(logger)
+        logger.log(Str.from('----------------- END LOG ------------------\n'))
         const includes = isIncludes(a, b)
-        if (!includes) unitLogger.log(`\x1b[31mparsed result\n${inspect(a)}\nis not includes \n${inspect(b)}\x1b[0m`)
+        if (!includes) {
+            logger.error(Str.from(`parsed result\n${inspect(a)}\nis not includes \n${inspect(b)}`))
+        }
         return includes
     })
-}
-
-const tab = '  '
-let indent = ''
-
-const addIndent = (str: Str): Str => {
-    return str.split(/\n/).map((line) => line.concat(indent)).join('\n')
-}
-
-const printSuccess = (data: Str): void => {
-    console.log('\x1b[32m%s\x1b[0m', addIndent(data))
-}
-
-const printError = (data: Str): void => {
-    console.log('\x1b[31m%s\x1b[0m', addIndent(data))
-}
-
-const print = (data: any): void => {
-    console.log(addIndent(data))
-}
-
-const withIndent = (fn: () => Und): void => {
-    indent = indent + tab
-    fn()
-    indent = indent.slice(tab.length)
-}
-
-const printGroupOrResult = (resultOrGroup: TestNodeResult): void => {
-    if (resultOrGroup instanceof TestGroupContext) {
-        if (resultOrGroup.children().length === 0) return
-        if (resultOrGroup.isSuccessfull()) {
-            printSuccess(resultOrGroup.description().concat(':'))
-        } else {
-            printError(resultOrGroup.description().concat(':'))
-        }
-        withIndent(() => {
-            resultOrGroup.children().forEach(printGroupOrResult)
-        })
-    } else if (resultOrGroup instanceof TestNodeContext) {
-        const codeLines = resultOrGroup.code()
-        if (resultOrGroup.isSuccessfull()) {
-            printSuccess(codeLines.at(0)!.concat(codeLines.length > 1 ? ' ...' : ''))
-        } else {
-            codeLines.forEach(printError)
-            withIndent(() => {
-                printError(resultOrGroup.path())
-                const log = resultOrGroup.log()
-                if (log !== undefined) {
-                    print('------------------- LOG --------------------\n')
-                    log.each(print)
-                }
-            })
-        }
-    }
 }
 
 if (unittestEnabled) {
     process.on('beforeExit', () => {
         console.log('unittest results: \n')
-        root.children().forEach(printGroupOrResult)
+        getUnittestRootGroup().printResults(Logger.new())
     })
 }

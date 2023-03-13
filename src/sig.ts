@@ -4,7 +4,7 @@ export interface ReadSig<T> {
 
 export interface WriteSig<T> {
     (val: T): void
-    with<F>(fnUpdate: (val: T) => T): void
+    with(fnUpdate: (val: T) => T): void
 }
 
 export const Sig = <T>(val: T): [ReadSig<T>, WriteSig<T>] => {

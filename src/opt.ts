@@ -31,6 +31,10 @@ export const no = <Y, N = void>(val?: N): Opt<Y, N> => {
     }
 }
 
+export const unwrap = <Y, N = void>(val?: Opt<Y, N>): Y => {
+    return (val as unknown as Ok<Y>).val
+}
+
 export const isOk = <Y, N = void>(val: Opt<Y, N>): val is Ok<Y> => {
     return val.type === OptType.Ok
 }

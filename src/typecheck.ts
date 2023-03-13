@@ -1,7 +1,7 @@
 export const isNumber = (v: unknown): v is number => typeof v === 'number'
 export const isString = (v: unknown): v is string => typeof v === 'string'
 export const isBoolean = (v: unknown): v is boolean => typeof v === 'boolean'
-export const isVoid = (v: unknown): v is Opt<null>efined => v == null
+export const isVoid = (v: unknown): v is void => v == null
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const isFunction = <T extends Function>(v: unknown): v is T => typeof v === 'function'
 export const isObject = <K extends string | number | symbol = string, T = unknown>(v: unknown): v is Record<K, T> => {

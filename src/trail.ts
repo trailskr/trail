@@ -1,3 +1,4 @@
+import { Str } from './str'
 import { assertInc, unittest } from './unittest'
 
 class CodeIterator {
@@ -113,7 +114,12 @@ class TokenStream {
 
 const t = [][Symbol.iterator]
 
-unittest('sample test', () => {
+unittest(Str.from('sample test'), () => {
     const ts = new TokenStream('a = a + 1')
-    assertInc(() => [{a: 1, b: 2}, {a: 1}])
+    unittest(Str.from('sample test 2'), () => {
+        assertInc((logger) => {
+            logger.log(Str.from('hello'))
+            return [{a: 1, b: 2}, {a: 3}]
+        })
+    })
 })
