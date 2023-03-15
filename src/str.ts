@@ -15,7 +15,6 @@ export class Str implements Rng<usize, char> {
         return new Str(str)
     }
 
-
     static from (str: string) {
         return new Str(str)
     }
@@ -78,8 +77,14 @@ export class Str implements Rng<usize, char> {
         return [...this._str].some(fn)
     }
 
-    fold<R> (initialValue: R, fn: (acc: R, item: char, index: usize) => R): R {
-        return [...this._str].reduce<R>(fn, initialValue)
+    fold<R> (initialValue: R, fn: (acc: R, item: char, index: usize, stop: () => void) => R): R {
+        let acc = initialValue
+        let stop = false
+        for (const [index, char] of [...this._str].entries()) {
+            acc = fn(acc, char, index, () => { stop = true })
+            if (stop) break
+        }
+        return acc
     }
 
     reduce (fn: (a: char, b: char, index: usize) => char): char {
@@ -108,8 +113,12 @@ export class Str implements Rng<usize, char> {
         return optFrom([...this._str].findIndex(fn))
     }
 
-    each<R> (fn: (val: char, key: usize) => R): void {
-        [...this._str].forEach(fn)
+    for<R> (fn: (val: char, key: usize, stop: () => void) => R): void {
+        let stop = false
+        for (const [index, char] of [...this._str].entries()) {
+            fn(char, index, () => { stop = true })
+            if (stop) break
+        }
     }
 
     pushRight (val: char): Str {

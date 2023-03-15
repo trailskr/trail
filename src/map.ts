@@ -3,7 +3,6 @@ import { Opt, optFrom } from './opt'
 
 import { Rng } from './rng'
 import { Slice } from './slice'
-import { Str } from './str'
 
 export class Map<K, T> implements Rng<K, T> {
     private readonly _map: ImmMap<K, T>
@@ -83,8 +82,14 @@ export class Map<K, T> implements Rng<K, T> {
         return this._map.some(fn)
     }
 
-    fold<R> (initialValue: R, fn: (acc: R, item: T, key: K) => R): R {
-        return this._map.reduce<R>(fn, initialValue)
+    fold<R> (initialValue: R, fn: (acc: R, item: T, key: K, stop: () => void) => R): R {
+        let acc = initialValue
+        let stop = false
+        for (const [index, char] of this._map.entries()) {
+            acc = fn(acc, char, index, () => { stop = true })
+            if (stop) break
+        }
+        return acc
     }
 
     reduce (fn: (a: T, b: T, key: K) => T): T {
@@ -114,8 +119,12 @@ export class Map<K, T> implements Rng<K, T> {
         return optFrom(this._map.findKey(fn))
     }
 
-    each<R> (fn: (val: T, key: K) => R): void {
-        this._map.forEach(fn)
+    for<R> (fn: (val: T, key: K, stop: () => void) => R): void {
+        let stop = false
+        for (const [index, char] of this._map.entries()) {
+            fn(char, index, () => { stop = true })
+            if (stop) break
+        }
     }
 
     inner (): ImmMap<K, T> {

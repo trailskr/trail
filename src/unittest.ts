@@ -52,10 +52,10 @@ class TestNodeContext implements TestNodeResult {
         } else {
             logger.error(fullPath)
             logger.withIndent(() => {
-                code.each((line) => { logger.error(line) })
+                code.for((line) => { logger.error(line) })
                 const log = this._log()
                 logger.log(Str.from('------------------- LOG --------------------\n'))
-                log.each(line => logger.log(line))
+                log.for(line => logger.log(line))
             })
         }
     }
@@ -110,7 +110,7 @@ class TestGroupContext implements TestNodeResult {
             logger.error(message)
         }
         logger.withIndent(() => {
-          this._children().each((child) => child.printResults(logger))
+          this._children().for((child) => child.printResults(logger))
         })
     }
 }

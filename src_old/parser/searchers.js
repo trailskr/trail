@@ -38,11 +38,9 @@ export const exceptChar = (charToFind, escape) => {
 }
 
 export const string = (stringToFind) => (codePointer) => {
-  let ptr = codePointer
-  let char
   const len = stringToFind.length
   for (let i = 0; i < len; i += 1) {
-    [ptr, char] = getNextChar(ptr)
+    const [ptr, char] = getNextChar(ptr)
 
     if (char !== stringToFind[i]) {
       return [codePointer, undefined]

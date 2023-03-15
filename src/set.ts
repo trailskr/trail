@@ -67,43 +67,48 @@ export class Set<T> implements SetRng<T, T> {
         return this._set.isSuperset(rng._set)
     }
 
-    every (fn: (item: T, key: T) => bool): bool {
+    every (fn: (item: T) => bool): bool {
         return this._set.every(fn)
     }
 
-    some (fn: (item: T, key: T) => bool): bool {
+    some (fn: (item: T) => bool): bool {
         return this._set.some(fn)
     }
 
-    fold<R> (initialValue: R, fn: (acc: R, item: T, key: T) => R): R {
-        return this._set.reduce<R>(fn, initialValue)
+    fold<R> (initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R {
+        let acc = initialValue
+        let stop = false
+        for (const item of this._set) {
+            acc = fn(acc, item, () => { stop = true })
+            if (stop) break
+        }
+        return acc
     }
 
-    reduce (fn: (a: T, b: T, key: T) => T): T {
+    reduce (fn: (a: T, b: T) => T): T {
         return this._set.reduce(fn)
     }
 
-    map<R> (fn: (val: T, key: T) => R): Set<R> {
+    map<R> (fn: (val: T) => R): Set<R> {
         const set = this._set.map(fn)
         return new Set(set)
     }
 
-    filter (fn: (val: T, key: T) => bool): Set<T> {
+    filter (fn: (val: T) => bool): Set<T> {
         const set = this._set.filter(fn)
         return new Set(set)
     }
 
-    find (fn: (val: T, key: T) => bool): Opt<T> {
+    find (fn: (val: T) => bool): Opt<T> {
         return optFrom(this._set.find(fn))
     }
 
-    findEntry (fn: (val: T, key: T) => bool): Opt<[value: T, key: T]> {
-        const entry = this._set.findEntry(fn)
-        return optFrom(entry && [entry[1], entry[0]])
-    }
-
-    each<R> (fn: (val: T, key: T) => R): void {
-        this._set.forEach(fn)
+    for<R> (fn: (val: T, stop: () => void) => R): void {
+        let stop = false
+        for (const item of this._set) {
+            fn(item, () => { stop = true })
+            if (stop) break
+        }
     }
 
     inner (): ImmSet<T> {

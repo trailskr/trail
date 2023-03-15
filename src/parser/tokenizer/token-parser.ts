@@ -1,18 +1,14 @@
-import { Opt } from "src/opt"
-import { Char } from "./char"
-import { CodePtr } from "./code-ptr"
-import { Token } from "./tokens"
+import { Opt } from 'src/opt'
+import { SearchChar } from './searchers/search-char'
+import { CodePtr } from './code-ptr'
+import { Token, TokenType } from './tokens'
 
-export const isWhiteSpace = (char: char): bool => {
-    return char === ' '
-}
-
-export const inRange = (char: char, from: char, to: char): bool => {
-    return char >= from && char <= to
-}
-
-export interface CharParser {
+export interface TokenParser {
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, char: Opt<Token>]
 }
 
-export const whiteSpace = Char.new(' ')
+export const plus = SearchChar.new({ type: TokenType.Plus }, '+')
+export const minus = SearchChar.new({ type: TokenType.Minus }, '+')
+export const div = SearchChar.new({ type: TokenType.Div }, '+')
+export const mul = SearchChar.new({ type: TokenType.Mul }, '+')
+

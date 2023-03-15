@@ -1,8 +1,8 @@
-import { CodePtr } from "./code-ptr"
-import { CharParser } from "./char-parser"
-import { isOk, no, Opt } from "src/opt"
+import { CodePtr } from '../code-ptr'
+import { isOk, no, Opt } from 'src/opt'
+import { TokenParser } from '../token-parser'
 
-export class CharInRange implements CharParser {
+export class CharInRange implements TokenParser {
     private readonly _from: char
     private readonly _to: char
 

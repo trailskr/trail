@@ -86,8 +86,14 @@ export class Vec<T> implements Rng<usize, T> {
         return this._arr.some(fn)
     }
 
-    fold <R>(initialValue: R, fn: (acc: R, item: T, key: usize) => R): R {
-        return this._arr.reduce<R>(fn, initialValue)
+    fold <R>(initialValue: R, fn: (acc: R, item: T, key: usize, stop: () => void) => R): R {
+        let acc = initialValue
+        let stop = false
+        for (const [index, char] of this._arr.entries()) {
+            acc = fn(acc, char, index, () => { stop = true })
+            if (stop) break
+        }
+        return acc
     }
 
     reduce (fn: (a: T, b: T, key: usize) => T): T {
@@ -117,8 +123,12 @@ export class Vec<T> implements Rng<usize, T> {
         return optFrom(this._arr.findIndex(fn))
     }
 
-    each<R> (fn: (val: T, key: usize) => R): void {
-        this._arr.forEach(fn)
+    for<R> (fn: (val: T, key: usize, stop: () => void) => R): void {
+        let stop = false
+        for (const [index, char] of this._arr.entries()) {
+            fn(char, index, () => { stop = true })
+            if (stop) break
+        }
     }
 
     pushRight (val: T): Vec<T> {
