@@ -29,8 +29,6 @@ export interface Rng<K, T> {
     len(): usize
 
     has(item: T): bool
-    get(key: K): Opt<T>
-    set(key: K, val: T): Rng<K, T>
     includes(rng: Rng<K, T>): bool
 
     popLeft(): [Rng<K, T>, Opt<T>]
