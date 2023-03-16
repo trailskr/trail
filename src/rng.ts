@@ -16,7 +16,7 @@ export interface SetRng<K, T> {
     every(fn: (val: T) => bool): bool
     some(fn: (val: T) => bool): bool
     fold<R>(initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R
-    reduce(fn: (a: T, b: T) => T): T
+    reduce(fn: (acc: T, b: T) => T): T
     map<R>(fn: (val: T) => R): SetRng<K, R>
     filter(fn: (val: T) => bool): SetRng<K, T>
     find(fn: (val: T) => bool): Opt<T>

@@ -84,7 +84,7 @@ export class Set<T> implements SetRng<T, T> {
         return acc
     }
 
-    reduce (fn: (a: T, b: T) => T): T {
+    reduce (fn: (acc: T, b: T) => T): T {
         return this._set.reduce(fn)
     }
 

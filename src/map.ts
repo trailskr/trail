@@ -91,7 +91,7 @@ export class Map<K, T> implements Rng<K, T> {
         return acc
     }
 
-    reduce (fn: (a: T, b: T, key: K) => T): T {
+    reduce (fn: (acc: T, b: T, key: K) => T): T {
         return this._map.reduce(fn)
     }
 

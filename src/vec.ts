@@ -96,7 +96,7 @@ export class Vec<T> implements Rng<usize, T> {
         return acc
     }
 
-    reduce (fn: (a: T, b: T, key: usize) => T): T {
+    reduce (fn: (acc: T, b: T, key: usize) => T): T {
         return this._arr.reduce(fn)
     }
 
