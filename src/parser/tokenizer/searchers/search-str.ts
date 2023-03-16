@@ -1,32 +1,25 @@
 import { CodePtr } from '../code-ptr'
-import { isNo, isOk, no, ok, Opt } from 'src/opt'
-import { TokenParser } from '../token-parser'
-import { TokenType, Token } from '../tokens'
+import { isNo } from 'src/opt'
 import { Str } from 'src/str'
-import { assert, assertEq, assertInc, unittest } from 'src/unittest'
+import { assertEq, unittest } from 'src/unittest'
+import { Searcher, SearchResult } from '../searcher'
 
-export class SearchStr implements TokenParser {
-    private readonly _token: Token
+export class SearchStr implements Searcher {
     private readonly _str: Str
 
-    constructor (token: Token, str: Str) {
-        this._token = token
+    private constructor (str: Str) {
         this._str = str
     }
     
-    static new (token: Token, str: Str): SearchStr {
-        return new SearchStr(token, str)
-    }
-
-    token(): Token {
-        return this._token
+    static new (str: Str): SearchStr {
+        return new SearchStr(str)
     }
 
     str(): Str {
         return this._str
     }
 
-    parse(codePtr: CodePtr): [newCodePtr: CodePtr, token: Opt<Token>] {
+    parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
         const newPtr = this._str.fold(codePtr, (ptr, strChar, _, stop) => {
             const [newPtr, charOpt] = ptr.next()
             if (isNo(charOpt) || strChar !== charOpt.val) {
@@ -37,15 +30,15 @@ export class SearchStr implements TokenParser {
         })
       
         return newPtr != codePtr
-            ? [newPtr, ok(this._token)]
-            : [codePtr, no()]
+            ? [newPtr, SearchResult.Found]
+            : [codePtr, SearchResult.NotFound]
     }
 }
 
 unittest(Str.from('SearchStr'), () => {
-    const arrow = SearchStr.new({ type: TokenType.LineEnd }, Str.from('\r\n'))
+    const arrow = SearchStr.new(Str.from('\r\n'))
     const codePtr1 = CodePtr.new(Str.from('\r\n'))
-    const [newPtr1, tokenOpt] = arrow.parse(codePtr1)
+    const [newPtr1, isFound] = arrow.parse(codePtr1)
     assertEq(() => [newPtr1.pos(), 2])
-    assert(() => isOk(tokenOpt) && tokenOpt.val.type === TokenType.LineEnd)
+    assertEq(() => [isFound, SearchResult.Found])
 })

@@ -1,44 +1,37 @@
 import { CodePtr } from '../code-ptr'
-import { isOk, no, ok, Opt } from 'src/opt'
-import { TokenParser } from '../token-parser'
-import { Token, TokenType } from '../tokens'
+import { isOk } from 'src/opt'
 import { Str } from 'src/str'
-import { assert, assertEq, unittest } from 'src/unittest'
+import { assertEq, unittest } from 'src/unittest'
+import { Searcher, SearchResult } from '../searcher'
 
-export class SearchChar implements TokenParser {
-    private readonly _token: Token
+export class SearchChar implements Searcher {
     private readonly _char: char
 
-    constructor (token: Token, char: char) {
-        this._token = token
+    private constructor (char: char) {
         this._char = char
     }
     
-    static new (token: Token, char: char): SearchChar {
-        return new SearchChar(token, char)
-    }
-
-    token(): Token {
-        return this._token
+    static new (char: char): SearchChar {
+        return new SearchChar(char)
     }
 
     char(): char {
         return this._char
     }
 
-    parse(codePtr: CodePtr): [newCodePtr: CodePtr, token: Opt<Token>] {
+    parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
         const [ptr, charOpt] = codePtr.next()
       
         return isOk(charOpt) && charOpt.val === this._char
-            ? [ptr, ok(this._token)]
-            : [codePtr, no()]
+            ? [ptr, SearchResult.Found]
+            : [codePtr, SearchResult.NotFound]
     }
 }
 
 unittest(Str.from('SearchChar'), () => {
-    const arrow = SearchChar.new({ type: TokenType.Plus }, '+')
+    const arrow = SearchChar.new('+')
     const codePtr1 = CodePtr.new(Str.from('+'))
-    const [newPtr1, tokenOpt] = arrow.parse(codePtr1)
+    const [newPtr1, isFound] = arrow.parse(codePtr1)
     assertEq(() => [newPtr1.pos(), 1])
-    assert(() => isOk(tokenOpt) && tokenOpt.val.type === TokenType.Plus)
+    assertEq(() => [isFound, SearchResult.Found])
 })

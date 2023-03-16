@@ -1,8 +1,6 @@
-import assert from "assert"
-
 export enum OptType {
-    Ok,
-    No,
+    Ok = 'Ok',
+    No = 'No',
 }
 
 export interface Ok<T> {

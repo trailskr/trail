@@ -1,14 +1,16 @@
+import { Str } from "src/str"
+
 export enum TokenType {
-    Indent,
-    LineEnd,
-    TokenError,
+    Indent = 'Indent',
+    LineEnd = 'LineEnd',
+    TokenError = 'TokenError',
 
-    Arrow,
+    Arrow = 'Arrow',
 
-    Plus,
-    Minus,
-    Mul,
-    Div,
+    Plus = 'Plus',
+    Minus = 'Minus',
+    Mul = 'Mul',
+    Div = 'Div',
 }
 
 export interface Indent { type: TokenType.Indent, size: usize }
@@ -34,7 +36,7 @@ export type Token =
 
 export interface TokenError {
     type: TokenType.TokenError
-    msg: string
+    msg: Str
 }
 
 export type TokenResult = Token | TokenError

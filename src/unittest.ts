@@ -54,8 +54,9 @@ class TestNodeContext implements TestNodeResult {
             logger.withIndent(() => {
                 code.for((line) => { logger.error(line) })
                 const log = this._log()
-                logger.log(Str.from('------------------- LOG --------------------\n'))
-                log.for(line => logger.log(line))
+                if (log.len() > 0) {
+                    log.for(line => logger.log(line))
+                }
             })
         }
     }
@@ -227,7 +228,6 @@ export const assert = (fn: (logger: Logger) => bool): bool => {
 export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
     return assert((logger) => {
         const [a, b] = fn(logger)
-        logger.log(Str.from('----------------- END LOG ------------------\n'))
         const equal = isEqual(a, b)
         if (!equal) {
             logger.error(Str.from(`parsed result\n${inspect(a)}\nis not equal to \n${inspect(b)}`))
@@ -239,7 +239,6 @@ export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
 export const assertInc = (fn: (logger: Logger) => [unknown, unknown]): bool => {
     return assert((logger) => {
         const [a, b] = fn(logger)
-        logger.log(Str.from('----------------- END LOG ------------------\n'))
         const includes = isIncludes(a, b)
         if (!includes) {
             logger.error(Str.from(`parsed result\n${inspect(a)}\nis not includes \n${inspect(b)}`))
