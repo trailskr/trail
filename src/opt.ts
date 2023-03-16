@@ -44,3 +44,7 @@ export const isNo = <Y, N = void>(val: Opt<Y, N>): val is No<N> => {
 export const optFrom = <T>(val: T | undefined): Opt<T, void> => {
     return val === undefined ? no<T>() : ok<T>(val)
 }
+
+export const or = <T>(val: Opt<T>, def: T): T => {
+    return isOk(val) ? val.val : def
+}

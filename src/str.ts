@@ -1,4 +1,4 @@
-import { isOk, no, ok, Opt, optFrom } from "./opt"
+import { isOk, no, ok, Opt, optFrom, or } from "./opt"
 import { Rng } from "./rng"
 import { Slice } from "./slice"
 import { Vec } from "./vec"
@@ -43,10 +43,10 @@ export class Str implements Rng<usize, char> {
         return new Str(this._str.slice(-amount))
     }
 
-    slice (fn: (len: usize) => [left: usize, right: usize]): Str {
+    slice (fn: (len: usize) => Slice<usize>): Str {
         const len = this.len()
-        const slice = Slice.new(len, fn)
-        return new Str(this._str.slice(slice.left(), slice.right()))
+        const slice = fn(len)
+        return new Str(this._str.slice(or(slice.left(), 0), or(slice.right(), len)))
     }
 
     has (item: char): bool {

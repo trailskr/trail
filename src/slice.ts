@@ -1,22 +1,23 @@
-export class Slice {
-    private readonly _left: usize
-    private readonly _right: usize
+import { Opt } from "./opt"
 
-    private constructor(left: usize, right: usize) {
+export class Slice<T = usize> {
+    private readonly _left: Opt<T>
+    private readonly _right: Opt<T>
+
+    private constructor(left: Opt<T>, right: Opt<T>) {
         this._left = left
         this._right = right
     }
 
-    static new(len: usize, fn: (len: usize) => [left: usize, right: usize]): Slice {
-        const [left, right] = fn(len)
+    static new<T = usize>(left: Opt<T>, right: Opt<T>): Slice<T> {
         return new Slice(left, right)
     }
 
-    left (): usize {
+    left (): Opt<T> {
         return this._left
     }
 
-    right (): usize {
+    right (): Opt<T> {
         return this._right
     }
 }

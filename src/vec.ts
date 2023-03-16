@@ -1,5 +1,5 @@
 import { List } from 'immutable'
-import { no, ok, Opt, optFrom, isOk } from './opt'
+import { no, ok, Opt, optFrom, isOk, or } from './opt'
 
 import { Rng } from "./rng"
 import { Slice } from './slice'
@@ -52,10 +52,10 @@ export class Vec<T> implements Rng<usize, T> {
         return new Vec(this._arr.skipLast(amount))
     }
 
-    slice (fn: (len: usize) => [left: usize, right: usize]): Vec<T> {
+    slice (fn: (len: usize) => Slice<usize>): Vec<T> {
         const len = this.len()
-        const slice = Slice.new(len, fn)
-        return new Vec(this._arr.slice(slice.left(), slice.right()))
+        const slice = fn(len)
+        return new Vec(this._arr.slice(or(slice.left(), 0), or(slice.right(), len)))
     }
 
     len (): usize {

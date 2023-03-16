@@ -1,5 +1,5 @@
 import { Map as ImmMap } from 'immutable'
-import { Opt, optFrom } from './opt'
+import { Opt, optFrom, or } from './opt'
 
 import { Rng } from './rng'
 import { Slice } from './slice'
@@ -47,11 +47,10 @@ export class Map<K, T> implements Rng<K, T> {
         return new Map(this._map.skipLast(amount))
     }
 
-    slice (fn: (len: usize) => [left: usize, right: usize]): Map<K, T> {
+    slice (fn: (len: usize) => Slice<usize>): Map<K, T> {
         const len = this.len()
-        const slice = Slice.new(len, fn)
-        const sliced = this._map.slice(slice.left(), slice.right())
-        return new Map(sliced)
+        const slice = fn(len)
+        return new Map(this._map.slice(or(slice.left(), 0), or(slice.right(), len)))
     }
 
     has (item: T): bool {

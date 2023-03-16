@@ -1,4 +1,6 @@
+import { no, ok } from "./opt"
 import { Sig, WriteSig } from "./sig"
+import { Slice } from "./slice"
 import { Str } from "./str"
 
 const addIndent = (str: Str, indent: Str): Str => {
@@ -63,7 +65,9 @@ export class Logger {
     }
 
     dec (): void {
-        this._setIndent.with((indent) => indent.slice((len) => [0, len - this._tab.len()]))
+        this._setIndent.with((indent) => indent.slice(
+            (len) => Slice.new(no(), ok(len - this._tab.len()))
+        ))
     }
 
     withIndent (fn: () => void) {

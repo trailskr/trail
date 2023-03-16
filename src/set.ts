@@ -1,5 +1,5 @@
 import { Set as ImmSet } from 'immutable'
-import { Opt, optFrom } from './opt'
+import { Opt, optFrom, or } from './opt'
 
 import { SetRng } from './rng'
 import { Slice } from './slice'
@@ -48,11 +48,10 @@ export class Set<T> implements SetRng<T, T> {
         return new Set(this._set.skipLast(amount))
     }
 
-    slice (fn: (len: usize) => [left: usize, right: usize]): Set<T> {
+    slice (fn: (len: usize) => Slice<usize>): Set<T> {
         const len = this.len()
-        const slice = Slice.new(len, fn)
-        const sliced = this._set.slice(slice.left(), slice.right())
-        return new Set(sliced)
+        const slice = fn(len)
+        return new Set(this._set.slice(or(slice.left(), 0), or(slice.right(), len)))
     }
 
     len (): usize {

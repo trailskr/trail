@@ -2,12 +2,13 @@ import fs from 'fs'
 import { inspect } from 'util'
 
 import { Logger } from './logger'
-import { isNo, unwrap } from './opt'
+import { isNo, no, ok, unwrap } from './opt'
 import { ReadSig, Sig, WriteSig } from './sig'
 import { Str } from './str'
 import { isEqual, isIncludes } from './utils'
 import { Vec } from './vec'
 import { Set } from './set'
+import { Slice } from './slice'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
@@ -149,7 +150,7 @@ const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
         return Math.min(minIndent, m.index!)
     })
     if (!isFinite(commonIndent)) return lines
-    return lines.map((line) => line.slice((len) => [commonIndent, len]))
+    return lines.map((line) => line.slice(() => Slice.new(ok(commonIndent), no())))
 }
 
 const filesRead = new Map()
@@ -163,7 +164,7 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     const lineOpt = lines.get(lineIndex)
     if (isNo(lineOpt)) return Vec.new()
     // spaces before code start
-    let line = Str.new(col, ' ').concat(lineOpt.val.slice((len) => [col - 1, len]))
+    let line = Str.new(col, ' ').concat(lineOpt.val.slice(() => Slice.new(ok(col - 1), no())))
     let result: Vec<Str> = Vec.new()
     let parensStack = Vec.new<char>()
     while (true) {
