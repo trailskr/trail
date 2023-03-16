@@ -20,7 +20,7 @@ export class TokenParser {
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, token: Opt<TokenResult>] {
         const [newPtr, result] = this._searcher.parse(codePtr)
         return result === SearchResult.NotEnded
-            ? [newPtr, ok({ type: TokenType.TokenError, msg: Str.from('expected end of token') })]
+            ? [newPtr, ok({ type: TokenType.Error, msg: Str.from('expected end of token') })]
             : result === SearchResult.Found
                 ? [newPtr, ok(this._tokenFn(codePtr, newPtr))]
                 : [codePtr, no()]

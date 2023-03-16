@@ -23,14 +23,14 @@ export class SearchAny implements Searcher {
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
         const [newPtr, isFound] = this._items.fold(
             [codePtr, false] as [CodePtr, bool],
-            ([ptr, isFound], searcher, _, stop) => {
+            ([ptr, _isFound], searcher, _, stop) => {
                 const [newPtr, result] = searcher.parse(ptr)
-                const newIsFound = isFound || result === SearchResult.Found
+                const newIsFound = result === SearchResult.Found
                 if (newIsFound) {
                     stop()
                     return [newPtr, true]
                 }
-                return [codePtr, false]
+                return [ptr, false]
             }
         )
       

@@ -4,6 +4,7 @@ import { Str } from "src/str"
 import { assertEq, unittest } from "src/unittest"
 import { Vec } from "src/vec"
 import { CodePtr } from "./code-ptr"
+import { SearchAny } from "./searchers/search-any"
 import { SearchChar } from "./searchers/search-char"
 import { SearchRepeat } from "./searchers/search-repeat"
 import { SearchSequence, SequenceFlag } from "./searchers/search-sequence"
@@ -31,7 +32,9 @@ export const mul = TokenParser.new(() => ({ type: TokenType.Mul }), SearchChar.n
 export const div = TokenParser.new(() => ({ type: TokenType.Div }), SearchChar.new('/'))
 
 unittest(Str.from('token parsers'), () => {
-    const [newCodePtr, result] = indent.parse(CodePtr.new(Str.from('          ')))
-    assertEq(() => [newCodePtr.pos(), 8])
-    assertEq(() => [result, ok({ type: TokenType.Indent, size: 2 })])
+    unittest(Str.from('indent'), () => {
+        const [newCodePtr, result] = indent.parse(CodePtr.new(Str.from('          ')))
+        assertEq(() => [newCodePtr.pos(), 8])
+        assertEq(() => [result, ok({ type: TokenType.Indent, size: 2 })])
+    })
 })

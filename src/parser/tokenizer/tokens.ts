@@ -11,7 +11,7 @@ export enum TokenType {
     Mul = 'Mul',
     Div = 'Div',
     
-    TokenError = 'TokenError',
+    Error = 'TokenError',
 }
 
 export interface Indent { type: TokenType.Indent, size: usize }
@@ -36,7 +36,7 @@ export type Token =
     Div
 
 export interface TokenError {
-    type: TokenType.TokenError
+    type: TokenType.Error
     msg: Str
 }
 
