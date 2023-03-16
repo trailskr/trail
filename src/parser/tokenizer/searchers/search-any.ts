@@ -58,6 +58,6 @@ unittest(Str.from('SearchAny'), () => {
 
     const codePtr3 = CodePtr.new(Str.from('c'))
     const [newPtr3, result3] = aOrB.parse(codePtr3)
-    assertEq(() => [newPtr3.pos(), 3])
+    assertEq(() => [newPtr3.pos(), 0])
     assertEq(() => [result3, SearchResult.NotFound])
 })
