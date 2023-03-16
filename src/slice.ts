@@ -31,7 +31,7 @@ export class Slice<T extends number = usize> implements Rng<usize, T> {
     }
 
     orRight (): T {
-        return orRight(this._left)
+        return orRight(this._right)
     }
 
     len (): T {
