@@ -88,6 +88,6 @@ unittest(Str.from('TokenStrem'), () => {
     assertEq(() => [result5, ok({ type: TokenType.Div })])
     const [tokenStream6, result6] = tokenStream5.popLeft()
     assertEq(() => [result6, ok({ type: TokenType.LineEnd })])
-    const [tokenStream7, result7] = tokenStream5.popLeft()
+    const [tokenStream7, result7] = tokenStream6.popLeft()
     assertEq(() => [result7, ok({ type: TokenType.Indent, size: 1 })])
 })
