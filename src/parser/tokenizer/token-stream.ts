@@ -1,11 +1,15 @@
 import { isNo, no, Opt } from "src/opt"
 import { Str } from "src/str"
+import { Vec } from "src/vec"
 import { CodePtr } from "./code-ptr"
+import { SearchChar } from "./searchers/search-char"
+import { SearchSequence } from "./searchers/search-sequence"
 import { TokenResult } from "./tokens"
 
-const isWhiteSpace = (char: char): bool => {
-    return char === ' '
-}
+const whiteSpace = SearchSequence.new(Vec.from([
+    { searcher: SearchChar.new('\r'), flag: SequenceFlag.Optional },
+    { searcher: SearchChar.new('\n'), flag: SequenceFlag.None },
+]))
 
 export class TokenStream {
     private readonly _codePtr: CodePtr

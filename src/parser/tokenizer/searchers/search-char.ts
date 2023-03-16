@@ -30,8 +30,14 @@ export class SearchChar implements Searcher {
 
 unittest(Str.from('SearchChar'), () => {
     const arrow = SearchChar.new('+')
+
     const codePtr1 = CodePtr.new(Str.from('+'))
-    const [newPtr1, isFound] = arrow.parse(codePtr1)
+    const [newPtr1, result1] = arrow.parse(codePtr1)
     assertEq(() => [newPtr1.pos(), 1])
-    assertEq(() => [isFound, SearchResult.Found])
+    assertEq(() => [result1, SearchResult.Found])
+
+    const codePtr2 = CodePtr.new(Str.from('-'))
+    const [newPtr2, result2] = arrow.parse(codePtr2)
+    assertEq(() => [newPtr2.pos(), 0])
+    assertEq(() => [result2, SearchResult.NotFound])
 })
