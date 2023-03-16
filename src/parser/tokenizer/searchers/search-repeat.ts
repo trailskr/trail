@@ -26,12 +26,13 @@ export class SearchRepeat implements Searcher {
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
         const [newPtr, times] = Slice.new<usize>(no(), this._slice.right()).fold(
             [codePtr, 0] as [CodePtr, usize],
-            ([ptr, times], _a, _) => {
+            ([ptr, times], _a, _, stop) => {
                 const [newPtr, result] = this._searcher.parse(ptr)
-                if (result === SearchResult.Found) {
-                    return [newPtr, times + 1] as [CodePtr, usize]
+                if (result !== SearchResult.Found) {
+                    stop()
+                    return [newPtr, times] as [CodePtr, usize]
                 }
-                return [newPtr, times] as [CodePtr, usize]
+                return [newPtr, times + 1] as [CodePtr, usize]
             })
       
         return times >= this._slice.orLeft()
@@ -41,20 +42,22 @@ export class SearchRepeat implements Searcher {
 }
 
 unittest(Str.from('SearchRepeat'), () => {
-    const spacesFrom2To5 = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(2), ok(5)))
+    const spacesFrom2 = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(2), no()))
 
     const codePtr1 = CodePtr.new(Str.from('    '))
-    const [newPtr1, result1] = spacesFrom2To5.parse(codePtr1)
+    const [newPtr1, result1] = spacesFrom2.parse(codePtr1)
     assertEq(() => [newPtr1.pos(), 4])
     assertEq(() => [result1, SearchResult.Found])
 
     const codePtr2 = CodePtr.new(Str.from(' '))
-    const [newPtr2, result2] = spacesFrom2To5.parse(codePtr2)
+    const [newPtr2, result2] = spacesFrom2.parse(codePtr2)
     assertEq(() => [newPtr2.pos(), 0])
     assertEq(() => [result2, SearchResult.NotFound])
 
+    const spacesTo5 = SearchRepeat.new(SearchChar.new(' '), Slice.new(no(), ok(5)))
+
     const codePtr3 = CodePtr.new(Str.from('         '))
-    const [newPtr3, result3] = spacesFrom2To5.parse(codePtr3)
+    const [newPtr3, result3] = spacesTo5.parse(codePtr3)
     assertEq(() => [newPtr3.pos(), 5])
     assertEq(() => [result3, SearchResult.Found])
 })

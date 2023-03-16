@@ -27,20 +27,7 @@ export class TokenStream {
 
     popLeft(): [TokenStream, Opt<[TokenResult, CodePtr]>] {
         if (this._isParsingIndent) {
-            let ptr: CodePtr
-            let charOpt: Opt<char>
-            let spaces = 0
-            while (true) {
-                [ptr, charOpt] = this._codePtr.next()
-                if (isNo(charOpt)) {
-                    return [new TokenStream(ptr, false), no()]
-                }
-                if (isWhiteSpace(charOpt.val)) {
-                    spaces += 1
-                } else {
-                    const 
-                }
-            }
+            
         }
     }
 }

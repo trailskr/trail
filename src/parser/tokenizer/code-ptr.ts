@@ -44,6 +44,10 @@ export class CodePtr {
         }
     }
 
+    lenFrom(codePtr: CodePtr): usize {
+        return this._pos - codePtr._pos
+    }
+
     private _nextCol (): CodePtr {
         return new CodePtr(this._code, this._pos + 1, this._col + 1, this._row)
     }

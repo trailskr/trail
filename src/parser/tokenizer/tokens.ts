@@ -3,7 +3,6 @@ import { Str } from "src/str"
 export enum TokenType {
     Indent = 'Indent',
     LineEnd = 'LineEnd',
-    TokenError = 'TokenError',
 
     Arrow = 'Arrow',
 
@@ -11,6 +10,8 @@ export enum TokenType {
     Minus = 'Minus',
     Mul = 'Mul',
     Div = 'Div',
+    
+    TokenError = 'TokenError',
 }
 
 export interface Indent { type: TokenType.Indent, size: usize }
