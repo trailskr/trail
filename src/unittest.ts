@@ -125,6 +125,7 @@ const test = (description: Str, fn: () => void): void => {
     topNode.addChild(newNode)
     setCurrentNode(newNode)
     fn() // __TEST_CALL__
+    setCurrentNode(topNode)
 }
 
 export const unittest = unittestEnabled

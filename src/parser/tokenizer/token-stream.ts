@@ -1,18 +1,19 @@
 import { isNo, no, Opt } from "src/opt"
-import { ReadSig, Sig, WriteSig } from "src/sig"
 import { Str } from "src/str"
 import { CodePtr } from "./code-ptr"
-import { isWhiteSpace } from "./token-parser"
-import { Token } from "./tokens"
+import { TokenResult } from "./tokens"
+
+const isWhiteSpace = (char: char): bool => {
+    return char === ' '
+}
 
 export class TokenStream {
     private readonly _codePtr: CodePtr
-    private readonly _parsingIndent: ReadSig<bool>
-    private readonly _setParsingIndent: WriteSig<bool>
+    private readonly _isParsingIndent: bool
 
-    constructor(codePtr: CodePtr, isParsingIndent: bool = true) {
+    private constructor(codePtr: CodePtr, isParsingIndent: bool = true) {
         this._codePtr = codePtr
-        ;[this._parsingIndent, this._setParsingIndent] = Sig(isParsingIndent)
+        this._isParsingIndent = isParsingIndent
     }
 
     static new (code: Str): TokenStream {
@@ -20,15 +21,20 @@ export class TokenStream {
         return new TokenStream(codePtr, true)
     }
 
-    popLeft(): [TokenStream, Opt<[Token, CodePtr]>] {
-        while (true) {
-            const [codePtr, charOpt] = this._codePtr.next()
-            if (isNo(charOpt)) return [this, no()]
-            const char = charOpt.val
-            if (this._parsingIndent()) {
-                const [spaces, setSpaces] = Sig(0)
-                if (isWhiteSpace(char)) {
-                    setSpaces.with(spaces => spaces +1)
+    popLeft(): [TokenStream, Opt<[TokenResult, CodePtr]>] {
+        if (this._isParsingIndent) {
+            let ptr: CodePtr
+            let charOpt: Opt<char>
+            let spaces = 0
+            while (true) {
+                [ptr, charOpt] = this._codePtr.next()
+                if (isNo(charOpt)) {
+                    return [new TokenStream(ptr, false), no()]
+                }
+                if (isWhiteSpace(charOpt.val)) {
+                    spaces += 1
+                } else {
+                    const 
                 }
             }
         }

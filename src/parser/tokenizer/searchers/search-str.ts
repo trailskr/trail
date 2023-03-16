@@ -1,8 +1,9 @@
 import { CodePtr } from '../code-ptr'
-import { isOk, no, ok, Opt } from 'src/opt'
+import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { TokenParser } from '../token-parser'
-import { Token } from '../tokens'
+import { TokenType, Token } from '../tokens'
 import { Str } from 'src/str'
+import { assert, assertEq, assertInc, unittest } from 'src/unittest'
 
 export class SearchStr implements TokenParser {
     private readonly _token: Token
@@ -25,13 +26,26 @@ export class SearchStr implements TokenParser {
         return this._str
     }
 
-    parse(codePtr: CodePtr): [newCodePtr: CodePtr, str: Opt<Token>] {
-        return this._str.fold(codePtr, (ptr) => {
-            const [ptr, charOpt] = codePtr.next()
+    parse(codePtr: CodePtr): [newCodePtr: CodePtr, token: Opt<Token>] {
+        const newPtr = this._str.fold(codePtr, (ptr, strChar, _, stop) => {
+            const [newPtr, charOpt] = ptr.next()
+            if (isNo(charOpt) || strChar !== charOpt.val) {
+                stop()
+                return codePtr
+            }
+            return newPtr
         })
       
-        return isOk(strOpt) && strOpt.val === this._str
-            ? [ptr, ok(this._token)]
+        return newPtr != codePtr
+            ? [newPtr, ok(this._token)]
             : [codePtr, no()]
     }
 }
+
+unittest(Str.from('SearchStr'), () => {
+    const arrow = SearchStr.new({ type: TokenType.LineEnd }, Str.from('\r\n'))
+    const codePtr1 = CodePtr.new(Str.from('\r\n'))
+    const [newPtr1, tokenOpt] = arrow.parse(codePtr1)
+    assertEq(() => [newPtr1.pos(), 2])
+    assert(() => isOk(tokenOpt) && tokenOpt.val.type === TokenType.LineEnd)
+})
