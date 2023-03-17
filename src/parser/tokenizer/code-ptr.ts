@@ -1,5 +1,5 @@
-import { isNo, Opt } from "src/opt"
-import { Str } from "src/str"
+import { isNo, Opt } from 'src/opt'
+import { Str } from 'src/str'
 
 export class CodePtr {
     private readonly _code: Str

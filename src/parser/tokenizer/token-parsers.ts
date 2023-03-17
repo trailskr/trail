@@ -1,16 +1,15 @@
-import { no, ok } from "src/opt"
-import { Slice } from "src/slice"
-import { Str } from "src/str"
-import { assertEq, unittest } from "src/unittest"
-import { Vec } from "src/vec"
-import { CodePtr } from "./code-ptr"
-import { SearchAny } from "./searchers/search-any"
-import { SearchChar } from "./searchers/search-char"
-import { SearchRepeat } from "./searchers/search-repeat"
-import { SearchSequence, SequenceFlag } from "./searchers/search-sequence"
-import { SearchStr } from "./searchers/search-str"
-import { TokenParser } from "./token-parser"
-import { TokenType } from "./tokens"
+import { no, ok } from 'src/opt'
+import { Slice } from 'src/slice'
+import { Str } from 'src/str'
+import { assertEq, unittest } from 'src/unittest'
+import { Vec } from 'src/vec'
+import { CodePtr } from './code-ptr'
+import { SearchChar } from './searchers/search-char'
+import { SearchRepeat } from './searchers/search-repeat'
+import { SearchSequence, SequenceFlag } from './searchers/search-sequence'
+import { SearchStr } from './searchers/search-str'
+import { TokenParser } from './token-parser'
+import { TokenType } from './tokens'
 
 export const indent = TokenParser.new(
     (oldCodePtr, newCodePtr) => ({ type: TokenType.Indent, size: newCodePtr.lenFrom(oldCodePtr) / 4 }),

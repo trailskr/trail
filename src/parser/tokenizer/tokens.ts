@@ -1,4 +1,4 @@
-import { Str } from "src/str"
+import { Str } from 'src/str'
 
 export enum TokenType {
     Indent = 'Indent',

@@ -3,7 +3,6 @@ import { Opt, optFrom, or } from './opt'
 
 import { SetRng } from './rng'
 import { Slice } from './slice'
-import { Str } from './str'
 
 export class Set<T> implements SetRng<T, T> {
     private readonly _set: ImmSet<T>

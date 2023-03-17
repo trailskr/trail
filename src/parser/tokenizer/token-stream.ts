@@ -1,16 +1,16 @@
-import { isOk, no, ok, Opt } from "src/opt"
-import { Slice } from "src/slice"
-import { Str } from "src/str"
-import { assertEq, unittest } from "src/unittest"
-import { Vec } from "src/vec"
-import { CodePtr } from "./code-ptr"
-import { SearchChar } from "./searchers/search-char"
-import { SearchRepeat } from "./searchers/search-repeat"
-import { TokenParser } from "./token-parser"
-import { arrow, div, indent, lineEnd, minus, mul, plus } from "./token-parsers"
-import { TokenResult, TokenType } from "./tokens"
+import { isOk, no, ok, Opt } from 'src/opt'
+import { Slice } from 'src/slice'
+import { Str } from 'src/str'
+import { assertEq, unittest } from 'src/unittest'
+import { Vec } from 'src/vec'
+import { CodePtr } from './code-ptr'
+import { SearchChar } from './searchers/search-char'
+import { SearchRepeat } from './searchers/search-repeat'
+import { TokenParser } from './token-parser'
+import { arrow, div, indent, lineEnd, minus, mul, plus } from './token-parsers'
+import { TokenResult, TokenType } from './tokens'
 
-const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(no(), no()))
+const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
 
 export class TokenStream {
     private readonly _codePtr: CodePtr

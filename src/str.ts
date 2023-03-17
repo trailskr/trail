@@ -1,7 +1,7 @@
-import { isOk, no, ok, Opt, optFrom, or } from "./opt"
-import { Rng } from "./rng"
-import { Slice } from "./slice"
-import { Vec } from "./vec"
+import { isOk, no, ok, Opt, optFrom, or } from './opt'
+import { Rng } from './rng'
+import { Slice } from './slice'
+import { Vec } from './vec'
 
 export class Str implements Rng<usize, char> {
     private readonly _str: string

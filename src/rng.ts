@@ -1,4 +1,4 @@
-import { Opt } from "./opt"
+import { Opt } from './opt'
 
 export interface SetRng<K, T> {
     left(): Opt<T>

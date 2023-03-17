@@ -1,7 +1,7 @@
-import { no, ok } from "./opt"
-import { Sig, WriteSig } from "./sig"
-import { Slice } from "./slice"
-import { Str } from "./str"
+import { no, ok } from './opt'
+import { Sig, WriteSig } from './sig'
+import { Slice } from './slice'
+import { Str } from './str'
 
 const addIndent = (str: Str, indent: Str): Str => {
     return str.split(/\n/).map((line) => indent.concat(line)).join(Str.from('\n'))

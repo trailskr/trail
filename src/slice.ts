@@ -1,6 +1,6 @@
-import { no, ok, Opt, or } from "./opt"
-import { Rng } from "./rng"
-import { Vec } from "./vec"
+import { no, ok, Opt, or } from './opt'
+import { Rng } from './rng'
+import { Vec } from './vec'
 
 const orLeft = <T>(val: Opt<T>): T => or(val, 0 as unknown as T)
 const orRight = <T>(val: Opt<T>): T => or(val, Number.MAX_SAFE_INTEGER as unknown as T)
