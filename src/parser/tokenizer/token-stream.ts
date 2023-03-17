@@ -38,10 +38,9 @@ export class TokenStream {
     private tryAny(codePtr: CodePtr, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenResult, void>] {
         const [newPtr, foundToken] = parsers.fold(
             [codePtr, no()] as [CodePtr, Opt<TokenResult>],
-            ([ptr, foundToken], parser, _, stop) => {
+            ([ptr, _accResult], parser, _, stop) => {
                 const [newPtr, result] = parser.parse(ptr)
-                const newIsFound = foundToken || isOk(result) && result.val.type !== TokenType.Error
-                if (newIsFound) {
+                if (isOk(result)) {
                     stop()
                     return [newPtr, result]
                 }
