@@ -7,7 +7,7 @@ import { CodePtr } from './code-ptr'
 import { SearchChar } from './searchers/search-char'
 import { SearchRepeat } from './searchers/search-repeat'
 import { TokenParser } from './token-parser'
-import { arrow, assign, div, equal, falseP, greaterThan, greaterThanOrEqual, indent, lessThan, lessThanOrEqual, lineEnd, minus, mul, notEqual, plus, trueP } from './token-parsers'
+import { ampersand, and, arrow, assign, at, colon, concat, decimalFractionalNumber, decimalIntegerNumber, div, dot, equal, exclamationMark, falseP, greaterThan, greaterThanOrEqual, indent, indentifier, leftCurlyBrace, leftParenthesis, leftSquareBracket, lessThan, lessThanOrEqual, lineEnd, minus, mul, notEqual, or, plus, questionMark, rightCurlyBrace, rightParenthesis, rightSquareBracket, sharp, trueP, verticalBar } from './token-parsers'
 import { TokenResult, TokenType } from './tokens'
 
 const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
@@ -82,8 +82,28 @@ export class TokenStream {
                 minus,
                 mul,
                 div,
+                concat,
+                or,
+                and,
+                dot,
+                exclamationMark,
+                questionMark,
+                colon,
+                at,
+                sharp,
+                ampersand,
+                verticalBar,
+                leftParenthesis,
+                rightParenthesis,
+                leftSquareBracket,
+                rightSquareBracket,
+                leftCurlyBrace,
+                rightCurlyBrace,
                 trueP,
                 falseP,
+                indentifier,
+                decimalIntegerNumber,
+                decimalFractionalNumber,
             ])
         )
     }
