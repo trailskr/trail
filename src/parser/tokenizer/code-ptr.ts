@@ -1,4 +1,5 @@
-import { isNo, Opt } from 'src/opt'
+import { isNo, ok, Opt } from 'src/opt'
+import { Slice } from 'src/slice'
 import { Str } from 'src/str'
 
 export class CodePtr {
@@ -48,11 +49,15 @@ export class CodePtr {
         return this._pos - codePtr._pos
     }
 
+    textFrom(codePtr: CodePtr): Str {
+        return this._code.slice(() => Slice.new(ok(codePtr._pos), ok(this._pos)))
+    }
+
     private _nextCol (): CodePtr {
         return new CodePtr(this._code, this._pos + 1, this._col + 1, this._row)
     }
 
     private _nextRow (): CodePtr {
-        return new CodePtr(this._code, this._pos + 1, this._col, this._row + 1)
+        return new CodePtr(this._code, this._pos + 1, 1, this._row + 1)
     }
 }

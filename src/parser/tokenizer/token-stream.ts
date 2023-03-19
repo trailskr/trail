@@ -7,7 +7,7 @@ import { CodePtr } from './code-ptr'
 import { SearchChar } from './searchers/search-char'
 import { SearchRepeat } from './searchers/search-repeat'
 import { TokenParser } from './token-parser'
-import { arrow, div, indent, lineEnd, minus, mul, plus } from './token-parsers'
+import { arrow, assign, div, equal, falseP, greaterThan, greaterThanOrEqual, indent, lessThan, lessThanOrEqual, lineEnd, minus, mul, notEqual, plus, trueP } from './token-parsers'
 import { TokenResult, TokenType } from './tokens'
 
 const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
@@ -56,7 +56,14 @@ export class TokenStream {
     popLeft(): [TokenStream, Opt<TokenResult>] {
         if (this._isParsingIndent) {
             const [newPtr, result] = indent.parse(this._codePtr)
-            if (isOk(result)) return [new TokenStream(newPtr, false), result]
+            if (isOk(result)) {
+                const [newPtr1, optionalLineEnd] = lineEnd.parse(this._codePtr)
+                // skip indent if lineEnd after it
+                if (isOk(optionalLineEnd)) {
+                    return [new TokenStream(newPtr1, false), optionalLineEnd]
+                }
+                return [new TokenStream(newPtr, false), result]
+            }
         }
         const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace())
         if (isOk(lineEndResult)) return [new TokenStream(newPtr, true), lineEndResult]
@@ -64,23 +71,32 @@ export class TokenStream {
             newPtr,
             Vec.from([
                 arrow,
+                equal,
+                notEqual,
+                lessThanOrEqual,
+                greaterThanOrEqual,
+                lessThan,
+                greaterThan,
+                assign,
                 plus,
                 minus,
                 mul,
                 div,
+                trueP,
+                falseP,
             ])
         )
     }
 }
 
-unittest(Str.from('TokenStrem'), () => {
-    const tokenStream = TokenStream.new(Str.from('    => +   - /\n     '))
+unittest(Str.from('TokenStream'), () => {
+    const tokenStream = TokenStream.new(Str.from('    => "\\"hello\\""   - hello ( 5.5 /\n     \n    true'))
     const [tokenStream1, result1] = tokenStream.popLeft()
     assertEq(() => [result1, ok({ type: TokenType.Indent, size: 1 })])
     const [tokenStream2, result2] = tokenStream1.popLeft()
     assertEq(() => [result2, ok({ type: TokenType.Arrow })])
     const [tokenStream3, result3] = tokenStream2.popLeft()
-    assertEq(() => [result3, ok({ type: TokenType.Plus })])
+    assertEq(() => [result3, ok({ type: TokenType.StringDoubleQuote, text: '"hello"' })])
     const [tokenStream4, result4] = tokenStream3.popLeft()
     assertEq(() => [result4, ok({ type: TokenType.Minus })])
     const [tokenStream5, result5] = tokenStream4.popLeft()
@@ -89,4 +105,10 @@ unittest(Str.from('TokenStrem'), () => {
     assertEq(() => [result6, ok({ type: TokenType.LineEnd })])
     const [tokenStream7, result7] = tokenStream6.popLeft()
     assertEq(() => [result7, ok({ type: TokenType.Indent, size: 1 })])
+    assertEq(() => [tokenStream7.codePtr().row(), 2])
+    assertEq(() => [tokenStream7.codePtr().col(), 5])
+    const [tokenStream8, result8] = tokenStream7.popLeft()
+    assertEq(() => [result8, ok({ type: TokenType.Indent })])
+    const [_, result9] = tokenStream8.popLeft()
+    assertEq(() => [result9, ok({ type: TokenType.True })])
 })
