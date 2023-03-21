@@ -231,7 +231,7 @@ export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
         const [a, b] = fn(logger)
         const equal = isEqual(a, b)
         if (!equal) {
-            logger.error(Str.from(`parsed result\n${inspect(a)}\nis not equal to \n${inspect(b)}`))
+            logger.error(Str.from(`result\n${inspect(a)}\nis not equal to \n${inspect(b)}`))
         }
         return equal
     })
@@ -242,7 +242,7 @@ export const assertInc = (fn: (logger: Logger) => [unknown, unknown]): bool => {
         const [a, b] = fn(logger)
         const includes = isIncludes(a, b)
         if (!includes) {
-            logger.error(Str.from(`parsed result\n${inspect(a)}\nis not includes \n${inspect(b)}`))
+            logger.error(Str.from(`result\n${inspect(a)}\nis not includes \n${inspect(b)}`))
         }
         return includes
     })

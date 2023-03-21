@@ -3,7 +3,7 @@ import { Slice } from 'src/slice'
 import { Str } from 'src/str'
 import { assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
-import { CodePtr } from './code-ptr'
+import { CharStream } from './char-stream'
 import { SearchChar } from './searchers/search-char'
 import { SearchRepeat } from './searchers/search-repeat'
 import { TokenParser } from './token-parser'
@@ -13,51 +13,51 @@ import { TokenResult, TokenType } from './tokens'
 const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
 
 export class TokenStream {
-    private readonly _codePtr: CodePtr
+    private readonly _charStream: CharStream
     private readonly _isParsingIndent: bool
 
-    private constructor(codePtr: CodePtr, isParsingIndent: bool = true) {
-        this._codePtr = codePtr
+    private constructor(charStream: CharStream, isParsingIndent: bool = true) {
+        this._charStream = charStream
         this._isParsingIndent = isParsingIndent
     }
 
     static new (code: Str): TokenStream {
-        const codePtr = CodePtr.new(code)
-        return new TokenStream(codePtr, true)
+        const charStream = CharStream.new(code)
+        return new TokenStream(charStream, true)
     }
 
-    codePtr (): CodePtr {
-        return this._codePtr
+    charStream (): CharStream {
+        return this._charStream
     }
 
-    private skipWhiteSpace(codePtr: CodePtr): CodePtr {
-        const [newPtr, _] = whiteSpace.parse(codePtr)
+    private skipWhiteSpace(charStream: CharStream): CharStream {
+        const [newPtr, _] = whiteSpace.parse(charStream)
         return newPtr
     }
 
-    private tryAny(codePtr: CodePtr, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenResult, void>] {
+    private tryAny(charStream: CharStream, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenResult, void>] {
         const [newPtr, foundToken] = parsers.fold(
-            [codePtr, no()] as [CodePtr, Opt<TokenResult>],
+            [charStream, no()] as [CharStream, Opt<TokenResult>],
             ([ptr, _accResult], parser, _, stop) => {
                 const [newPtr, result] = parser.parse(ptr)
                 if (isOk(result)) {
                     stop()
                     return [newPtr, result]
                 }
-                return [codePtr, no() as Opt<TokenResult>]
+                return [charStream, no() as Opt<TokenResult>]
             }
         )
       
         return isOk(foundToken)
             ? [new TokenStream(newPtr, false), foundToken]
-            : [new TokenStream(codePtr, false), no()]
+            : [new TokenStream(charStream, false), no()]
     }
 
     popLeft(): [TokenStream, Opt<TokenResult>] {
         if (this._isParsingIndent) {
-            const [newPtr, result] = indent.parse(this._codePtr)
+            const [newPtr, result] = indent.parse(this._charStream)
             if (isOk(result)) {
-                const [newPtr1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._codePtr))
+                const [newPtr1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
                 // skip indent if lineEnd after it
                 if (isOk(optionalLineEnd)) {
                     return [new TokenStream(newPtr1, true), optionalLineEnd]
@@ -65,7 +65,7 @@ export class TokenStream {
                 return [new TokenStream(newPtr, false), result]
             }
         }
-        const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace(this._codePtr))
+        const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
         if (isOk(lineEndResult)) return [new TokenStream(newPtr, true), lineEndResult]
         return this.tryAny(
             newPtr,

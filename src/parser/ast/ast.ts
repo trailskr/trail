@@ -1,14 +1,22 @@
 import { Str } from "src/str"
+import { Vec } from "src/vec"
 
 export enum AstNodeType {
     BinaryOperator = 'BinaryOperator',
     DotAccess = 'DotAccess',
     IndexAccess = 'IndexAccess',
     FunctionCall = 'FunctionCall',
+    FunctionDeclaration = 'FunctionDeclaration',
     PrefixOperator = 'PrefixOperator',
     Assignment = 'Assignment',
-    Literal = 'Literal',
+    BooleanLiteral = 'BooleanLiteral',
+    FractionalNumberLiteral = 'FractionalNumberLiteral',
+    IntegerNumberLiteral = 'IntegerNumberLiteral',
+    StringLiteral = 'StringLiteral',
+    CharLiteral = 'CharLiteral',
     Identifier = 'Identifier',
+    Structure = 'Structure',
+    Enumeration = 'Enumeration',
 
     Error = 'Error',
 }
@@ -29,10 +37,18 @@ export enum BinaryOperatorType {
     Or = 'Or',
 }
 
-export interface BinaryOperator { type: AstNodeType.BinaryOperator }
-export interface DotAccess { type: AstNodeType.DotAccess }
-export interface IndexAccess { type: AstNodeType.IndexAccess }
-export interface FunctionCall { type: AstNodeType.FunctionCall }
+export interface BinaryOperator { type: AstNodeType.BinaryOperator, left: AstNode, right: AstNode }
+export interface DotAccess { type: AstNodeType.DotAccess, left: AstNode, right: AstNode }
+export interface IndexAccess { type: AstNodeType.IndexAccess, left: AstNode, right: AstNode }
+export interface FunctionCall { type: AstNodeType.FunctionCall, name: AstNode, arguments: Vec<AstNode> }
+
+export interface FunctionParameter {
+    name: Str,
+    type: AstNode,
+    defaultValue: AstNode,
+}
+
+export interface FunctionDeclaration { type: AstNodeType.FunctionDeclaration, parameters: Vec<FunctionParameter> }
 
 export enum PrefixOperatorType {
     Minus = 'Minus',
@@ -42,17 +58,35 @@ export enum PrefixOperatorType {
 
 export interface PrefixOperator { type: AstNodeType.PrefixOperator, operator: PrefixOperatorType, operand: AstNode }
 export interface Assignment { type: AstNodeType.Assignment }
-export interface Literal { type: AstNodeType.Literal }
+export interface BooleanLiteral { type: AstNodeType.BooleanLiteral, value: bool }
+export interface FractionalNumberLiteral { type: AstNodeType.FractionalNumberLiteral, value: f64 }
+export interface IntegerNumberLiteral { type: AstNodeType.IntegerNumberLiteral, value: i64 }
+export interface StringLiteral { type: AstNodeType.StringLiteral, value: Str }
+export interface CharLiteral { type: AstNodeType.CharLiteral, value: char }
 export interface Identifier { type: AstNodeType.Identifier, name: Str }
+
+export interface StructureField {
+    name: Str,
+    type: AstNode,
+    isPublic: boolean,
+}
+
+export interface Structure { type: AstNodeType.Structure, fields: Vec<StructureField> }
+export interface Enumeration { type: AstNodeType.Enumeration, variants: Str }
 
 export type AstNode = 
     BinaryOperator |
     DotAccess |
     IndexAccess |
     FunctionCall |
+    FunctionDeclaration |
     PrefixOperator |
     Assignment |
-    Literal |
+    BooleanLiteral |
+    FractionalNumberLiteral |
+    IntegerNumberLiteral |
+    StringLiteral |
+    CharLiteral |
     Identifier
 
         

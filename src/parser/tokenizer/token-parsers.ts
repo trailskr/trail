@@ -3,7 +3,7 @@ import { Slice } from 'src/slice'
 import { Str } from 'src/str'
 import { assertEq, assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
-import { CodePtr } from './code-ptr'
+import { CharStream } from './char-stream'
 import { SearchAny } from './searchers/search-any'
 import { SearchChar } from './searchers/search-char'
 import { SearchCharInRange } from './searchers/search-char-in-range'
@@ -192,8 +192,8 @@ export const stringDoubleQuote = TokenParser.new(
 
 unittest(Str.from('token parsers'), () => {
     unittest(Str.from('indent'), () => {
-        const [newCodePtr, result] = indent.parse(CodePtr.new(Str.from('          a')))
-        assertEq(() => [newCodePtr.pos(), 8])
+        const [newCharStream, result] = indent.parse(CharStream.new(Str.from('          a')))
+        assertEq(() => [newCharStream.pos(), 8])
         assertInc(() => [result, ok({ type: TokenType.Indent, size: 2 })])
     })
 })

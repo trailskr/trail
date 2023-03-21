@@ -2,7 +2,7 @@ import { isNo, ok, Opt } from 'src/opt'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
 
-export class CodePtr {
+export class CharStream {
     private readonly _code: Str
     private readonly _pos: usize
     private readonly _col: usize
@@ -15,8 +15,8 @@ export class CodePtr {
         this._row = row
     }
 
-    static new (code: Str): CodePtr {
-        return new CodePtr(code)
+    static new (code: Str): CharStream {
+        return new CharStream(code)
     }
 
     code (): Str {
@@ -39,7 +39,7 @@ export class CodePtr {
         return this._code.get(this._pos - 1)
     }
 
-    popLeft (): [CodePtr, Opt<char>] {
+    popLeft (): [CharStream, Opt<char>] {
         const charOpt = this._code.get(this._pos)
         if (isNo(charOpt)) return [this, charOpt]
         if (charOpt.val === '\n') {
@@ -49,19 +49,19 @@ export class CodePtr {
         }
     }
 
-    lenFrom(codePtr: CodePtr): usize {
-        return this._pos - codePtr._pos
+    lenFrom(charStream: CharStream): usize {
+        return this._pos - charStream._pos
     }
 
-    textFrom(codePtr: CodePtr): Str {
-        return this._code.slice(() => Slice.new(ok(codePtr._pos), ok(this._pos)))
+    textFrom(charStream: CharStream): Str {
+        return this._code.slice(() => Slice.new(ok(charStream._pos), ok(this._pos)))
     }
 
-    private _popLeftCol (): CodePtr {
-        return new CodePtr(this._code, this._pos + 1, this._col + 1, this._row)
+    private _popLeftCol (): CharStream {
+        return new CharStream(this._code, this._pos + 1, this._col + 1, this._row)
     }
 
-    private _popLeftRow (): CodePtr {
-        return new CodePtr(this._code, this._pos + 1, 1, this._row + 1)
+    private _popLeftRow (): CharStream {
+        return new CharStream(this._code, this._pos + 1, 1, this._row + 1)
     }
 }

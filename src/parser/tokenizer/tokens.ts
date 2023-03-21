@@ -1,5 +1,5 @@
 import { Str } from 'src/str'
-import { CodePtr } from './code-ptr'
+import { CharStream } from './char-stream'
 
 export enum TokenType {
     Indent = 'Indent',
@@ -101,7 +101,7 @@ export interface DecimalIntegerNumber { type: TokenType.DecimalIntegerNumber, va
 export interface StringSingleQuote { type: TokenType.StringSingleQuote, text: Str }
 export interface StringDoubleQuote { type: TokenType.StringDoubleQuote, text: Str }
 
-export type Token = ({ from: CodePtr, to: CodePtr }) & (
+export type Token = ({ from: CharStream, to: CharStream }) & (
     Indent |
     LineEnd |
 

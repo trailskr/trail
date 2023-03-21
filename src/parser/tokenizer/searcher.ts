@@ -1,4 +1,4 @@
-import { CodePtr } from './code-ptr';
+import { CharStream } from './char-stream';
 
 export enum SearchResult {
     Found = 'Found',
@@ -7,5 +7,5 @@ export enum SearchResult {
 }
 
 export interface Searcher {
-    parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult]
+    parse(charStream: CharStream): [newCharStream: CharStream, result: SearchResult]
 }

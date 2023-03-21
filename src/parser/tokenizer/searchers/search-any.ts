@@ -1,4 +1,4 @@
-import { CodePtr } from '../code-ptr'
+import { CharStream } from '../char-stream'
 import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
@@ -20,9 +20,9 @@ export class SearchAny implements Searcher {
         return this._items
     }
 
-    parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
+    parse(charStream: CharStream): [newCharStream: CharStream, result: SearchResult] {
         const [newPtr, isFound] = this._items.fold(
-            [codePtr, false] as [CodePtr, bool],
+            [charStream, false] as [CharStream, bool],
             ([ptr, _isFound], searcher, _, stop) => {
                 const [newPtr, result] = searcher.parse(ptr)
                 const newIsFound = result === SearchResult.Found
@@ -36,7 +36,7 @@ export class SearchAny implements Searcher {
       
         return isFound
             ? [newPtr, SearchResult.Found]
-            : [codePtr, SearchResult.NotFound]
+            : [charStream, SearchResult.NotFound]
     }
 }
 
@@ -46,18 +46,18 @@ unittest(Str.from('SearchAny'), () => {
         SearchChar.new('b'),
     ]))
 
-    const codePtr1 = CodePtr.new(Str.from('a'))
-    const [newPtr1, result1] = aOrB.parse(codePtr1)
+    const charStream1 = CharStream.new(Str.from('a'))
+    const [newPtr1, result1] = aOrB.parse(charStream1)
     assertEq(() => [newPtr1.pos(), 1])
     assertEq(() => [result1, SearchResult.Found])
 
-    const codePtr2 = CodePtr.new(Str.from('b'))
-    const [newPtr2, result2] = aOrB.parse(codePtr2)
+    const charStream2 = CharStream.new(Str.from('b'))
+    const [newPtr2, result2] = aOrB.parse(charStream2)
     assertEq(() => [newPtr2.pos(), 1])
     assertEq(() => [result2, SearchResult.Found])
 
-    const codePtr3 = CodePtr.new(Str.from('c'))
-    const [newPtr3, result3] = aOrB.parse(codePtr3)
+    const charStream3 = CharStream.new(Str.from('c'))
+    const [newPtr3, result3] = aOrB.parse(charStream3)
     assertEq(() => [newPtr3.pos(), 0])
     assertEq(() => [result3, SearchResult.NotFound])
 })
