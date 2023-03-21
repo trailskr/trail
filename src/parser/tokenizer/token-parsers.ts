@@ -47,6 +47,7 @@ export const div = TokenParser.new((from, to) => ({ type: TokenType.Div, from, t
 export const concat = TokenParser.new((from, to) => ({ type: TokenType.Concat, from, to }), SearchChar.new('~'))
 export const or = TokenParser.new((from, to) => ({ type: TokenType.Or, from, to }), SearchStr.new(Str.from('or')))
 export const and = TokenParser.new((from, to) => ({ type: TokenType.And, from, to }), SearchStr.new(Str.from('and')))
+export const not = TokenParser.new((from, to) => ({ type: TokenType.Not, from, to }), SearchStr.new(Str.from('not')))
 
 export const dot = TokenParser.new((from, to) => ({ type: TokenType.Dot, from, to }), SearchChar.new('.'))
 export const exclamationMark = TokenParser.new((from, to) => ({ type: TokenType.ExclamationMark, from, to }), SearchChar.new('!'))

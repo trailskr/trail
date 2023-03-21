@@ -23,6 +23,7 @@ export enum TokenType {
     Concat = 'Concat',
     Or = 'Or',
     And = 'And',
+    Not = 'Not',
 
     Dot = 'Dot',
     ExclamationMark = 'ExclamationMark',
@@ -73,6 +74,7 @@ export interface Div { type: TokenType.Div }
 export interface Concat { type: TokenType.Concat }
 export interface Or { type: TokenType.Or }
 export interface And { type: TokenType.And }
+export interface Not { type: TokenType.Not }
 
 export interface Dot { type: TokenType.Dot }
 export interface ExclamationMark { type: TokenType.ExclamationMark }
@@ -121,6 +123,7 @@ export type Token = ({ from: CodePtr, to: CodePtr }) & (
     Concat |
     Or |
     And |
+    Not |
 
     Dot |
     ExclamationMark |
