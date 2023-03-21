@@ -1,7 +1,7 @@
 import { isOk, no, ok, Opt } from 'src/opt'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
-import { assertEq, assertInc, unittest } from 'src/unittest'
+import { assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
 import { CodePtr } from './code-ptr'
 import { SearchChar } from './searchers/search-char'
@@ -30,8 +30,8 @@ export class TokenStream {
         return this._codePtr
     }
 
-    private skipWhiteSpace(): CodePtr {
-        const [newPtr, _] = whiteSpace.parse(this._codePtr)
+    private skipWhiteSpace(codePtr: CodePtr): CodePtr {
+        const [newPtr, _] = whiteSpace.parse(codePtr)
         return newPtr
     }
 
@@ -57,15 +57,15 @@ export class TokenStream {
         if (this._isParsingIndent) {
             const [newPtr, result] = indent.parse(this._codePtr)
             if (isOk(result)) {
-                const [newPtr1, optionalLineEnd] = lineEnd.parse(this._codePtr)
+                const [newPtr1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._codePtr))
                 // skip indent if lineEnd after it
                 if (isOk(optionalLineEnd)) {
-                    return [new TokenStream(newPtr1, false), optionalLineEnd]
+                    return [new TokenStream(newPtr1, true), optionalLineEnd]
                 }
                 return [new TokenStream(newPtr, false), result]
             }
         }
-        const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace())
+        const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace(this._codePtr))
         if (isOk(lineEndResult)) return [new TokenStream(newPtr, true), lineEndResult]
         return this.tryAny(
             newPtr,
@@ -102,8 +102,8 @@ export class TokenStream {
                 trueP,
                 falseP,
                 indentifier,
-                decimalIntegerNumber,
                 decimalFractionalNumber,
+                decimalIntegerNumber,
                 stringSingleQuote,
                 stringDoubleQuote,
             ])
@@ -112,25 +112,29 @@ export class TokenStream {
 }
 
 unittest(Str.from('TokenStream'), () => {
-    const tokenStream = TokenStream.new(Str.from('    => "\\"hello\\""   - hello (5.5 /\n     \n    true'))
+    const tokenStream = TokenStream.new(Str.from('    => "\\"hello\\""   - hello (2.5 /\n     \n    true'))
     const [tokenStream1, result1] = tokenStream.popLeft()
     assertInc(() => [result1, ok({ type: TokenType.Indent, size: 1 })])
     const [tokenStream2, result2] = tokenStream1.popLeft()
     assertInc(() => [result2, ok({ type: TokenType.Arrow })])
     const [tokenStream3, result3] = tokenStream2.popLeft()
     assertInc(() => [result3, ok({ type: TokenType.StringDoubleQuote, text: Str.from('"hello"') })])
-    // const [tokenStream4, result4] = tokenStream3.popLeft()
-    // assertInc(() => [result4, ok({ type: TokenType.Minus })])
-    // const [tokenStream5, result5] = tokenStream4.popLeft()
-    // assertInc(() => [result5, ok({ type: TokenType.Div })])
-    // const [tokenStream6, result6] = tokenStream5.popLeft()
-    // assertInc(() => [result6, ok({ type: TokenType.LineEnd })])
-    // const [tokenStream7, result7] = tokenStream6.popLeft()
-    // assertInc(() => [result7, ok({ type: TokenType.Indent, size: 1 })])
-    // assertInc(() => [tokenStream7.codePtr().row(), 2])
-    // assertInc(() => [tokenStream7.codePtr().col(), 5])
-    // const [tokenStream8, result8] = tokenStream7.popLeft()
-    // assertInc(() => [result8, ok({ type: TokenType.Indent })])
-    // const [_, result9] = tokenStream8.popLeft()
-    // assertInc(() => [result9, ok({ type: TokenType.True })])
+    const [tokenStream4, result4] = tokenStream3.popLeft()
+    assertInc(() => [result4, ok({ type: TokenType.Minus })])
+    const [tokenStream5, result5] = tokenStream4.popLeft()
+    assertInc(() => [result5, ok({ type: TokenType.Identifier, name: Str.from('hello') })])
+    const [tokenStream6, result6] = tokenStream5.popLeft()
+    assertInc(() => [result6, ok({ type: TokenType.LeftParenthesis })])
+    const [tokenStream7, result7] = tokenStream6.popLeft()
+    assertInc(() => [result7, ok({ type: TokenType.DecimalFractionalNumber, value: 2.5 })])
+    const [tokenStream8, result8] = tokenStream7.popLeft()
+    assertInc(() => [result8, ok({ type: TokenType.Div })])
+    const [tokenStream9, result9] = tokenStream8.popLeft()
+    assertInc(() => [result9, ok({ type: TokenType.LineEnd })])
+    const [tokenStream10, result10] = tokenStream9.popLeft()
+    assertInc(() => [result10, ok({ type: TokenType.LineEnd })])
+    const [tokenStream11, result11] = tokenStream10.popLeft()
+    assertInc(() => [result11, ok({ type: TokenType.Indent, size: 1 })])
+    const [_, result12] = tokenStream11.popLeft()
+    assertInc(() => [result12, ok({ type: TokenType.True })])
 })

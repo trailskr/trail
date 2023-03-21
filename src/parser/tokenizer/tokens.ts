@@ -94,8 +94,8 @@ export interface True { type: TokenType.True }
 export interface False { type: TokenType.False }
 
 export interface Identifier { type: TokenType.Identifier, name: Str }
-export interface DecimalIntegerNumber { type: TokenType.DecimalIntegerNumber, value: i64 }
 export interface DecimalFractionalNumber { type: TokenType.DecimalFractionalNumber, value: f64 }
+export interface DecimalIntegerNumber { type: TokenType.DecimalIntegerNumber, value: i64 }
 export interface StringSingleQuote { type: TokenType.StringSingleQuote, text: Str }
 export interface StringDoubleQuote { type: TokenType.StringDoubleQuote, text: Str }
 
@@ -142,8 +142,8 @@ export type Token = ({ from: CodePtr, to: CodePtr }) & (
     False |
 
     Identifier |
-    DecimalIntegerNumber |
     DecimalFractionalNumber |
+    DecimalIntegerNumber |
     StringSingleQuote |
     StringDoubleQuote
 )

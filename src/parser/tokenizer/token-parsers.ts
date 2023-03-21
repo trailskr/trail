@@ -97,13 +97,6 @@ const decimalInteger = SearchSequence.new(Vec.from([{
     flag: SequenceFlag.Optional,
 }]))
 
-export const decimalIntegerNumber = TokenParser.new(
-    (from, to) => ({
-        type: TokenType.DecimalIntegerNumber, from, to, value: parseInt(to.textFrom(from).inner())
-    }),
-    decimalInteger
-)
-
 const exponentPart = SearchSequence.new(Vec.from([{
     searcher: SearchAny.new(Vec.from([
         SearchChar.new('e'), 
@@ -143,6 +136,13 @@ export const decimalFractionalNumber = TokenParser.new(
         type: TokenType.DecimalFractionalNumber, from, to, value: parseFloat(to.textFrom(from).inner())
     }),
     decimalFractional
+)
+
+export const decimalIntegerNumber = TokenParser.new(
+    (from, to) => ({
+        type: TokenType.DecimalIntegerNumber, from, to, value: parseInt(to.textFrom(from).inner())
+    }),
+    decimalInteger
 )
 
 const escape = '\\'
