@@ -31,44 +31,44 @@ export class TokenStream {
     }
 
     private skipWhiteSpace(charStream: CharStream): CharStream {
-        const [newPtr, _] = whiteSpace.parse(charStream)
-        return newPtr
+        const [newCharStream, _] = whiteSpace.parse(charStream)
+        return newCharStream
     }
 
     private tryAny(charStream: CharStream, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenResult, void>] {
-        const [newPtr, foundToken] = parsers.fold(
+        const [newCharStream, foundToken] = parsers.fold(
             [charStream, no()] as [CharStream, Opt<TokenResult>],
             ([ptr, _accResult], parser, _, stop) => {
-                const [newPtr, result] = parser.parse(ptr)
+                const [newCharStream, result] = parser.parse(ptr)
                 if (isOk(result)) {
                     stop()
-                    return [newPtr, result]
+                    return [newCharStream, result]
                 }
                 return [charStream, no() as Opt<TokenResult>]
             }
         )
       
         return isOk(foundToken)
-            ? [new TokenStream(newPtr, false), foundToken]
+            ? [new TokenStream(newCharStream, false), foundToken]
             : [new TokenStream(charStream, false), no()]
     }
 
     popLeft(): [TokenStream, Opt<TokenResult>] {
         if (this._isParsingIndent) {
-            const [newPtr, result] = indent.parse(this._charStream)
+            const [newCharStream, result] = indent.parse(this._charStream)
             if (isOk(result)) {
-                const [newPtr1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
+                const [newCharStream1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
                 // skip indent if lineEnd after it
                 if (isOk(optionalLineEnd)) {
-                    return [new TokenStream(newPtr1, true), optionalLineEnd]
+                    return [new TokenStream(newCharStream1, true), optionalLineEnd]
                 }
-                return [new TokenStream(newPtr, false), result]
+                return [new TokenStream(newCharStream, false), result]
             }
         }
-        const [newPtr, lineEndResult] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
-        if (isOk(lineEndResult)) return [new TokenStream(newPtr, true), lineEndResult]
+        const [newCharStream, lineEndResult] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
+        if (isOk(lineEndResult)) return [new TokenStream(newCharStream, true), lineEndResult]
         return this.tryAny(
-            newPtr,
+            newCharStream,
             Vec.from([
                 arrow,
                 equal,

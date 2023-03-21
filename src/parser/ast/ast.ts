@@ -25,8 +25,8 @@ export enum BinaryOperatorType {
     Concat = 'Concat',
     Mul = 'Mul',
     Div = 'Div',
-    Plus = 'Plus',
-    Minus = 'Minus',
+    Add = 'Add',
+    Sub = 'Sub',
     Equal = 'Equal',
     NotEqual = 'NotEqual',
     LessThanOrEqual = 'LessThanOrEqual',
@@ -37,7 +37,7 @@ export enum BinaryOperatorType {
     Or = 'Or',
 }
 
-export interface BinaryOperator { type: AstNodeType.BinaryOperator, left: AstNode, right: AstNode }
+export interface BinaryOperator { type: AstNodeType.BinaryOperator, left: AstNode, right: AstNode, operator: BinaryOperatorType }
 export interface DotAccess { type: AstNodeType.DotAccess, left: AstNode, right: AstNode }
 export interface IndexAccess { type: AstNodeType.IndexAccess, left: AstNode, right: AstNode }
 export interface FunctionCall { type: AstNodeType.FunctionCall, name: AstNode, arguments: Vec<AstNode> }
