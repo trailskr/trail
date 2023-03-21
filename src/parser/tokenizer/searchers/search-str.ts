@@ -21,7 +21,7 @@ export class SearchStr implements Searcher {
 
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
         const newPtr = this._str.fold(codePtr, (ptr, strChar, _, stop) => {
-            const [newPtr, charOpt] = ptr.next()
+            const [newPtr, charOpt] = ptr.popLeft()
             if (isNo(charOpt) || strChar !== charOpt.val) {
                 stop()
                 return codePtr

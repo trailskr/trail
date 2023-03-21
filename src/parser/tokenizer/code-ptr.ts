@@ -39,13 +39,13 @@ export class CodePtr {
         return this._code.get(this._pos - 1)
     }
 
-    next (): [CodePtr, Opt<char>] {
+    popLeft (): [CodePtr, Opt<char>] {
         const charOpt = this._code.get(this._pos)
         if (isNo(charOpt)) return [this, charOpt]
         if (charOpt.val === '\n') {
-            return [this._nextRow(), charOpt]
+            return [this._popLeftRow(), charOpt]
         } else {
-            return [this._nextCol(), charOpt]
+            return [this._popLeftCol(), charOpt]
         }
     }
 
@@ -57,11 +57,11 @@ export class CodePtr {
         return this._code.slice(() => Slice.new(ok(codePtr._pos), ok(this._pos)))
     }
 
-    private _nextCol (): CodePtr {
+    private _popLeftCol (): CodePtr {
         return new CodePtr(this._code, this._pos + 1, this._col + 1, this._row)
     }
 
-    private _nextRow (): CodePtr {
+    private _popLeftRow (): CodePtr {
         return new CodePtr(this._code, this._pos + 1, 1, this._row + 1)
     }
 }

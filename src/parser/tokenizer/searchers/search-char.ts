@@ -20,7 +20,7 @@ export class SearchChar implements Searcher {
     }
 
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
-        const [ptr, charOpt] = codePtr.next()
+        const [ptr, charOpt] = codePtr.popLeft()
       
         return isOk(charOpt) && charOpt.val === this._char
             ? [ptr, SearchResult.Found]

@@ -26,7 +26,7 @@ export class SearchExceptChar implements Searcher {
     }
 
     parse(codePtr: CodePtr): [newCodePtr: CodePtr, result: SearchResult] {
-        const [ptr, charOpt] = codePtr.next()
+        const [ptr, charOpt] = codePtr.popLeft()
         const prevChar = codePtr.getCharBefore()
       
         return (
