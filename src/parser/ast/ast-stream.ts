@@ -1,4 +1,4 @@
-import { isOk, no, Opt } from 'src/opt'
+import { isOk, no, ok, Opt } from 'src/opt'
 import { Str } from 'src/str'
 import { assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
@@ -42,7 +42,7 @@ export class AstStream {
 
     popLeft(): [AstStream, Opt<AstNodeResult>] {
         return this.tryAny(this._tokenStream, Vec.from([
-            
+
         ]))
     }
 }
@@ -51,7 +51,7 @@ unittest(Str.from('AstStream'), () => {
     unittest(Str.from('parsing tokens'), () => {
         const astStream = AstStream.new(Str.from('a + 10'))
         const [_astStream1, result1] = astStream.popLeft()
-        assertInc(() => [result1, {
+        assertInc(() => [result1, ok({
             type: AstNodeType.BinaryOperator,
             operator: BinaryOperatorType.Add,
             left: {
@@ -62,7 +62,7 @@ unittest(Str.from('AstStream'), () => {
                 type: AstNodeType.FractionalNumberLiteral,
                 value: 10
             }
-        }])
+        })])
     })
     // unittest(Str.from('parsing error'), () => {
     //     const astStream = AstStream.new(Str.from('a + 10'))
