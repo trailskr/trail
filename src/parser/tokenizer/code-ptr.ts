@@ -35,6 +35,10 @@ export class CodePtr {
         return this._row
     }
 
+    getCharBefore (): Opt<char> {
+        return this._code.get(this._pos - 1)
+    }
+
     next (): [CodePtr, Opt<char>] {
         const charOpt = this._code.get(this._pos)
         if (isNo(charOpt)) return [this, charOpt]

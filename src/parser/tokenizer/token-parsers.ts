@@ -7,6 +7,7 @@ import { CodePtr } from './code-ptr'
 import { SearchAny } from './searchers/search-any'
 import { SearchChar } from './searchers/search-char'
 import { SearchCharInRange } from './searchers/search-char-in-range'
+import { SearchExceptChar } from './searchers/search-except-char'
 import { SearchRepeat } from './searchers/search-repeat'
 import { SearchSequence, SequenceFlag } from './searchers/search-sequence'
 import { SearchStr } from './searchers/search-str'
@@ -142,6 +143,17 @@ export const decimalFractionalNumber = TokenParser.new(
         type: TokenType.DecimalFractionalNumber, from, to, value: parseFloat(to.textFrom(from).inner())
     }),
     decimalFractional
+)
+
+export const stringSingleQuote = TokenParser.new(
+    (from, to) => ({
+        type: TokenType.StringSingleQuote, from, to, text: to.textFrom(from)
+    }),
+    SearchSequence.new(Vec.from([{
+        searcher: SearchExceptChar.new("'", '\\'), flag: SequenceFlag.Optional,
+    }, {
+        searcher: exponentPart, flag: SequenceFlag.None,
+    }]))
 )
 
 unittest(Str.from('token parsers'), () => {

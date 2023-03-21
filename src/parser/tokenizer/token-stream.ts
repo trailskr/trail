@@ -110,7 +110,7 @@ export class TokenStream {
 }
 
 unittest(Str.from('TokenStream'), () => {
-    const tokenStream = TokenStream.new(Str.from('    => "\\"hello\\""   - hello ( 5.5 /\n     \n    true'))
+    const tokenStream = TokenStream.new(Str.from('    => "\\"hello\\""   - hello (5.5 /\n     \n    true'))
     const [tokenStream1, result1] = tokenStream.popLeft()
     assertEq(() => [result1, ok({ type: TokenType.Indent, size: 1 })])
     const [tokenStream2, result2] = tokenStream1.popLeft()
