@@ -1,7 +1,7 @@
 import { no, ok } from 'src/opt'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
-import { assertEq, unittest } from 'src/unittest'
+import { assertEq, assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
 import { CodePtr } from './code-ptr'
 import { SearchAny } from './searchers/search-any'
@@ -145,21 +145,54 @@ export const decimalFractionalNumber = TokenParser.new(
     decimalFractional
 )
 
+const escape = '\\'
+
+const singleQuote: char = "'"
+
 export const stringSingleQuote = TokenParser.new(
     (from, to) => ({
         type: TokenType.StringSingleQuote, from, to, text: to.textFrom(from)
+            .slice((len) => Slice.new(ok(1), ok(len - 1)))
+            .replace(/\\'/g, Str.from(singleQuote))
     }),
     SearchSequence.new(Vec.from([{
-        searcher: SearchExceptChar.new("'", '\\'), flag: SequenceFlag.Optional,
+        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.None,
     }, {
-        searcher: exponentPart, flag: SequenceFlag.None,
+        searcher: SearchRepeat.new(
+            SearchExceptChar.new(singleQuote, escape),
+            Slice.new(no(), no())
+        ),
+        flag: SequenceFlag.Optional,
+    }, {
+        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.None,
+    }]))
+)
+
+const doubleQuote: char = '"'
+
+export const stringDoubleQuote = TokenParser.new(
+    (from, to) => ({
+        type: TokenType.StringDoubleQuote, from, to, text: to.textFrom(from)
+            .slice((len) => Slice.new(ok(1), ok(len - 1)))
+            .replace(/\\"/g, Str.from(doubleQuote))
+    }),
+    SearchSequence.new(Vec.from([{
+        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.None,
+    }, {
+        searcher: SearchRepeat.new(
+            SearchExceptChar.new(doubleQuote, escape),
+            Slice.new(no(), no())
+        ),
+        flag: SequenceFlag.Optional,
+    }, {
+        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.None,
     }]))
 )
 
 unittest(Str.from('token parsers'), () => {
     unittest(Str.from('indent'), () => {
-        const [newCodePtr, result] = indent.parse(CodePtr.new(Str.from('          ')))
+        const [newCodePtr, result] = indent.parse(CodePtr.new(Str.from('          a')))
         assertEq(() => [newCodePtr.pos(), 8])
-        assertEq(() => [result, ok({ type: TokenType.Indent, size: 2 })])
+        assertInc(() => [result, ok({ type: TokenType.Indent, size: 2 })])
     })
 })

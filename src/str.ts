@@ -141,8 +141,19 @@ export class Str implements Rng<usize, char> {
         return new Str(this._str + val.inner())
     }
 
-    split (regExp: RegExp): Vec<Str> {
-        return Vec.from(this._str.split(regExp).map((str) => new Str(str)))
+    split (regExpOrString: RegExp | Str): Vec<Str> {
+        const val = regExpOrString instanceof Str ? regExpOrString.inner() : regExpOrString
+        return Vec.from(this._str.split(val).map((str) => new Str(str)))
+    }
+
+    replace (regExpOrString: RegExp | Str, replaceValue: Str): Str {
+        const val = regExpOrString instanceof Str ? regExpOrString.inner() : regExpOrString
+        return Str.from(this._str.replaceAll(val, replaceValue.inner()))
+    }
+
+    match (regExpOrString: RegExp | Str): Opt<RegExpMatchArray> {
+        const val = regExpOrString instanceof Str ? regExpOrString.inner() : regExpOrString
+        return optFrom(this._str.match(val))
     }
 
     inner(): string {

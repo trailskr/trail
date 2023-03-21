@@ -68,12 +68,12 @@ export const isIncludes = (a: unknown, b: unknown, options?: IsEqualOptions): bo
             const len = Math.max(a.length, b.length)
             for (let i = 0; i < len; i++) {
                 if (!filter(i, a, b)) continue
-                if (!isEqual(a[i], b[i], options)) return false
+                if (!isIncludes(a[i], b[i], options)) return false
             }
         } else {
             const len = b.length
             for (let i = 0; i < len; i++) {
-                if (!isEqual(a[i], b[i], options)) return false
+                if (!isIncludes(a[i], b[i], options)) return false
             }
         }
         return true
@@ -93,16 +93,16 @@ export const isIncludes = (a: unknown, b: unknown, options?: IsEqualOptions): bo
             for (const key of keysB) {
                 checkedKeys.add(key)
                 if (!filter(key, a, b)) continue
-                if (!isEqual(a[key], b[key], options)) return false
+                if (!isIncludes(a[key], b[key], options)) return false
             }
             for (const key of keysA) {
                 if (checkedKeys.has(key)) continue
                 if (!filter(key, a, b)) continue
-                if (!isEqual(a[key], b[key], options)) return false
+                if (!isIncludes(a[key], b[key], options)) return false
             }
         } else {
             for (const key of keysB) {
-                if (!isEqual(a[key], b[key], options)) return false
+                if (!isIncludes(a[key], b[key], options)) return false
             }
         }
         return true
