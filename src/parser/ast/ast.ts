@@ -1,5 +1,6 @@
 import { Str } from "src/str"
 import { Vec } from "src/vec"
+import { CharStream } from "../tokenizer/char-stream"
 
 export enum AstNodeType {
     BinaryOperator = 'BinaryOperator',
@@ -74,7 +75,7 @@ export interface StructureField {
 export interface Structure { type: AstNodeType.Structure, fields: Vec<StructureField> }
 export interface Enumeration { type: AstNodeType.Enumeration, variants: Str }
 
-export type AstNode = 
+export type AstNode = ({ from: CharStream, to: CharStream }) & (
     BinaryOperator |
     DotAccess |
     IndexAccess |
@@ -88,6 +89,7 @@ export type AstNode =
     StringLiteral |
     CharLiteral |
     Identifier
+)
 
         
 export interface AstNodeError {
