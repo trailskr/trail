@@ -16,7 +16,7 @@ import { TokenType } from './tokens'
 
 export const indent = TokenParser.new(
     (from, to) => ({ type: TokenType.Indent, from, to, size: to.lenFrom(from) / 4 }),
-    SearchRepeat.new(SearchStr.new(Str.from('    ')), Slice.new(no(), no()))
+    SearchRepeat.new(SearchStr.new(Str.from('    ')), Slice.new(ok(1), no()))
 )
 export const lineEnd = TokenParser.new(
     (from, to) => ({ type: TokenType.LineEnd, from, to }),
@@ -102,7 +102,7 @@ const exponentPart = SearchSequence.new(Vec.from([{
         SearchChar.new('e'), 
         SearchChar.new('E')
     ])),
-    flag: SequenceFlag.None,
+    flag: SequenceFlag.RequireEnd,
 }, {
     searcher: SearchAny.new(Vec.from([
         SearchChar.new('+'), 
@@ -111,16 +111,16 @@ const exponentPart = SearchSequence.new(Vec.from([{
     flag: SequenceFlag.Optional,
 }, {
     searcher: SearchRepeat.new(decimalDigit, Slice.new(ok(1), no())),
-    flag: SequenceFlag.None,
+    flag: SequenceFlag.End,
 }]))
 
 const decimalFractional = SearchAny.new(Vec.from([
     SearchSequence.new(Vec.from([{
         searcher: decimalInteger, flag: SequenceFlag.Optional,
     }, {
-        searcher: SearchChar.new('.'), flag: SequenceFlag.None,
+        searcher: SearchChar.new('.'), flag: SequenceFlag.RequireEnd,
     }, {
-        searcher: SearchRepeat.new(decimalDigit, Slice.new(ok(1), no())), flag: SequenceFlag.None,
+        searcher: SearchRepeat.new(decimalDigit, Slice.new(ok(1), no())), flag: SequenceFlag.End,
     }, {
         searcher: exponentPart, flag: SequenceFlag.Optional,
     }])),
@@ -156,7 +156,7 @@ export const stringSingleQuote = TokenParser.new(
             .replace(/\\'/g, Str.from(singleQuote))
     }),
     SearchSequence.new(Vec.from([{
-        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.None,
+        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.RequireEnd,
     }, {
         searcher: SearchRepeat.new(
             SearchExceptChar.new(singleQuote, escape),
@@ -164,7 +164,7 @@ export const stringSingleQuote = TokenParser.new(
         ),
         flag: SequenceFlag.Optional,
     }, {
-        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.None,
+        searcher: SearchChar.new(singleQuote), flag: SequenceFlag.End,
     }]))
 )
 
@@ -177,7 +177,7 @@ export const stringDoubleQuote = TokenParser.new(
             .replace(/\\"/g, Str.from(doubleQuote))
     }),
     SearchSequence.new(Vec.from([{
-        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.None,
+        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.RequireEnd,
     }, {
         searcher: SearchRepeat.new(
             SearchExceptChar.new(doubleQuote, escape),
@@ -185,7 +185,7 @@ export const stringDoubleQuote = TokenParser.new(
         ),
         flag: SequenceFlag.Optional,
     }, {
-        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.None,
+        searcher: SearchChar.new(doubleQuote), flag: SequenceFlag.End,
     }]))
 )
 
