@@ -49,7 +49,7 @@ export interface FunctionParameter {
     defaultValue: AstNode,
 }
 
-export interface FunctionDeclaration { type: AstNodeType.FunctionDeclaration, parameters: Vec<FunctionParameter> }
+export interface FunctionDeclaration { type: AstNodeType.FunctionDeclaration, parameters: Vec<FunctionParameter>, returnType: AstNode, body: AstNode }
 
 export enum PrefixOperatorType {
     Minus = 'Minus',
