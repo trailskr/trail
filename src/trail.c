@@ -23,5 +23,5 @@ Logger LoggerNew(
 
 void main() {
     Logger logger;
-    logger._tab
+    logger._tab;
 }
