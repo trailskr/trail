@@ -2,7 +2,7 @@ import { no, ok, Opt } from 'src/opt'
 import { CharStream } from './char-stream'
 import { Token, TokenResult, TokenType } from './tokens'
 import { Str } from 'src/str'
-import { Searcher, SearchResult } from './searcher'
+import { Searcher, SearchResult } from '../searcher/searcher'
 
 export class TokenParser {
     private readonly _tokenFn: (fromCharStream: CharStream, toCharStream: CharStream) => Token

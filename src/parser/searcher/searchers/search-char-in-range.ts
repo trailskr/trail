@@ -1,4 +1,4 @@
-import { CharStream } from '../char-stream'
+import { CharStream } from '../../lexer/char-stream'
 import { isOk } from 'src/opt'
 import { Searcher, SearchResult } from '../searcher'
 import { assertEq, unittest } from 'src/unittest'
