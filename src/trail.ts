@@ -1,2 +1,2 @@
-import './parser/tokenizer/token-stream'
+import './parser/lexer/token-stream'
 import './parser/ast/ast-stream'

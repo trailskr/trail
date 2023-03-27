@@ -1,6 +1,6 @@
 import { no, ok, Opt } from 'src/opt'
 import { Str } from 'src/str'
-import { TokenStream } from '../tokenizer/token-stream'
+import { TokenStream } from '../lexer/token-stream'
 import { AstNodeResult, AstNodeType } from './ast'
 import { Finder, FindResultType } from './finder'
 

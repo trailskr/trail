@@ -1,5 +1,5 @@
 import { Str } from 'src/str'
-import { TokenStream } from '../tokenizer/token-stream'
+import { TokenStream } from '../lexer/token-stream'
 import { AstNode } from './ast'
 
 export enum FindResultType {

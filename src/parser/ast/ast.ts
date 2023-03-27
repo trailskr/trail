@@ -1,6 +1,6 @@
 import { Str } from "src/str"
 import { Vec } from "src/vec"
-import { CharStream } from "../tokenizer/char-stream"
+import { CharStream } from "../lexer/char-stream"
 
 export enum AstNodeType {
     BinaryOperator = 'BinaryOperator',

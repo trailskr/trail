@@ -2,7 +2,7 @@ import { isOk, no, ok, Opt } from 'src/opt'
 import { Str } from 'src/str'
 import { assertInc, unittest } from 'src/unittest'
 import { Vec } from 'src/vec'
-import { TokenStream } from '../tokenizer/token-stream'
+import { TokenStream } from '../lexer/token-stream'
 import { AstNode, AstNodeResult, AstNodeType, BinaryOperatorType } from './ast'
 import { AstParser } from './ast-parser'
 
