@@ -1,11 +1,12 @@
 import { List } from 'immutable'
-import { no, ok, Opt, optFrom, isOk, or } from './opt'
+import { no, ok, Opt, optFrom, or } from './opt'
+import { fold, has, InpRndAccRngFinite, OutBidirRngLeft } from './rng'
 
-import { Rng } from "./rng"
 import { Slice } from './slice'
 import { Str } from './str'
+import { assertEq, unittest } from './unittest'
 
-export class Vec<T> implements Rng<usize, T> {
+export class Vec<T> implements InpRndAccRngFinite<usize, T>, OutBidirRngLeft<usize, T> {
     private readonly _arr: List<T>
 
     private constructor(list: List<T>) {
@@ -62,8 +63,20 @@ export class Vec<T> implements Rng<usize, T> {
         return this._arr.size
     }
 
+    isEmpty(): bool {
+        return this.len() === 0
+    }
+
+    pushRight (val: T): Vec<T> {
+        return new Vec(this._arr.push(val))
+    }
+
+    pushLeft (val: T): Vec<T> {
+        return new Vec(this._arr.unshift(val))
+    }
+
     has (item: T): bool {
-        return isOk(this.find((a) => a === item))
+        return has(this, item)
     }
 
     includes (rng: Vec<T>): bool {
@@ -96,7 +109,7 @@ export class Vec<T> implements Rng<usize, T> {
         return acc
     }
 
-    reduce (fn: (acc: T, b: T, key: usize) => T): T {
+    reduce (fn: (acc: T, item: T, key: usize) => T): T {
         return this._arr.reduce(fn)
     }
 
@@ -123,20 +136,12 @@ export class Vec<T> implements Rng<usize, T> {
         return optFrom(this._arr.findIndex(fn))
     }
 
-    for<R> (fn: (val: T, key: usize, stop: () => void) => R): void {
+    for (fn: (val: T, key: usize, stop: () => void) => void): void {
         let stop = false
         for (const [index, char] of this._arr.entries()) {
             fn(char, index, () => { stop = true })
             if (stop) break
         }
-    }
-
-    pushRight (val: T): Vec<T> {
-        return new Vec(this._arr.push(val))
-    }
-
-    pushLeft (val: T): Vec<T> {
-        return new Vec(this._arr.unshift(val))
     }
 
     join (val: Str): Str {
@@ -155,3 +160,8 @@ export class Vec<T> implements Rng<usize, T> {
         return this._arr.toArray().toString()
     }
 }
+
+unittest(Str.from('Vec rng'), () => {
+    const vec = Vec.from([1, 2, 3])
+    assertEq(() => [fold(vec, 0, (acc, item) => acc + item), 6])
+})
