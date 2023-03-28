@@ -9,6 +9,7 @@ import { isEqual, isIncludes } from './utils'
 import { Vec } from './vec'
 import { Set } from './set'
 import { Slice } from './slice'
+import { concat, enumerate, every, fold, forEach, map, find, some, includes, filter } from './rng'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
@@ -49,14 +50,18 @@ class TestNodeContext implements TestNodeResult {
     printResults(logger: Logger) {
         const { code, fullPath, } = this._fileCodePointer
         if (this.isSuccessfull()) {
-            logger.success(unwrap(code.get(0)).concat(Str.from(code.len() > 1 ? ' ...' : '')))
+            const logMsg = concat(
+                unwrap(code.get(0)),
+                Str.from(code.len() > 1 ? ' ...' : '')
+            )
+            logger.success(logMsg)
         } else {
             logger.error(fullPath)
             logger.withIndent(() => {
-                code.for((line) => { logger.error(line) })
+                forEach(code, (line) => { logger.error(line) })
                 const log = this._log()
                 if (log.len() > 0) {
-                    log.for(line => logger.log(line))
+                    forEach(log, line => logger.log(line))
                 }
             })
         }
@@ -100,19 +105,19 @@ class TestGroupContext implements TestNodeResult {
     }
 
     isSuccessfull(): bool {
-        return this._children().every((child) => child.isSuccessfull())
+        return every(this._children(), (child) => child.isSuccessfull())
     }
 
     printResults(logger: Logger) {
         if (this._children().len() === 0) return
-        const message = this._description.concat(Str.from(':'))
+        const message = concat(this._description, Str.from(':'))
         if (this.isSuccessfull()) {
             logger.success(message)
         } else {
             logger.error(message)
         }
         logger.withIndent(() => {
-          this._children().for((child) => child.printResults(logger))
+          forEach(this._children(), (child) => child.printResults(logger))
         })
     }
 }
@@ -144,13 +149,13 @@ const readFileLines = (path: Str): Vec<Str> => {
 }
 
 const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
-    const commonIndent = lines.fold(Infinity, (minIndent, line) => {
+    const commonIndent = fold(lines, Infinity, (minIndent, line) => {
         const m = line.match(/\S/)
         if (isNo(m)) return minIndent
         return Math.min(minIndent, m.val.index!)
     })
     if (!isFinite(commonIndent)) return lines
-    return lines.map((line) => line.slice(() => Slice.new(ok(commonIndent), no())))
+    return map(lines, (line) => line.slice(() => Slice.new(ok(commonIndent), no())), Vec.new())
 }
 
 const filesRead = new Map()
@@ -164,7 +169,10 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     const lineOpt = lines.get(lineIndex)
     if (isNo(lineOpt)) return Vec.new()
     // spaces before code start
-    let line = Str.new(col, ' ').concat(lineOpt.val.slice(() => Slice.new(ok(col - 1), no())))
+    let line = concat(
+        Str.new(col, ' '),
+        lineOpt.val.slice(() => Slice.new(ok(col - 1), no()))
+    )
     let result: Vec<Str> = Vec.new()
     let parensStack = Vec.new<char>()
     while (true) {
@@ -196,16 +204,21 @@ interface FileCodePointer {
 }
 
 const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePointer => {
-    const testCallIndex = unwrap(stack.findKey((filePointer) => filePointer.code.some((line) => {
-        return line.includes(Str.from('// __TEST_CALL__'))
-    })))
+    const found = find(enumerate(stack), ([filePointer]) => some(filePointer.code, (line) => {
+        return includes(line, Str.from('// __TEST_CALL__'))
+    }))
+    const [_, testCallIndex] = unwrap(found)
     return unwrap(stack.get(testCallIndex - 1))
 }
 
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
-    return stack.split(/\n/)
-        .filter((line) => line.includes(Str.from('.ts:')))
-        .map((line) => {
+    return map(
+        filter(
+            stack.split(/\n/),
+            (line) => includes(line, Str.from('.ts:')),
+            Vec.new()
+        ),
+        (line) => {
             const m = unwrap(line.match(/.*\((.*?\.ts):(\d+):(\d+)/))
             const path = Str.from(m[1])
             const row = +m[2]
@@ -215,7 +228,9 @@ const parseStack = (stack: Str): Vec<FileCodePointer> => {
             const fullPath = Str.from(`${path.inner()}:${row}:${col}`)
             const file: FileCodePointer = { path, code, row, col, fullPath }
             return file
-        })
+        },
+        Vec.new()
+    )
 }
 
 export const assert = (fn: (logger: Logger) => bool): bool => {

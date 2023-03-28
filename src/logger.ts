@@ -1,18 +1,20 @@
 import { no, ok } from './opt'
+import { concat, map } from './rng'
 import { Sig, WriteSig } from './sig'
 import { Slice } from './slice'
 import { Str } from './str'
+import { Vec } from './vec'
 
 const addIndent = (str: Str, indent: Str): Str => {
-    return str.split(/\n/).map((line) => indent.concat(line)).join(Str.from('\n'))
+    return map(str.split(/\n/), (line) => concat(indent, line), Vec.new()).join(Str.from('\n'))
 }
 
 const greenStr = (data: Str): Str => {
-    return Str.from('\x1b[32m').concat(data).concat(Str.from('\x1b[0m'))
+    return concat(concat(Str.from('\x1b[32m'), data), Str.from('\x1b[0m'))
 }
 
 const redStr = (data: Str): Str => {
-    return Str.from('\x1b[31m').concat(data).concat(Str.from('\x1b[0m'))
+    return concat(concat(Str.from('\x1b[31m'), data), Str.from('\x1b[0m'))
 }
 
 export class Logger {
@@ -61,7 +63,7 @@ export class Logger {
     }
 
     inc (): void {
-        this._setIndent.with((indent) => indent.concat(this._tab))
+        this._setIndent.with((indent) => concat(indent, this._tab))
     }
 
     dec (): void {

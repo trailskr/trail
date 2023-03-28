@@ -1,9 +1,9 @@
-import { isOk, no, ok, Opt, optFrom, or } from './opt'
-import { Rng } from './rng'
+import { isOk, Opt, optFrom, or } from './opt'
+import { find, RandomAccessFiniteRng } from './rng'
 import { Slice } from './slice'
 import { Vec } from './vec'
 
-export class Str implements Rng<usize, char> {
+export class Str implements RandomAccessFiniteRng<usize, char> {
     private readonly _str: string
 
     private constructor(str: string) {
@@ -36,11 +36,11 @@ export class Str implements Rng<usize, char> {
     }
 
     skipLeft (amount: usize): Str {
-        return new Str(this._str.slice(0, amount))
+        return new Str(this._str.slice(amount))
     }
 
     skipRight (amount: usize): Str {
-        return new Str(this._str.slice(-amount))
+        return new Str(this._str.slice(0, -amount))
     }
 
     slice (fn: (len: usize) => Slice<usize>): Str {
@@ -50,11 +50,7 @@ export class Str implements Rng<usize, char> {
     }
 
     has (item: char): bool {
-        return isOk(this.find((a) => a === item))
-    }
-
-    includes (rng: Str): bool {
-        return this._str.includes(rng._str)
+        return isOk(find(this, (a) => a === item))
     }
 
     get (index: usize): Opt<char> {
@@ -69,56 +65,8 @@ export class Str implements Rng<usize, char> {
         return this._str.length
     }
 
-    every (fn: (item: string, key: usize) => bool): bool {
-        return [...this._str].every(fn)
-    }
-
-    some (fn: (item: string, key: usize) => bool): bool {
-        return [...this._str].some(fn)
-    }
-
-    fold<R> (initialValue: R, fn: (acc: R, item: char, index: usize, stop: () => void) => R): R {
-        let acc = initialValue
-        let stop = false
-        for (const [index, char] of [...this._str].entries()) {
-            acc = fn(acc, char, index, () => { stop = true })
-            if (stop) break
-        }
-        return acc
-    }
-
-    reduce (fn: (a: char, b: char, index: usize) => char): char {
-        return [...this._str].reduce(fn)
-    }
-
-    map<R> (fn: (val: char, key: usize) => R): Vec<R> {
-        return Vec.from([...this._str].map(fn))
-    }
-
-    filter (fn: (val: char, key: usize) => bool): Str {
-        return new Str([...this._str].filter(fn).join(''))
-    }
-
-    find (fn: (val: char, key: usize) => bool): Opt<char> {
-        return optFrom([...this._str].find(fn))
-    }
-
-    findEntry (fn: (val: char, key: usize) => bool): Opt<[value: char, key: usize]> {
-        const index = [...this._str].findIndex(fn)
-        if (index === -1) return no()
-        return ok([this._str[index], index])
-    }
-
-    findKey (fn: (val: char, key: usize) => bool): Opt<usize> {
-        return optFrom([...this._str].findIndex(fn))
-    }
-
-    for<R> (fn: (val: char, key: usize, stop: () => void) => R): void {
-        let stop = false
-        for (const [index, char] of [...this._str].entries()) {
-            fn(char, index, () => { stop = true })
-            if (stop) break
-        }
+    isEmpty(): boolean {
+        return this.len() === 0
     }
 
     pushRight (val: char): Str {
@@ -131,14 +79,6 @@ export class Str implements Rng<usize, char> {
         const str = [...this._str]
         str.unshift(val)
         return new Str(str.join(''))
-    }
-
-    join (val: Str): Str {
-        return Str.from([...this._str].join(val.inner()))
-    }
-
-    concat (val: Str): Str {
-        return new Str(this._str + val.inner())
     }
 
     split (regExpOrString: RegExp | Str): Vec<Str> {

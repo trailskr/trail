@@ -1,12 +1,11 @@
 import { List } from 'immutable'
-import { no, ok, Opt, optFrom, or } from './opt'
-import { fold, has, InpRndAccRngFinite, OutBidirRngLeft } from './rng'
+import { Opt, optFrom, or } from './opt'
+import { RandomAccessFiniteRng } from './rng'
 
 import { Slice } from './slice'
 import { Str } from './str'
-import { assertEq, unittest } from './unittest'
 
-export class Vec<T> implements InpRndAccRngFinite<usize, T>, OutBidirRngLeft<usize, T> {
+export class Vec<T> implements RandomAccessFiniteRng<usize, T> {
     private readonly _arr: List<T>
 
     private constructor(list: List<T>) {
@@ -75,14 +74,6 @@ export class Vec<T> implements InpRndAccRngFinite<usize, T>, OutBidirRngLeft<usi
         return new Vec(this._arr.unshift(val))
     }
 
-    has (item: T): bool {
-        return has(this, item)
-    }
-
-    includes (rng: Vec<T>): bool {
-        return this._arr.isSuperset(rng._arr)
-    }
-
     get (index: usize): Opt<T> {
         return optFrom(this._arr.get(index))
     }
@@ -91,77 +82,11 @@ export class Vec<T> implements InpRndAccRngFinite<usize, T>, OutBidirRngLeft<usi
         return new Vec(this._arr.set(index, val))
     }
 
-    every (fn: (item: T, key: usize) => bool): bool {
-        return this._arr.every(fn)
-    }
-
-    some (fn: (item: T, key: usize) => bool): bool {
-        return this._arr.some(fn)
-    }
-
-    fold <R>(initialValue: R, fn: (acc: R, item: T, key: usize, stop: () => void) => R): R {
-        let acc = initialValue
-        let stop = false
-        for (const [index, char] of this._arr.entries()) {
-            acc = fn(acc, char, index, () => { stop = true })
-            if (stop) break
-        }
-        return acc
-    }
-
-    reduce (fn: (acc: T, item: T, key: usize) => T): T {
-        return this._arr.reduce(fn)
-    }
-
-    map <R>(fn: (val: T, key: usize) => R): Vec<R> {
-        return new Vec(this._arr.map(fn))
-    }
-
-    filter (fn: (val: T, key: usize) => bool): Vec<T> {
-        return new Vec(this._arr.filter(fn))
-    }
-
-    find (fn: (val: T, key: usize) => bool): Opt<T> {
-        return optFrom(this._arr.find(fn))
-    }
-
-    findEntry (fn: (aval: T, key: usize) => bool): Opt<[value: T, key: usize]> {
-        const entry = this._arr.findEntry(fn)
-        if (entry === undefined) return no()
-        const [key, value] = entry
-        return ok([value, key])
-    }
-
-    findKey (fn: (val: T, key: usize) => bool): Opt<usize> {
-        return optFrom(this._arr.findIndex(fn))
-    }
-
-    for (fn: (val: T, key: usize, stop: () => void) => void): void {
-        let stop = false
-        for (const [index, char] of this._arr.entries()) {
-            fn(char, index, () => { stop = true })
-            if (stop) break
-        }
-    }
-
     join (val: Str): Str {
         return Str.from(this._arr.join(val.inner()))
-    }
-
-    concat (val: Vec<T>): Vec<T> {
-        return new Vec(this._arr.concat(val._arr))
-    }
-
-    inner(): T[] {
-        return this._arr.toArray()
     }
 
     toString (): string {
         return this._arr.toArray().toString()
     }
 }
-
-unittest(Str.from('Vec rng'), () => {
-    const vec = Vec.from([1, 2, 3])
-    assertEq(() => [fold(vec, 0, (acc, item) => acc + item), 6])
-})
