@@ -2,9 +2,9 @@ import { CharStream } from '../../lexer/char-stream'
 import { isNo, isOk } from 'src/opt'
 import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
-import { Searcher, SearchResult } from '../searcher'
+import { Searcher, SearchResult, SearchResultType } from '../searcher'
 
-export class SearchExceptChar implements Searcher {
+export class SearchExceptChar implements Searcher<char, char, CharStream> {
     private readonly _char: char
     private readonly _escape: char
 
@@ -25,7 +25,7 @@ export class SearchExceptChar implements Searcher {
         return this._escape
     }
 
-    parse(charStream: CharStream): [newCharStream: CharStream, result: SearchResult] {
+    search(charStream: CharStream): [newCharStream: CharStream, result: SearchResult<char>] {
         const [ptr, charOpt] = charStream.popLeft()
         const prevChar = charStream.getCharBefore()
       
@@ -34,8 +34,8 @@ export class SearchExceptChar implements Searcher {
         ) || (
             isNo(prevChar) || prevChar.val === this._escape
         )
-            ? [ptr, SearchResult.Found]
-            : [charStream, SearchResult.NotFound]
+            ? [ptr, { type: SearchResultType.Found, val: charOpt.val }]
+            : [charStream, { type: SearchResultType.NotFound }]
     }
 }
 
@@ -45,9 +45,9 @@ unittest(Str.from('SearchExceptChar'), () => {
     const charStream1 = CharStream.new(Str.from('\\""a'))
     const [charStream2, result1] = exceptDoubleQuote.parse(charStream1)
     assertEq(() => [charStream2.pos(), 1])
-    assertEq(() => [result1, SearchResult.Found])
+    assertEq(() => [result1, SearchResultType.Found])
     const [charStream3, result2] = exceptDoubleQuote.parse(charStream2)
-    assertEq(() => [result2, SearchResult.Found])
+    assertEq(() => [result2, SearchResultType.Found])
     const [_charStream4, result3] = exceptDoubleQuote.parse(charStream3)
-    assertEq(() => [result3, SearchResult.NotFound])
+    assertEq(() => [result3, SearchResultType.NotFound])
 })
