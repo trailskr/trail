@@ -6,6 +6,7 @@ import { Str } from './str'
 export interface InpLeftRng<T> {
     left(): Opt<T>
     popLeft(): [InpLeftRng<T>, Opt<T>]
+    withoutLeft(): InpLeftRng<T>
     skipLeft(amount: usize): InpLeftRng<T>
     isEmpty(): bool
 }
@@ -13,6 +14,7 @@ export interface InpLeftRng<T> {
 export interface InpBidirRng<T> extends InpLeftRng<T> {
     right(): Opt<T>
     popRight(): [InpBidirRng<T>, Opt<T>]
+    withoutRight(): InpBidirRng<T>
     skipRight(amount: usize): InpBidirRng<T>
 }
 
@@ -20,7 +22,7 @@ export interface InpRandomAccessInfiniteRng<T> extends InpLeftRng<T> {
     getAt(key: usize): Opt<T>
 }
 
-export interface InpRandomAccessFiniteRng<T> extends InpRandomAccessInfiniteRng<T> {
+export interface InpRandomAccessFiniteRng<T> extends InpRandomAccessInfiniteRng<T>, InpBidirRng<T> {
     len(): usize
     slice (fn: (len: usize) => Slice<usize>): InpRandomAccessFiniteRng<T>
 }
@@ -171,6 +173,10 @@ class Enumeration<T> {
                 new Enumeration(newRng, this._index + 1),
                 no()
             ]
+    }
+
+    withoutLeft(): InpLeftRng<[T, usize]> {
+        return new Enumeration(this._rng.withoutLeft(), this._index + 1)
     }
 
     skipLeft(amount: usize): InpLeftRng<[T, usize]> {

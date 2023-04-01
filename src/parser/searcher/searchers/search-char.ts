@@ -1,43 +1,49 @@
 import { CharStream } from '../../lexer/char-stream'
-import { isOk } from 'src/opt'
+import { isNo, no, ok, Opt } from 'src/opt'
 import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
-import { Searcher, SearchResult, SearchResultType } from '../searcher'
+import { Searcher, SearchResult } from '../searcher'
+import { InpLeftRng } from 'src/rng'
 
-export class SearchChar implements Searcher<char, char, CharStream> {
-    private readonly _char: char
+export class SearchOne<T> implements Searcher<T> {
+    private readonly _toFind: T
 
-    private constructor (char: char) {
-        this._char = char
+    private constructor (_toFind: T) {
+        this._toFind = _toFind
     }
     
-    static new (char: char): SearchChar {
-        return new SearchChar(char)
+    static new <T>(toFind: T): SearchOne<T> {
+        return new SearchOne(toFind)
     }
 
-    char(): char {
-        return this._char
+    toFind(): T {
+        return this._toFind
     }
 
-    search(charStream: CharStream): [newCharStream: CharStream, result: SearchResult<char>] {
-        const [newCharStream, charOpt] = charStream.popLeft()
-      
-        return isOk(charOpt) && charOpt.val === this._char
-            ? [newCharStream, { type: SearchResultType.Found, val: charOpt.val }]
-            : [charStream, { type: SearchResultType.NotFound }]
+    search<R extends InpLeftRng<T>>(rng: R): [newCharStream: R, result: Opt<SearchResult<T>>] {
+        const [newRng, optVal] = rng.popLeft()
+        if (isNo(optVal)) return [rng, no()]
+        return optVal.val === this._toFind
+            ? [newRng as R, ok({ type: SearchResult.Type.Found, val: optVal.val })]
+            : [rng as R, ok({ type: SearchResult.Type.NotFound })]
     }
 }
 
-unittest(Str.from('SearchChar'), () => {
-    const arrow = SearchChar.new('+')
+unittest(Str.from('SearchOne'), () => {
+    const plus = SearchOne.new('+')
 
     const charStream1 = CharStream.new(Str.from('+'))
-    const [newCharStream1, result1] = arrow.search(charStream1)
+    const [newCharStream1, result1] = plus.search(charStream1)
     assertEq(() => [newCharStream1.pos(), 1])
-    assertEq(() => [result1.type, SearchResultType.Found])
+    assertEq(() => [result1, ok<SearchResult<char>>({ type: SearchResult.Type.Found, val: '+' })])
 
     const charStream2 = CharStream.new(Str.from('-'))
-    const [newCharStream2, result2] = arrow.search(charStream2)
+    const [newCharStream2, result2] = plus.search(charStream2)
     assertEq(() => [newCharStream2.pos(), 0])
-    assertEq(() => [result2.type, SearchResultType.NotFound])
+    assertEq(() => [result2, ok({ type: SearchResult.Type.NotFound })])
+
+    const charStream3 = CharStream.new(Str.from(''))
+    const [newCharStream3, result3] = plus.search(charStream3)
+    assertEq(() => [newCharStream3.pos(), 0])
+    assertEq(() => [result3, no()])
 })

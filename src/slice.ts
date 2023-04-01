@@ -57,10 +57,18 @@ export class Slice<T extends number = usize> implements InpBidirRng<T> {
             : [new Slice(this.left(), ok(this.orRight() - 1 as unknown as T)), this.right()]
     }
 
+    withoutLeft(): Slice<T> {
+        return this.skipLeft(1)
+    }
+
     skipLeft(amount: usize): Slice<T> {
         return amount >= this.len()
             ? new Slice(ok(this.orRight()), ok(this.orRight()))
             : new Slice(ok(this.orLeft() + amount as unknown as T), this.right())
+    }
+
+    withoutRight(): Slice<T> {
+        return this.skipRight(1)
     }
 
     skipRight(amount: usize): Slice<T> {

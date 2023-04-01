@@ -1,3 +1,4 @@
+import { Opt } from 'src/opt'
 import { Str } from 'src/str'
 import { CharStream } from './char-stream'
 
@@ -101,7 +102,12 @@ export interface DecimalIntegerNumber { type: TokenType.DecimalIntegerNumber, va
 export interface StringSingleQuote { type: TokenType.StringSingleQuote, text: Str }
 export interface StringDoubleQuote { type: TokenType.StringDoubleQuote, text: Str }
 
-export type Token = ({ from: CharStream, to: CharStream }) & (
+export interface TokenPos {
+    from: CharStream,
+    to: CharStream
+}
+
+export type Token = TokenPos & (
     Indent |
     LineEnd |
 
@@ -151,9 +157,9 @@ export type Token = ({ from: CharStream, to: CharStream }) & (
     StringDoubleQuote
 )
 
-export interface TokenError {
+export interface TokenError extends TokenPos {
     type: TokenType.Error
     msg: Str
 }
 
-export type TokenResult = Token | TokenError
+export type TokenOpt = Opt<Token, TokenError>

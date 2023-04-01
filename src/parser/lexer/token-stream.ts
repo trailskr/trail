@@ -6,19 +6,21 @@ import { Vec } from 'src/vec'
 import { CharStream } from './char-stream'
 import { SearchChar } from '../searcher/searchers/search-char'
 import { SearchRepeat } from '../searcher/searchers/search-repeat'
-import { TokenParser } from './token-parser'
 import { ampersand, and, arrow, assign, at, colon, concat, decimalFractionalNumber, decimalIntegerNumber, div, dot, equal, exclamationMark, falseP, greaterThan, greaterThanOrEqual, indent, indentifier, leftCurlyBrace, leftParenthesis, leftSquareBracket, lessThan, lessThanOrEqual, lineEnd, minus, mul, not, notEqual, or, plus, questionMark, rightCurlyBrace, rightParenthesis, rightSquareBracket, sharp, stringDoubleQuote, stringSingleQuote, trueP, verticalBar } from './token-parsers'
-import { TokenResult, TokenType } from './tokens'
+import { TokenOpt, TokenType } from './tokens'
+import { fold, InpLeftRng } from 'src/rng'
 
 const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
 
-export class TokenStream {
+export class TokenStream implements InpLeftRng<TokenOpt> {
     private readonly _charStream: CharStream
     private readonly _isParsingIndent: bool
+    private readonly _indent: usize
 
-    private constructor(charStream: CharStream, isParsingIndent: bool = true) {
+    private constructor(charStream: CharStream, isParsingIndent: bool = true, indent = 0) {
         this._charStream = charStream
         this._isParsingIndent = isParsingIndent
+        this._indent = indent
     }
 
     static new (code: Str): TokenStream {
@@ -35,16 +37,30 @@ export class TokenStream {
         return newCharStream
     }
 
-    private tryAny(charStream: CharStream, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenResult, void>] {
-        const [newCharStream, foundToken] = parsers.fold(
-            [charStream, no()] as [CharStream, Opt<TokenResult>],
-            ([ptr, _accResult], parser, _, stop) => {
+    left(): Opt<TokenOpt> {
+        if (this._isParsingIndent) {
+            const [newCharStream, result] = indent.parse(this._charStream)
+            if (isOk(result)) {
+                const [newCharStream1, optionalLineEnd] = lineEnd.parse(this.skipWhiteSpace(this._charStream))
+                // skip indent if lineEnd after it
+                if (isOk(optionalLineEnd)) {
+                    return [new TokenStream(newCharStream1, true), optionalLineEnd]
+                }
+                return [new TokenStream(newCharStream, false), result]
+            }
+        }
+    }
+
+    private tryAny(charStream: CharStream, parsers: Vec<TokenParser>): [TokenStream, Opt<TokenOpt, void>] {
+        const [newCharStream, foundToken] = fold(parsers,
+            [charStream, no()] as [CharStream, Opt<TokenOpt>],
+            ([ptr, _accResult], parser, stop) => {
                 const [newCharStream, result] = parser.parse(ptr)
                 if (isOk(result)) {
                     stop()
                     return [newCharStream, result]
                 }
-                return [charStream, no() as Opt<TokenResult>]
+                return [charStream, no() as Opt<TokenOpt>]
             }
         )
       
@@ -53,7 +69,7 @@ export class TokenStream {
             : [new TokenStream(charStream, false), no()]
     }
 
-    popLeft(): [TokenStream, Opt<TokenResult>] {
+    popLeft(): [TokenStream, Opt<TokenOpt>] {
         if (this._isParsingIndent) {
             const [newCharStream, result] = indent.parse(this._charStream)
             if (isOk(result)) {

@@ -35,8 +35,16 @@ export class Str implements RandomAccessFiniteRng<char> {
         return [new Str(this._str.slice(0, -1)), this.right()]
     }
 
+    withoutLeft(): Str {
+        return new Str(this._str.slice(1))
+    }
+
     skipLeft (amount: usize): Str {
         return new Str(this._str.slice(amount))
+    }
+
+    withoutRight(): Str {
+        return new Str(this._str.slice(0, -1))
     }
 
     skipRight (amount: usize): Str {

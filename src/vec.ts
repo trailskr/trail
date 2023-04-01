@@ -1,6 +1,6 @@
 import { List } from 'immutable'
 import { Opt, optFrom, or } from './opt'
-import { RandomAccessFiniteRng } from './rng'
+import { InpLeftRng, RandomAccessFiniteRng } from './rng'
 
 import { Slice } from './slice'
 import { Str } from './str'
@@ -44,8 +44,16 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return [rest, last]
     }
 
+    withoutLeft(): Vec<T> {
+        return new Vec(this._arr.skip(1))
+    }
+
     skipLeft (amount: usize): Vec<T> {
         return new Vec(this._arr.skip(amount))
+    }
+
+    withoutRight(): Vec<T> {
+        return new Vec(this._arr.skip(1))
     }
 
     skipRight (amount: usize): Vec<T> {

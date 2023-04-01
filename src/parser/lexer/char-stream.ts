@@ -1,8 +1,9 @@
 import { isNo, ok, Opt } from 'src/opt'
+import { InpLeftRng } from 'src/rng'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
 
-export class CharStream {
+export class CharStream implements InpLeftRng<char> {
     private readonly _code: Str
     private readonly _pos: usize
     private readonly _col: usize
@@ -36,17 +37,35 @@ export class CharStream {
     }
 
     getCharBefore (): Opt<char> {
-        return this._code.get(this._pos - 1)
+        return this._code.getAt(this._pos - 1)
+    }
+
+    left(): Opt<char> {
+        return this._code.getAt(this._pos)
+    }
+
+    withoutLeft(): CharStream {
+        const charOpt = this.left()
+        if (isNo(charOpt)) return this
+        return charOpt.val === '\n'
+            ? this._popLeftRow()
+            : this._popLeftCol()
+    }
+
+    skipLeft(amount: number): CharStream {
+        const iterate = (stream: CharStream, restAmount: number): CharStream => {
+            if (restAmount === 0) return stream
+            return iterate(stream.withoutLeft(), restAmount - 1)
+        }
+        return iterate(this.withoutLeft(), amount - 1)
+    }
+
+    isEmpty(): boolean {
+        return isNo(this.left())
     }
 
     popLeft (): [CharStream, Opt<char>] {
-        const charOpt = this._code.get(this._pos)
-        if (isNo(charOpt)) return [this, charOpt]
-        if (charOpt.val === '\n') {
-            return [this._popLeftRow(), charOpt]
-        } else {
-            return [this._popLeftCol(), charOpt]
-        }
+        return [this.withoutLeft(), this.left()]
     }
 
     lenFrom(charStream: CharStream): usize {

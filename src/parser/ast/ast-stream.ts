@@ -1,51 +1,7 @@
-import { isOk, no, ok, Opt } from 'src/opt'
+import { ok } from 'src/opt'
 import { Str } from 'src/str'
 import { assertInc, unittest } from 'src/unittest'
-import { Vec } from 'src/vec'
-import { TokenStream } from '../lexer/token-stream'
-import { AstNode, AstNodeResult, AstNodeType, BinaryOperatorType } from './ast'
-import { AstParser } from './ast-parser'
-
-export class AstStream {
-    private readonly _tokenStream: TokenStream
-
-    private constructor(tokenStream: TokenStream) {
-        this._tokenStream = tokenStream
-    }
-
-    static new (code: Str): AstStream {
-        const tokenStream = TokenStream.new(code)
-        return new AstStream(tokenStream)
-    }
-
-    tokenStream (): TokenStream {
-        return this._tokenStream
-    }
-
-    private tryAny(tokenSteam: TokenStream, parsers: Vec<AstParser>): [AstStream, Opt<AstNodeResult, void>] {
-        const [newPtr, foundToken] = parsers.fold(
-            [tokenSteam, no()] as [TokenStream, Opt<AstNodeResult>],
-            ([ptr, _accResult], parser, _, stop) => {
-                const [newPtr, result] = parser.parse(ptr)
-                if (isOk(result)) {
-                    stop()
-                    return [newPtr, result]
-                }
-                return [tokenSteam, no() as Opt<AstNodeResult>]
-            }
-        )
-      
-        return isOk(foundToken)
-            ? [new AstStream(newPtr), foundToken]
-            : [new AstStream(tokenSteam), no()]
-    }
-
-    popLeft(): [AstStream, Opt<AstNodeResult>] {
-        return this.tryAny(this._tokenStream, Vec.from([
-
-        ]))
-    }
-}
+import { AstNodeType, BinaryOperatorType } from './ast'
 
 const testAst = (sourceCode: Str, resultCode: Partial<AstNode>) => {
     assertInc(() => {

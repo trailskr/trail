@@ -241,7 +241,7 @@ export const assert = (fn: (logger: Logger) => bool): bool => {
     return testNodeContext.run(fn)
 }
 
-export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
+export const assertEq = <T>(fn: (logger: Logger) => [T, T]): bool => {
     return assert((logger) => {
         const [a, b] = fn(logger)
         const equal = isEqual(a, b)
@@ -252,7 +252,7 @@ export const assertEq = (fn: (logger: Logger) => [unknown, unknown]): bool => {
     })
 }
 
-export const assertInc = (fn: (logger: Logger) => [unknown, unknown]): bool => {
+export const assertInc = <T>(fn: (logger: Logger) => [T, Partial<T>]): bool => {
     return assert((logger) => {
         const [a, b] = fn(logger)
         const includes = isIncludes(a, b)
