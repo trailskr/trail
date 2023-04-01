@@ -2,7 +2,6 @@ import { Err } from './err'
 import { isNo, isOk, no, ok, Opt } from './opt'
 import { Slice } from './slice'
 import { Str } from './str'
-import { Vec } from './vec'
 
 export interface InpLeftRng<K, T> {
     left(): Opt<T>
