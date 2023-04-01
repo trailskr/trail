@@ -5,7 +5,7 @@ import { RandomAccessFiniteRng } from './rng'
 import { Slice } from './slice'
 import { Str } from './str'
 
-export class Vec<T> implements RandomAccessFiniteRng<usize, T> {
+export class Vec<T> implements RandomAccessFiniteRng<T> {
     private readonly _arr: List<T>
 
     private constructor(list: List<T>) {
@@ -74,11 +74,11 @@ export class Vec<T> implements RandomAccessFiniteRng<usize, T> {
         return new Vec(this._arr.unshift(val))
     }
 
-    get (index: usize): Opt<T> {
+    getAt (index: usize): Opt<T> {
         return optFrom(this._arr.get(index))
     }
 
-    set (index: usize, val: T): Vec<T> {
+    setAt (index: usize, val: T): Vec<T> {
         return new Vec(this._arr.set(index, val))
     }
 

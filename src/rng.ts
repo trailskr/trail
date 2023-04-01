@@ -3,45 +3,45 @@ import { isNo, isOk, no, ok, Opt } from './opt'
 import { Slice } from './slice'
 import { Str } from './str'
 
-export interface InpLeftRng<K, T> {
+export interface InpLeftRng<T> {
     left(): Opt<T>
-    popLeft(): [InpLeftRng<K, T>, Opt<T>]
-    skipLeft(amount: usize): InpLeftRng<K, T>
+    popLeft(): [InpLeftRng<T>, Opt<T>]
+    skipLeft(amount: usize): InpLeftRng<T>
     isEmpty(): bool
 }
 
-export interface InpRandomAccessInfiniteRng<K, T> extends InpLeftRng<K, T> {
-    get(key: K): Opt<T>
-}
-
-export interface InpBidirRng<K, T> extends InpLeftRng<K, T> {
+export interface InpBidirRng<T> extends InpLeftRng<T> {
     right(): Opt<T>
-    popRight(): [InpBidirRng<K, T>, Opt<T>]
-    skipRight(amount: usize): InpBidirRng<K, T>
+    popRight(): [InpBidirRng<T>, Opt<T>]
+    skipRight(amount: usize): InpBidirRng<T>
 }
 
-export interface InpRandomAccessFiniteRng<K, T> extends InpRandomAccessInfiniteRng<K, T> {
+export interface InpRandomAccessInfiniteRng<T> extends InpLeftRng<T> {
+    getAt(key: usize): Opt<T>
+}
+
+export interface InpRandomAccessFiniteRng<T> extends InpRandomAccessInfiniteRng<T> {
     len(): usize
-    slice (fn: (len: usize) => Slice<usize>): InpRandomAccessFiniteRng<K, T>
+    slice (fn: (len: usize) => Slice<usize>): InpRandomAccessFiniteRng<T>
 }
 
-export interface OutRightRng<K, T> {
-    pushRight(val: T): OutRightRng<K, T>
+export interface OutRightRng<T> {
+    pushRight(val: T): OutRightRng<T>
 }
 
-export interface OutBidirRng<K, T> extends OutRightRng<K, T> {
-    pushLeft(val: T): OutBidirRng<K, T>
+export interface OutBidirRng<T> extends OutRightRng<T> {
+    pushLeft(val: T): OutBidirRng<T>
 }
 
-export interface OutRandomAccessFiniteRng<K, T> extends OutBidirRng<K, T> {
-    set(key: K, val: T): OutRandomAccessFiniteRng<K, T>
+export interface OutRandomAccessFiniteRng<T> extends OutBidirRng<T> {
+    setAt(key: usize, val: T): OutRandomAccessFiniteRng<T>
 }
 
-export type RandomAccessFiniteRng<K, T> = InpRandomAccessFiniteRng<K, T> & OutRandomAccessFiniteRng<K, T>
+export type RandomAccessFiniteRng<T> = InpRandomAccessFiniteRng<T> & OutRandomAccessFiniteRng<T>
 
-export const fold = <K, T, R>(rng: InpLeftRng<K, T>, initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R => {
+export const fold = <T, R>(rng: InpLeftRng<T>, initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R => {
     let stop = false
-    const iterate = (res: R, rng: InpLeftRng<K, T>): R => {
+    const iterate = (res: R, rng: InpLeftRng<T>): R => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return res
         const ans = fn(res, left.val, () => { stop = true })
@@ -51,11 +51,11 @@ export const fold = <K, T, R>(rng: InpLeftRng<K, T>, initialValue: R, fn: (acc: 
     return iterate(initialValue, rng)
 }
 
-export const reduce = <K, T>(rng: InpLeftRng<K, T>, fn: (acc: T, item: T, stop: () => void) => T): Opt<T, Err> => {
+export const reduce = <T>(rng: InpLeftRng<T>, fn: (acc: T, item: T, stop: () => void) => T): Opt<T, Err> => {
     const [newRng, left] = rng.popLeft()
     if (isNo(left)) return no({ msg: Str.from('reduce on empty array') })
     let stop = false
-    const iterate = (rng: InpLeftRng<K, T>, acc: T): T => {
+    const iterate = (rng: InpLeftRng<T>, acc: T): T => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return acc
         const ans = fn(acc, left.val, () => { stop = true })
@@ -65,9 +65,9 @@ export const reduce = <K, T>(rng: InpLeftRng<K, T>, fn: (acc: T, item: T, stop: 
     return ok(iterate(newRng, left.val))
 }
 
-export const forEach = <K, T>(rng: InpLeftRng<K, T>, fn: (item: T, stop: () => void) => void): void => {
+export const forEach = <T>(rng: InpLeftRng<T>, fn: (item: T, stop: () => void) => void): void => {
     let stop = false
-    const iterate = (rng: InpLeftRng<K, T>): void => {
+    const iterate = (rng: InpLeftRng<T>): void => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return
         fn(left.val, () => { stop = true })
@@ -77,8 +77,8 @@ export const forEach = <K, T>(rng: InpLeftRng<K, T>, fn: (item: T, stop: () => v
     return iterate(rng)
 }
 
-export const find = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): Opt<T> => {
-    const iterate = (rng: InpLeftRng<K, T>): Opt<T> => {
+export const find = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): Opt<T> => {
+    const iterate = (rng: InpLeftRng<T>): Opt<T> => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return no()
         if (fn(left.val)) return left
@@ -87,7 +87,7 @@ export const find = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): Opt<T> 
     return iterate(rng)
 }
 
-export const every = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): bool => {
+export const every = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): bool => {
     return fold(rng, true, (_, item, stop) => {
         if (!fn(item)) {
             stop()
@@ -97,7 +97,7 @@ export const every = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): bool =
     })
 }
 
-export const some = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): bool => {
+export const some = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): bool => {
     return fold(rng, false, (_, item, stop) => {
         if (fn(item)) {
             stop()
@@ -107,8 +107,8 @@ export const some = <K, T>(rng: InpLeftRng<K, T>, fn: (val: T) => bool): bool =>
     })
 }
 
-export const map = <R, K, T, V extends OutRightRng<K, R>>(rng: InpLeftRng<K, T>, fn: (val: T) => R, initialVec: V): V => {
-    const iterate = (rng: InpLeftRng<K, T>, vec: V): V => {
+export const map = <R, T, V extends OutRightRng<R>>(rng: InpLeftRng<T>, fn: (val: T) => R, initialVec: V): V => {
+    const iterate = (rng: InpLeftRng<T>, vec: V): V => {
         const [newRng, left] = rng.popLeft()
         if (isNo(left)) return vec
         const newVec = vec.pushRight(fn(left.val)) as V
@@ -117,8 +117,8 @@ export const map = <R, K, T, V extends OutRightRng<K, R>>(rng: InpLeftRng<K, T>,
     return iterate(rng, initialVec)
 }
 
-export const filter = <K, T, V extends OutRightRng<K, T>>(rng: InpLeftRng<K, T>, fn: (val: T) => bool, initialVec: V): V => {
-    const iterate = (rng: InpLeftRng<K, T>, vec: V): V => {
+export const filter = <T, V extends OutRightRng<T>>(rng: InpLeftRng<T>, fn: (val: T) => bool, initialVec: V): V => {
+    const iterate = (rng: InpLeftRng<T>, vec: V): V => {
         const [newRng, left] = rng.popLeft()
         if (isNo(left)) return vec
         const newVec = fn(left.val)
@@ -129,12 +129,12 @@ export const filter = <K, T, V extends OutRightRng<K, T>>(rng: InpLeftRng<K, T>,
     return iterate(rng, initialVec)
 }
 
-export const has = <K, T>(rng: InpLeftRng<K, T>, item: T): bool => {
+export const includes = <T>(rng: InpLeftRng<T>, item: T): bool => {
     return isOk(find(rng, (a) => a === item))
 }
 
-export const concat = <K, T, V extends OutRightRng<K, T>>(appendTo: V, appendFrom: InpLeftRng<K, T>): V => {
-    const iterate = (appendTo: V, appendFrom: InpLeftRng<K, T>): V => {
+export const concat = <T, V extends OutRightRng<T>>(appendTo: V, appendFrom: InpLeftRng<T>): V => {
+    const iterate = (appendTo: V, appendFrom: InpLeftRng<T>): V => {
         const [newFrom, left] = appendFrom.popLeft()
         if (isNo(left)) return appendTo
         const newTo = appendTo.pushRight(left.val) as V
@@ -143,13 +143,13 @@ export const concat = <K, T, V extends OutRightRng<K, T>>(appendTo: V, appendFro
     return iterate(appendTo, appendFrom)
 }
 
-class Enumeration<K, T> {
+class Enumeration<T> {
     private constructor (
-        private readonly _rng: InpLeftRng<K, T>,
+        private readonly _rng: InpLeftRng<T>,
         private readonly _index: usize
     ) {}
 
-    static new<K, T>(rng: InpLeftRng<K, T>, index: usize) {
+    static new<T>(rng: InpLeftRng<T>, index: usize) {
         return new Enumeration(rng, index)
     }
 
@@ -160,7 +160,7 @@ class Enumeration<K, T> {
             : no()
     }
 
-    popLeft(): [InpLeftRng<K, [T, usize]>, Opt<[T, usize]>] {
+    popLeft(): [InpLeftRng<[T, usize]>, Opt<[T, usize]>] {
         const [newRng, left] = this._rng.popLeft()
         return isOk(left)
             ? [
@@ -173,7 +173,7 @@ class Enumeration<K, T> {
             ]
     }
 
-    skipLeft(amount: usize): InpLeftRng<K, [T, usize]> {
+    skipLeft(amount: usize): InpLeftRng<[T, usize]> {
         return new Enumeration(this._rng.skipLeft(amount), this._index + amount)
     }
 
@@ -182,12 +182,12 @@ class Enumeration<K, T> {
     }
 }
 
-export const enumerate = <K, T>(rng: InpLeftRng<K, T>, from: usize = 0): InpLeftRng<K, [T, usize]> => {
+export const enumerate = <T>(rng: InpLeftRng<T>, from: usize = 0): InpLeftRng<[T, usize]> => {
     return Enumeration.new(rng, from)
 }
 
-export const includes = <K, T>(rngA: InpLeftRng<K, T>, rngB: InpLeftRng<K, T>): bool => {
-    const equal = (rngA: InpLeftRng<K, T>, rngB: InpLeftRng<K, T>): bool => {
+export const contains = <T>(rngA: InpLeftRng<T>, rngB: InpLeftRng<T>): bool => {
+    const equal = (rngA: InpLeftRng<T>, rngB: InpLeftRng<T>): bool => {
         const [newRngB, leftB] = rngB.popLeft()
         if (isNo(leftB)) return true
         const [newRngA, leftA] = rngA.popLeft()
@@ -195,7 +195,7 @@ export const includes = <K, T>(rngA: InpLeftRng<K, T>, rngB: InpLeftRng<K, T>): 
         return equal(newRngA, newRngB)
     }
 
-    const iterate = (rngA: InpLeftRng<K, T>): bool => {
+    const iterate = (rngA: InpLeftRng<T>): bool => {
         if (equal(rngA, rngB)) return true
         if (rngA.isEmpty()) return false
         return iterate(rngA.skipLeft(1))

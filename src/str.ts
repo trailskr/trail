@@ -3,7 +3,7 @@ import { find, RandomAccessFiniteRng } from './rng'
 import { Slice } from './slice'
 import { Vec } from './vec'
 
-export class Str implements RandomAccessFiniteRng<usize, char> {
+export class Str implements RandomAccessFiniteRng<char> {
     private readonly _str: string
 
     private constructor(str: string) {
@@ -15,7 +15,7 @@ export class Str implements RandomAccessFiniteRng<usize, char> {
         return new Str(str)
     }
 
-    static from (str: string) {
+    static from (str: string): Str {
         return new Str(str)
     }
 
@@ -53,11 +53,11 @@ export class Str implements RandomAccessFiniteRng<usize, char> {
         return isOk(find(this, (a) => a === item))
     }
 
-    get (index: usize): Opt<char> {
+    getAt (index: usize): Opt<char> {
         return optFrom(this._str[index])
     }
 
-    set (index: usize, val: char): Str {
+    setAt (index: usize, val: char): Str {
         return Str.from(this._str.slice(0, index) + val + this._str.slice(index))
     }
 

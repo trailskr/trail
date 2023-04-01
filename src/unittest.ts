@@ -9,7 +9,7 @@ import { isEqual, isIncludes } from './utils'
 import { Vec } from './vec'
 import { Set } from './set'
 import { Slice } from './slice'
-import { concat, enumerate, every, fold, forEach, map, find, some, includes, filter } from './rng'
+import { concat, enumerate, every, fold, forEach, map, find, some, filter, contains } from './rng'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
@@ -51,7 +51,7 @@ class TestNodeContext implements TestNodeResult {
         const { code, fullPath, } = this._fileCodePointer
         if (this.isSuccessfull()) {
             const logMsg = concat(
-                unwrap(code.get(0)),
+                unwrap(code.getAt(0)),
                 Str.from(code.len() > 1 ? ' ...' : '')
             )
             logger.success(logMsg)
@@ -166,7 +166,7 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     const lines = readFileLines(path)
     let pos = 0
     let lineIndex = row - 1
-    const lineOpt = lines.get(lineIndex)
+    const lineOpt = lines.getAt(lineIndex)
     if (isNo(lineOpt)) return Vec.new()
     // spaces before code start
     let line = concat(
@@ -176,12 +176,12 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
     let result: Vec<Str> = Vec.new()
     let parensStack = Vec.new<char>()
     while (true) {
-        const char = line.get(pos)
+        const char = line.getAt(pos)
         if (isNo(char)) {
             result = result.pushRight(line)
             if (parensStack.len() === 0) return result
             lineIndex++
-            const nextLine = lines.get(lineIndex)
+            const nextLine = lines.getAt(lineIndex)
             if (isNo(nextLine)) return result
             pos = 0
             line = nextLine.val
@@ -205,17 +205,17 @@ interface FileCodePointer {
 
 const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePointer => {
     const found = find(enumerate(stack), ([filePointer]) => some(filePointer.code, (line) => {
-        return includes(line, Str.from('// __TEST_CALL__'))
+        return contains(line, Str.from('// __TEST_CALL__'))
     }))
     const [_, testCallIndex] = unwrap(found)
-    return unwrap(stack.get(testCallIndex - 1))
+    return unwrap(stack.getAt(testCallIndex - 1))
 }
 
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
     return map(
         filter(
             stack.split(/\n/),
-            (line) => includes(line, Str.from('.ts:')),
+            (line) => contains(line, Str.from('.ts:')),
             Vec.new()
         ),
         (line) => {
