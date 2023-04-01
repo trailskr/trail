@@ -2,7 +2,6 @@ import { Err } from './err'
 import { isNo, isOk, no, ok, Opt } from './opt'
 import { Slice } from './slice'
 import { Str } from './str'
-import { assertEq, unittest } from './unittest'
 import { Vec } from './vec'
 
 export interface InpLeftRng<K, T> {
@@ -205,27 +204,27 @@ export const includes = <K, T>(rngA: InpLeftRng<K, T>, rngB: InpLeftRng<K, T>): 
     return iterate(rngA)
 }
 
-const test = () => {
-    const vec = Vec.from([1, 2, 3])
-    console.log(fold(vec, 0, (acc, item) => acc + item) === 6)
-    console.log(includes(vec, Vec.from([2, 3])))
-    console.log(isOk(find(vec, (item) => item === 1)))
-    console.log(isNo(find(vec, (item) => item === 4)))
-    const [enumer1, left1] = enumerate(vec).popLeft()
-    console.log(isOk(left1) && left1.val[0] === 1 && left1.val[1] === 0)
-    const [_, left2] = enumer1.popLeft()
-    console.log(isOk(left2) && left2.val[0] === 2 && left2.val[1] === 1)
+// const test = () => {
+//     const vec = Vec.from([1, 2, 3])
+//     console.log(fold(vec, 0, (acc, item) => acc + item) === 6)
+//     console.log(includes(vec, Vec.from([2, 3])))
+//     console.log(isOk(find(vec, (item) => item === 1)))
+//     console.log(isNo(find(vec, (item) => item === 4)))
+//     const [enumer1, left1] = enumerate(vec).popLeft()
+//     console.log(isOk(left1) && left1.val[0] === 1 && left1.val[1] === 0)
+//     const [_, left2] = enumer1.popLeft()
+//     console.log(isOk(left2) && left2.val[0] === 2 && left2.val[1] === 1)
     
-    console.log(some(vec, (item) => item === 2))
-    console.log(!some(vec, (item) => item === 5))
-    console.log(every(vec, (item) => item < 4))
-    console.log(!every(vec, (item) => item === 1))
+//     console.log(some(vec, (item) => item === 2))
+//     console.log(!some(vec, (item) => item === 5))
+//     console.log(every(vec, (item) => item < 4))
+//     console.log(!every(vec, (item) => item === 1))
 
-    const str = Str.from('123')
-    console.log(includes(str, Str.from('23')))
-    console.log(isOk(find(str, (item) => item === '1')))
-    console.log(isNo(find(str, (item) => item === '4')))
+//     const str = Str.from('123')
+//     console.log(includes(str, Str.from('23')))
+//     console.log(isOk(find(str, (item) => item === '1')))
+//     console.log(isNo(find(str, (item) => item === '4')))
 
-    const str2 = Str.from('fn() // __TEST_CALL__')
-    console.log(includes(str2, Str.from('__TEST_CALL__')))
-}
+//     const str2 = Str.from('fn() // __TEST_CALL__')
+//     console.log(includes(str2, Str.from('__TEST_CALL__')))
+// }

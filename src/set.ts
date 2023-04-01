@@ -1,10 +1,10 @@
 import { Set as ImmSet } from 'immutable'
-import { Opt, optFrom, or } from './opt'
+import { no, ok, Opt, optFrom, or } from './opt'
 
-import { SetRng } from './rng'
+import { RandomAccessFiniteRng } from './rng'
 import { Slice } from './slice'
 
-export class Set<T> implements SetRng<T, T> {
+export class Set<T> implements RandomAccessFiniteRng<T, T> {
     private readonly _set: ImmSet<T>
     
     private constructor(set: ImmSet<T>) {
@@ -47,6 +47,26 @@ export class Set<T> implements SetRng<T, T> {
         return new Set(this._set.skipLast(amount))
     }
 
+    get(key: T): Opt<T> {
+        return this.has(key) ? ok(key) : no()
+    }
+
+    set(key: T, val: T): Set<T> {
+        return new Set(this._set.add(key))
+    }
+
+    pushRight (val: T): Set<T> {
+        return new Set(this._set.add(val))
+    }
+
+    pushLeft (val: T): Set<T> {
+        return new Set(this._set.add(val))
+    }
+
+    has (item: T): bool {
+        return this._set.includes(item)
+    }
+
     slice (fn: (len: usize) => Slice<usize>): Set<T> {
         const len = this.len()
         const slice = fn(len)
@@ -57,56 +77,8 @@ export class Set<T> implements SetRng<T, T> {
         return this._set.size
     }
 
-    has (item: T): bool {
-        return this._set.includes(item)
-    }
-
-    includes (rng: Set<T>): bool {
-        return this._set.isSuperset(rng._set)
-    }
-
-    every (fn: (item: T) => bool): bool {
-        return this._set.every(fn)
-    }
-
-    some (fn: (item: T) => bool): bool {
-        return this._set.some(fn)
-    }
-
-    fold<R> (initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R {
-        let acc = initialValue
-        let stop = false
-        for (const item of this._set) {
-            acc = fn(acc, item, () => { stop = true })
-            if (stop) break
-        }
-        return acc
-    }
-
-    reduce (fn: (acc: T, b: T) => T): T {
-        return this._set.reduce(fn)
-    }
-
-    map<R> (fn: (val: T) => R): Set<R> {
-        const set = this._set.map(fn)
-        return new Set(set)
-    }
-
-    filter (fn: (val: T) => bool): Set<T> {
-        const set = this._set.filter(fn)
-        return new Set(set)
-    }
-
-    find (fn: (val: T) => bool): Opt<T> {
-        return optFrom(this._set.find(fn))
-    }
-
-    for<R> (fn: (val: T, stop: () => void) => R): void {
-        let stop = false
-        for (const item of this._set) {
-            fn(item, () => { stop = true })
-            if (stop) break
-        }
+    isEmpty(): boolean {
+        return this.len() === 0
     }
 
     inner (): ImmSet<T> {
