@@ -24,7 +24,7 @@ export interface InpRandomAccessInfiniteRng<T> extends InpLeftRng<T> {
 
 export interface InpRandomAccessFiniteRng<T> extends InpRandomAccessInfiniteRng<T>, InpBidirRng<T> {
     len(): usize
-    slice (fn: (len: usize) => Slice<usize>): InpRandomAccessFiniteRng<T>
+    slice (fn: (len: usize) => Slice): InpRandomAccessFiniteRng<T>
 }
 
 export interface OutRightRng<T> {

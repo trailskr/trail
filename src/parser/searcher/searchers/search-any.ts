@@ -4,7 +4,7 @@ import { Searcher } from '../searcher'
 import { Vec } from 'src/vec'
 import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { fold, InpLeftRng } from 'src/rng'
-import { SearchOne } from './search-char'
+import { SearchOne } from './search-one'
 import { CharStream } from 'src/parser/lexer/char-stream'
 
 export class SearchAny<T> implements Searcher<T> {

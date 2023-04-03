@@ -51,7 +51,7 @@ export class Str implements RandomAccessFiniteRng<char> {
         return new Str(this._str.slice(0, -amount))
     }
 
-    slice (fn: (len: usize) => Slice<usize>): Str {
+    slice (fn: (len: usize) => Slice): Str {
         const len = this.len()
         const slice = fn(len)
         return new Str(this._str.slice(or(slice.left(), 0), or(slice.right(), len)))

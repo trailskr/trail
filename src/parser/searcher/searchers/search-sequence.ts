@@ -3,7 +3,7 @@ import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
 import { Vec } from 'src/vec'
-import { SearchChar } from './search-char'
+import { SearchChar } from './search-one'
 
 export enum SequenceFlag {
     None = 'None',

@@ -60,7 +60,7 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return new Vec(this._arr.skipLast(amount))
     }
 
-    slice (fn: (len: usize) => Slice<usize>): Vec<T> {
+    slice (fn: (len: usize) => Slice): Vec<T> {
         const len = this.len()
         const slice = fn(len)
         return new Vec(this._arr.slice(or(slice.left(), 0), or(slice.right(), len)))
