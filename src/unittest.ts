@@ -155,7 +155,10 @@ const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
         return Math.min(minIndent, m.val.index!)
     })
     if (!isFinite(commonIndent)) return lines
-    return map(lines, (line) => line.slice(() => Slice.new(ok(commonIndent), no()))).collect(Vec.new())
+    return map(
+        lines,
+        (line) => line.slice(() => Slice.new(ok(commonIndent), no()))
+    ).collect(Vec.new())
 }
 
 const filesRead = new Map()
@@ -211,15 +214,17 @@ const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePoint
     return unwrap(stack.getAt(testCallIndex - 1))
 }
 
+const tsFileLineMathRe = /.*\((.*?\.ts):(\d+):(\d+)/
+
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
     const linesWithTs = filter(
         stack.split(/\n/),
-        (line) => contains(line, Str.from('.ts:'))
+        (line) => tsFileLineMathRe.test(line.inner())
     )
     const fileCodePointers = map(
         linesWithTs,
         (line) => {
-            const m = unwrap(line.match(/.*\((.*?\.ts):(\d+):(\d+)/))
+            const m = unwrap(line.match(tsFileLineMathRe))
             const path = Str.from(m[1])
             const row = +m[2]
             const col = +m[3]

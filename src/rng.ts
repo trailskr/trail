@@ -174,7 +174,8 @@ class Filter<T> implements InpLeftRng<T> {
     }
 
     popLeft(): [InpLeftRng<T>, Opt<T>] {
-        return find(this._rng, this._fn)
+        const [newRng, result] = find(this._rng, this._fn)
+        return [new Filter(newRng, this._fn), result]
     }
 
     withoutLeft(): InpLeftRng<T> {
@@ -324,5 +325,13 @@ const test = () => {
     const mappedVec = mapped.collect(Vec.new<i32>())
     const l22 = mappedVec.getAt(2)
     console.log(isOk(l22) && l22.val === 4)
+
+    const filtered = filter(vec, (a) => a !== 2)
+    const fl0 = filtered.left()
+    console.log(isOk(fl0) && fl0.val === 1)
+    const fl1 = filtered.withoutLeft().left()
+    console.log(isOk(fl1) && fl1.val === 3)
+    const filteredVec = filtered.collect(Vec.new<i32>())
+    console.log(filteredVec.len() === 2)
 }
 test()

@@ -1,5 +1,5 @@
 import { isOk, Opt, optFrom, or } from './opt'
-import { find, RandomAccessFiniteRng } from './rng'
+import { findItem, RandomAccessFiniteRng } from './rng'
 import { Slice } from './slice'
 import { Vec } from './vec'
 
@@ -58,7 +58,7 @@ export class Str implements RandomAccessFiniteRng<char> {
     }
 
     has (item: char): bool {
-        return isOk(find(this, (a) => a === item))
+        return isOk(findItem(this, (a) => a === item))
     }
 
     getAt (index: usize): Opt<char> {

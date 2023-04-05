@@ -1,6 +1,6 @@
 import { List } from 'immutable'
 import { Opt, optFrom, or } from './opt'
-import { InpLeftRng, RandomAccessFiniteRng } from './rng'
+import { RandomAccessFiniteRng } from './rng'
 
 import { Slice } from './slice'
 import { Str } from './str'
