@@ -2,7 +2,7 @@ import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
 import { Vec } from 'src/vec'
-import { isOk, no, ok, Opt } from 'src/opt'
+import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { findItem, InpLeftRng, map } from 'src/rng'
 import { SearchOne } from './search-one'
 import { CharStream } from 'src/parser/lexer/char-stream'
@@ -23,13 +23,18 @@ export class SearchAny<T> implements Searcher<T> {
     }
 
     search<R extends InpLeftRng<T>>(from: R): [newRng: R, result: Opt<SearchResult<T>>] {
-        const result = findItem(
-            map(this._items, (searcher) => searcher.search(from)),
-            ([_rng, result]) => isOk(result)
-        )
-        return isOk(result)
-            ? result.val as [R, Opt<SearchResult<T>>]
-            : [from, no()]
+        const iterate = (
+            rng: R,
+            searchersRng: Vec<Searcher<T>>
+        ): [newRng: R, result: Opt<SearchResult<T>>] => {
+            const [newSearchersRng, searcherOpt] = searchersRng.popLeft()
+            if (isNo(searcherOpt)) return [rng, ok({ type: SearchResult.Type.NotFound })]
+            const [newRange, left] = searcherOpt.val.search(rng)
+            if (isNo(left)) return [rng, no()]
+            if (left.val.type !== SearchResult.Type.NotFound) return [newRange as R, left]
+            return iterate(newRange as R, newSearchersRng)
+        }
+        return iterate(from, this._items)
     }
 }
 
@@ -40,8 +45,8 @@ unittest(Str.from('SearchAny'), () => {
     ]))
 
     const charStream0 = CharStream.new(Str.from(''))
-    const [_newCharStream0, result0] = aOrB.search(charStream0)
-    assertEq(() => [newCharStream1.pos(), 0])
+    const [newCharStream0, result0] = aOrB.search(charStream0)
+    assertEq(() => [newCharStream0.pos(), 0])
     assertEq(() => [result0, no()])
 
     const charStream1 = CharStream.new(Str.from('a'))
