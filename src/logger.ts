@@ -6,7 +6,9 @@ import { Str } from './str'
 import { Vec } from './vec'
 
 const addIndent = (str: Str, indent: Str): Str => {
-    return map(str.split(/\n/), (line) => concat(indent, line), Vec.new()).join(Str.from('\n'))
+    return map(str.split(/\n/), (line) => concat(indent, line))
+        .collect(Vec.new())
+        .join(Str.from('\n'))
 }
 
 const greenStr = (data: Str): Str => {

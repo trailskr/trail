@@ -334,4 +334,4 @@ const test = () => {
     const filteredVec = filtered.collect(Vec.new<i32>())
     console.log(filteredVec.len() === 2)
 }
-test()
+// test()
