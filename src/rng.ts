@@ -2,6 +2,7 @@ import { Err } from './err'
 import { isNo, isOk, no, ok, Opt } from './opt'
 import { Slice } from './slice'
 import { Str } from './str'
+import { Vec } from './vec'
 
 export interface InpLeftRng<T> {
     left(): Opt<T>
@@ -41,45 +42,39 @@ export interface OutRandomAccessFiniteRng<T> extends OutBidirRng<T> {
 
 export type RandomAccessFiniteRng<T> = InpRandomAccessFiniteRng<T> & OutRandomAccessFiniteRng<T>
 
-export const fold = <T, R>(rng: InpLeftRng<T>, initialValue: R, fn: (acc: R, item: T, stop: () => void) => R): R => {
-    let stop = false
+export const fold = <T, R>(rng: InpLeftRng<T>, initialValue: R, fn: (acc: R, item: T) => R): R => {
     const iterate = (res: R, rng: InpLeftRng<T>): R => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return res
-        const ans = fn(res, left.val, () => { stop = true })
-        if (stop) return ans
+        const ans = fn(res, left.val)
         return iterate(ans, newRange)
     }
     return iterate(initialValue, rng)
 }
 
-export const reduce = <T>(rng: InpLeftRng<T>, fn: (acc: T, item: T, stop: () => void) => T): Opt<T, Err> => {
+export const reduce = <T>(rng: InpLeftRng<T>, fn: (acc: T, item: T) => T): Opt<T, Err> => {
     const [newRng, left] = rng.popLeft()
     if (isNo(left)) return no({ msg: Str.from('reduce on empty array') })
-    let stop = false
     const iterate = (rng: InpLeftRng<T>, acc: T): T => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return acc
-        const ans = fn(acc, left.val, () => { stop = true })
-        if (stop) return ans
+        const ans = fn(acc, left.val)
         return iterate(newRange, ans)
     }
     return ok(iterate(newRng, left.val))
 }
 
-export const forEach = <T>(rng: InpLeftRng<T>, fn: (item: T, stop: () => void) => void): void => {
-    let stop = false
+export const forEach = <T>(rng: InpLeftRng<T>, fn: (item: T) => void): void => {
     const iterate = (rng: InpLeftRng<T>): void => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return
-        fn(left.val, () => { stop = true })
-        if (stop) return
+        fn(left.val)
         return iterate(newRange)
     }
     return iterate(rng)
 }
 
-export const find = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): Opt<T> => {
+export const findItem = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): Opt<T> => {
     const iterate = (rng: InpLeftRng<T>): Opt<T> => {
         const [newRange, left] = rng.popLeft()
         if (isNo(left)) return no()
@@ -89,50 +84,128 @@ export const find = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): Opt<T> => {
     return iterate(rng)
 }
 
+export const find = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): [InpLeftRng<T>, Opt<T>] => {
+    const iterate = (rng: InpLeftRng<T>): [InpLeftRng<T>, Opt<T>] => {
+        const [newRange, left] = rng.popLeft()
+        if (isNo(left)) return [newRange, no()]
+        if (fn(left.val)) return [newRange, left]
+        return iterate(newRange)
+    }
+    return iterate(rng)
+}
+
 export const every = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): bool => {
-    return fold(rng, true, (_, item, stop) => {
-        if (!fn(item)) {
-            stop()
-            return false
-        }
-        return true
-    })
+    return isNo(findItem(rng, (item) => fn(item) === false))
 }
 
 export const some = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): bool => {
-    return fold(rng, false, (_, item, stop) => {
-        if (fn(item)) {
-            stop()
-            return true
+    return isOk(findItem(rng, (item) => fn(item) === true))
+}
+
+class Mapper<T, R> implements InpLeftRng<R> {
+    private constructor (
+        private readonly _rng: InpLeftRng<T>,
+        private readonly _fn: (val: T) => R
+    ) {}
+
+    static new<T, R>(rng: InpLeftRng<T>, _fn: (val: T) => R) {
+        return new Mapper<T, R>(rng, _fn)
+    }
+
+    left(): Opt<R> {
+        const left = this._rng.left()
+        return isOk(left)
+            ? ok(this._fn(left.val))
+            : no()
+    }
+
+    popLeft(): [InpLeftRng<R>, Opt<R>] {
+        const [newRng, left] = this._rng.popLeft()
+        return isOk(left)
+            ? [
+                new Mapper(newRng, this._fn),
+                ok(this._fn(left.val))
+            ]
+            : [
+                new Mapper(newRng, this._fn),
+                no()
+            ]
+    }
+
+    withoutLeft(): InpLeftRng<R> {
+        return new Mapper(this._rng.withoutLeft(), this._fn)
+    }
+
+    skipLeft(amount: usize): InpLeftRng<R> {
+        return new Mapper(this._rng.skipLeft(amount), this._fn)
+    }
+
+    isEmpty(): bool {
+        return this._rng.isEmpty()
+    }
+
+    collect<V extends OutRightRng<R>>(initialVec: V): V {
+        const iterate = (rng: InpLeftRng<R>, vec: V): V => {
+            const [newRng, left] = rng.popLeft()
+            if (isNo(left)) return vec
+            const newVec = vec.pushRight(left.val) as V
+            return iterate(newRng, newVec)
         }
-        return false
-    })
+        return iterate(this, initialVec)
+    }
 }
 
-export const map = <R, T, V extends OutRightRng<R>>(rng: InpLeftRng<T>, fn: (val: T) => R, initialVec: V): V => {
-    const iterate = (rng: InpLeftRng<T>, vec: V): V => {
-        const [newRng, left] = rng.popLeft()
-        if (isNo(left)) return vec
-        const newVec = vec.pushRight(fn(left.val)) as V
-        return iterate(newRng, newVec)
-    }
-    return iterate(rng, initialVec)
+export const map = <T, R>(rng: InpLeftRng<T>, fn: (val: T) => R): Mapper<T, R> => {
+    return Mapper.new(rng, fn)
 }
 
-export const filter = <T, V extends OutRightRng<T>>(rng: InpLeftRng<T>, fn: (val: T) => bool, initialVec: V): V => {
-    const iterate = (rng: InpLeftRng<T>, vec: V): V => {
-        const [newRng, left] = rng.popLeft()
-        if (isNo(left)) return vec
-        const newVec = fn(left.val)
-            ? vec.pushRight(left.val) as V
-            : vec
-        return iterate(newRng, newVec)
+class Filter<T> implements InpLeftRng<T> {
+    private constructor (
+        private readonly _rng: InpLeftRng<T>,
+        private readonly _fn: (val: T) => bool
+    ) {}
+
+    static new<T>(rng: InpLeftRng<T>, _fn: (val: T) => bool) {
+        return new Filter<T>(rng, _fn)
     }
-    return iterate(rng, initialVec)
+
+    left(): Opt<T> {
+        return findItem(this._rng, this._fn)
+    }
+
+    popLeft(): [InpLeftRng<T>, Opt<T>] {
+        return find(this._rng, this._fn)
+    }
+
+    withoutLeft(): InpLeftRng<T> {
+        return new Filter(this._rng.withoutLeft(), this._fn)
+    }
+
+    skipLeft(amount: usize): InpLeftRng<T> {
+        return new Filter(this._rng.skipLeft(amount), this._fn)
+    }
+
+    isEmpty(): bool {
+        return this._rng.isEmpty()
+    }
+
+    collect<V extends OutRightRng<T>>(initialVec: V): V {
+        const iterate = (rng: InpLeftRng<T>, vec: V): V => {
+            const [newRng, left] = rng.popLeft()
+            if (isNo(left)) return vec
+            const newVec = vec.pushRight(left.val) as V
+            return iterate(newRng, newVec)
+        }
+        return iterate(this, initialVec)
+    }
+}
+
+export const filter = <T>(rng: InpLeftRng<T>, fn: (val: T) => bool): Filter<T> => {
+    return Filter.new(rng, fn)
 }
 
 export const includes = <T>(rng: InpLeftRng<T>, item: T): bool => {
-    return isOk(find(rng, (a) => a === item))
+    return isOk(findItem(rng, (a) => a === item))
 }
 
 export const concat = <T, V extends OutRightRng<T>>(appendTo: V, appendFrom: InpLeftRng<T>): V => {
@@ -145,7 +218,7 @@ export const concat = <T, V extends OutRightRng<T>>(appendTo: V, appendFrom: Inp
     return iterate(appendTo, appendFrom)
 }
 
-class Enumeration<T> {
+class Enumeration<T> implements InpLeftRng<[T, usize]> {
     private constructor (
         private readonly _rng: InpLeftRng<T>,
         private readonly _index: usize
@@ -186,6 +259,16 @@ class Enumeration<T> {
     isEmpty(): bool {
         return this._rng.isEmpty()
     }
+
+    collect<V extends OutRightRng<[T, usize]>>(initialVec: V): V {
+        const iterate = (rng: InpLeftRng<[T, usize]>, vec: V): V => {
+            const [newRng, left] = rng.popLeft()
+            if (isNo(left)) return vec
+            const newVec = vec.pushRight(left.val) as V
+            return iterate(newRng, newVec)
+        }
+        return iterate(this, initialVec)
+    }
 }
 
 export const enumerate = <T>(rng: InpLeftRng<T>, from: usize = 0): InpLeftRng<[T, usize]> => {
@@ -209,27 +292,37 @@ export const contains = <T>(rngA: InpLeftRng<T>, rngB: InpLeftRng<T>): bool => {
     return iterate(rngA)
 }
 
-// const test = () => {
-//     const vec = Vec.from([1, 2, 3])
-//     console.log(fold(vec, 0, (acc, item) => acc + item) === 6)
-//     console.log(includes(vec, Vec.from([2, 3])))
-//     console.log(isOk(find(vec, (item) => item === 1)))
-//     console.log(isNo(find(vec, (item) => item === 4)))
-//     const [enumer1, left1] = enumerate(vec).popLeft()
-//     console.log(isOk(left1) && left1.val[0] === 1 && left1.val[1] === 0)
-//     const [_, left2] = enumer1.popLeft()
-//     console.log(isOk(left2) && left2.val[0] === 2 && left2.val[1] === 1)
+const test = () => {
+    const vec = Vec.from([1, 2, 3])
+    console.log(fold(vec, 0, (acc, item) => acc + item) === 6)
+    console.log(contains(vec, Vec.from([2, 3])))
+    console.log(isOk(findItem(vec, (item) => item === 1)))
+    console.log(isNo(findItem(vec, (item) => item === 4)))
+    const [enumer1, left1] = enumerate(vec).popLeft()
+    console.log(isOk(left1) && left1.val[0] === 1 && left1.val[1] === 0)
+    const [_, left2] = enumer1.popLeft()
+    console.log(isOk(left2) && left2.val[0] === 2 && left2.val[1] === 1)
     
-//     console.log(some(vec, (item) => item === 2))
-//     console.log(!some(vec, (item) => item === 5))
-//     console.log(every(vec, (item) => item < 4))
-//     console.log(!every(vec, (item) => item === 1))
+    console.log(some(vec, (item) => item === 2))
+    console.log(!some(vec, (item) => item === 5))
+    console.log(every(vec, (item) => item < 4))
+    console.log(!every(vec, (item) => item === 1))
 
-//     const str = Str.from('123')
-//     console.log(includes(str, Str.from('23')))
-//     console.log(isOk(find(str, (item) => item === '1')))
-//     console.log(isNo(find(str, (item) => item === '4')))
+    const str = Str.from('123')
+    console.log(contains(str, Str.from('23')))
+    console.log(isOk(findItem(str, (item) => item === '1')))
+    console.log(isNo(findItem(str, (item) => item === '4')))
 
-//     const str2 = Str.from('fn() // __TEST_CALL__')
-//     console.log(includes(str2, Str.from('__TEST_CALL__')))
-// }
+    const str2 = Str.from('fn() // __TEST_CALL__')
+    console.log(contains(str2, Str.from('__TEST_CALL__')))
+
+    const mapped = map(vec, (a) => a + 1)
+    const l0 = mapped.left()
+    console.log(isOk(l0) && l0.val === 2)
+    const l2 = mapped.skipLeft(2).left()
+    console.log(isOk(l2) && l2.val === 4)
+    const mappedVec = mapped.collect(Vec.new<i32>())
+    const l22 = mappedVec.getAt(2)
+    console.log(isOk(l22) && l22.val === 4)
+}
+test()

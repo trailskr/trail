@@ -9,7 +9,7 @@ import { isEqual, isIncludes } from './utils'
 import { Vec } from './vec'
 import { Set } from './set'
 import { Slice } from './slice'
-import { concat, enumerate, every, fold, forEach, map, find, some, filter, contains } from './rng'
+import { concat, enumerate, every, fold, forEach, map, some, filter, contains, findItem } from './rng'
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
@@ -155,7 +155,7 @@ const removeCommonIndent = (lines: Vec<Str>): Vec<Str> => {
         return Math.min(minIndent, m.val.index!)
     })
     if (!isFinite(commonIndent)) return lines
-    return map(lines, (line) => line.slice(() => Slice.new(ok(commonIndent), no())), Vec.new())
+    return map(lines, (line) => line.slice(() => Slice.new(ok(commonIndent), no()))).collect(Vec.new())
 }
 
 const filesRead = new Map()
@@ -204,7 +204,7 @@ interface FileCodePointer {
 }
 
 const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePointer => {
-    const found = find(enumerate(stack), ([filePointer]) => some(filePointer.code, (line) => {
+    const found = findItem(enumerate(stack), ([filePointer]) => some(filePointer.code, (line) => {
         return contains(line, Str.from('// __TEST_CALL__'))
     }))
     const [_, testCallIndex] = unwrap(found)
@@ -212,12 +212,12 @@ const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePoint
 }
 
 const parseStack = (stack: Str): Vec<FileCodePointer> => {
-    return map(
-        filter(
-            stack.split(/\n/),
-            (line) => contains(line, Str.from('.ts:')),
-            Vec.new()
-        ),
+    const linesWithTs = filter(
+        stack.split(/\n/),
+        (line) => contains(line, Str.from('.ts:'))
+    )
+    const fileCodePointers = map(
+        linesWithTs,
         (line) => {
             const m = unwrap(line.match(/.*\((.*?\.ts):(\d+):(\d+)/))
             const path = Str.from(m[1])
@@ -228,9 +228,9 @@ const parseStack = (stack: Str): Vec<FileCodePointer> => {
             const fullPath = Str.from(`${path.inner()}:${row}:${col}`)
             const file: FileCodePointer = { path, code, row, col, fullPath }
             return file
-        },
-        Vec.new()
+        }
     )
+    return fileCodePointers.collect(Vec.new())
 }
 
 export const assert = (fn: (logger: Logger) => bool): bool => {

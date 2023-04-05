@@ -1,1 +1,1 @@
-import './searcher/searchers/search-one'
+import './rng'

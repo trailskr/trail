@@ -20,12 +20,12 @@ export class SearchOne<T> implements Searcher<T> {
         return this._toFind
     }
 
-    search<R extends InpLeftRng<T>>(rng: R): [newCharStream: R, result: Opt<SearchResult<T>>] {
-        const [newRng, optVal] = rng.popLeft()
-        if (isNo(optVal)) return [rng, no()]
+    search<R extends InpLeftRng<T>>(from: R): [newRng: R, result: Opt<SearchResult<T>>] {
+        const [to, optVal] = from.popLeft()
+        if (isNo(optVal)) return [from, no()]
         return optVal.val === this._toFind
-            ? [newRng as R, ok({ type: SearchResult.Type.Found, val: optVal.val })]
-            : [rng as R, ok({ type: SearchResult.Type.NotFound })]
+            ? [to as R, ok({ type: SearchResult.Type.Found, val: optVal.val, from, to })]
+            : [from as R, ok({ type: SearchResult.Type.NotFound })]
     }
 }
 
@@ -35,7 +35,12 @@ unittest(Str.from('SearchOne'), () => {
     const charStream1 = CharStream.new(Str.from('+'))
     const [newCharStream1, result1] = plus.search(charStream1)
     assertEq(() => [newCharStream1.pos(), 1])
-    assertEq(() => [result1, ok<SearchResult<char>>({ type: SearchResult.Type.Found, val: '+' })])
+    assertEq(() => [result1, ok<SearchResult<char>>({
+        type: SearchResult.Type.Found,
+        val: '+',
+        from: charStream1,
+        to: newCharStream1
+    })])
 
     const charStream2 = CharStream.new(Str.from('-'))
     const [newCharStream2, result2] = plus.search(charStream2)

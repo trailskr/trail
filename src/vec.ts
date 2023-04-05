@@ -94,6 +94,10 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return Str.from(this._arr.join(val.inner()))
     }
 
+    inner(): T[] {
+        return this._arr.toArray()
+    }
+
     toString (): string {
         return this._arr.toArray().toString()
     }
