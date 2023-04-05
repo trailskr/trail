@@ -1,4 +1,4 @@
-import { CharStream } from '../../lexer/char-stream'
+import { CharStream } from '../../parser/lexer/char-stream'
 import { isNo } from 'src/opt'
 import { Str } from 'src/str'
 import { assertEq, unittest } from 'src/unittest'
