@@ -1,4 +1,4 @@
-import { isArray, isDate, isObjectLike } from './typecheck'
+import { isArray, isDate, isFunction, isObjectLike } from './typecheck'
 
 export interface IsEqualOptions {
     /**
@@ -34,6 +34,12 @@ export const isEqual = (a: unknown, b: unknown, options?: IsEqualOptions): boole
 
     if (isObjectLike(b)) {
         if (!a || !isObjectLike(a)) return false
+        if (
+            'inner' in a && 'inner' in b &&
+            isFunction(a.inner) && isFunction(b.inner)
+        ) {
+            return isEqual(a.inner(), b.inner(), options)
+        }
         const keysA = Object.keys(a)
         const keysB = Object.keys(b)
         if (filter) {
@@ -86,6 +92,12 @@ export const isIncludes = (a: unknown, b: unknown, options?: IsEqualOptions): bo
 
     if (isObjectLike(b)) {
         if (!a || !isObjectLike(a)) return false
+        if (
+            'inner' in a && 'inner' in b &&
+            isFunction(a.inner) && isFunction(b.inner)
+        ) {
+            return isEqual(a.inner(), b.inner(), options)
+        }
         const keysA = Object.keys(a)
         const keysB = Object.keys(b)
         if (filter) {

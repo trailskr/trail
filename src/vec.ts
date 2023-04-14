@@ -38,7 +38,7 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return [rest, first]
     }
 
-    popRight (): [Vec<T>, Opt<T>] {
+    popRight(): [Vec<T>, Opt<T>] {
         const last = optFrom(this._arr.last())
         const rest = new Vec(this._arr.pop())
         return [rest, last]
@@ -48,7 +48,7 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return new Vec(this._arr.skip(1))
     }
 
-    skipLeft (amount: usize): Vec<T> {
+    skipLeft(amount: usize): Vec<T> {
         return new Vec(this._arr.skip(amount))
     }
 
@@ -56,17 +56,17 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return new Vec(this._arr.skip(1))
     }
 
-    skipRight (amount: usize): Vec<T> {
+    skipRight(amount: usize): Vec<T> {
         return new Vec(this._arr.skipLast(amount))
     }
 
-    slice (fn: (len: usize) => Slice): Vec<T> {
+    slice(fn: (len: usize) => Slice): Vec<T> {
         const len = this.len()
         const slice = fn(len)
         return new Vec(this._arr.slice(or(slice.left(), 0), or(slice.right(), len)))
     }
 
-    len (): usize {
+    len(): usize {
         return this._arr.size
     }
 
@@ -74,23 +74,23 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return this.len() === 0
     }
 
-    pushRight (val: T): Vec<T> {
+    pushRight(val: T): Vec<T> {
         return new Vec(this._arr.push(val))
     }
 
-    pushLeft (val: T): Vec<T> {
+    pushLeft(val: T): Vec<T> {
         return new Vec(this._arr.unshift(val))
     }
 
-    getAt (index: usize): Opt<T> {
+    getAt(index: usize): Opt<T> {
         return optFrom(this._arr.get(index))
     }
 
-    setAt (index: usize, val: T): Vec<T> {
+    setAt(index: usize, val: T): Vec<T> {
         return new Vec(this._arr.set(index, val))
     }
 
-    join (val: Str): Str {
+    join(val: Str): Str {
         return Str.from(this._arr.join(val.inner()))
     }
 
@@ -98,7 +98,11 @@ export class Vec<T> implements RandomAccessFiniteRng<T> {
         return this._arr.toArray()
     }
 
-    toString (): string {
+    toString(): string {
         return this._arr.toArray().toString()
+    }
+
+    valueOf(): T[] {
+        return this._arr.toArray()
     }
 }

@@ -1,50 +1,59 @@
 import { CharStream } from '../../parser/lexer/char-stream'
 import { Str } from 'src/str'
-import { assertEq, unittest } from 'src/unittest'
+import { assertEq, assertInc, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
-import { isNo, no, ok, Opt } from 'src/opt'
+import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { Slice } from 'src/slice'
-import { fold, InpLeftRng } from 'src/rng'
+import { InpLeftRng } from 'src/rng'
 import { SearchOne } from './search-one'
+import { Vec } from 'src/vec'
 
-export class SearchRepeat<T> implements Searcher<T> {
-    private readonly _searcher: Searcher<T>
+export class SearchRepeat<T> implements Searcher<T, Vec<T>> {
+    private readonly _searcher: Searcher<T, T>
     private readonly _slice: Slice
 
-    private constructor (searcher: Searcher<T>, slice: Slice) {
+    private constructor(searcher: Searcher<T, T>, slice: Slice) {
         this._searcher = searcher
         this._slice = slice
     }
-    
-    static new <T>(searcher: Searcher<T>, slice: Slice): SearchRepeat<T> {
+
+    static new<T>(searcher: Searcher<T, T>, slice: Slice): SearchRepeat<T> {
         return new SearchRepeat(searcher, slice)
     }
 
-    searcher(): Searcher<T> {
+    searcher(): Searcher<T, T> {
         return this._searcher
     }
 
-    search<R extends InpLeftRng<T>>(rng: R): [newRng: R, result: Opt<SearchResult<T>>] {
-        const [newRng, times, result] = fold(
-            Slice.new<usize>(no(), this._slice.right()),
-            [rng, 0, no()] as [R, usize, Opt<SearchResult<T>>],
-            ([curRng, times, curResult], _, stop) => {
-                const [newRng, result] = this._searcher.search(curRng)
-                if (isNo(result)) {
-                    stop()
-                    return [rng, times, no<SearchResult<T>>()]
+    search<R extends InpLeftRng<T>>(from: R): [newRng: R, result: Opt<SearchResult<T, Vec<T>>>] {
+        const iterate = (curRng: R, curResult: Vec<T>): [newRng: R, result: Opt<SearchResult<T, Vec<T>>>] => {
+            const [newRng, result] = this._searcher.search(curRng)
+            if (isNo(result)) {
+                if (curResult.isEmpty()) {
+                    return [from as R, no<SearchResult<T, Vec<T>>>()]
                 }
-                if (result.val.type !== SearchResult.Type.Found) {
-                    stop()
-                    return [newRng as R, times, ok(result.val)]
+                const sliceLeft = this._slice.left()
+                if (isNo(sliceLeft) || curResult.len() >= sliceLeft.val) {
+                    return [newRng as R, ok({ type: SearchResult.Type.Found, val: curResult, from, to: newRng as R })]
                 }
-                return [newRng as R, times + 1, curResult]
-            })
+                return [from, ok({ type: SearchResult.Type.NotFound })]
+            }
+            if (result.val.type !== SearchResult.Type.Found) {
+                const sliceLeft = this._slice.left()
+                if (isNo(sliceLeft) || curResult.len() >= sliceLeft.val) {
+                    return [newRng as R, ok({ type: SearchResult.Type.Found, val: curResult, from, to: newRng as R })]
+                }
+                return [from, ok({ type: SearchResult.Type.NotFound })]
+            }
+            const newResult = curResult.pushRight(result.val.val)
+            const sliceRight = this._slice.right()
+            if (isOk(sliceRight) && sliceRight.val === newResult.len()) {
+                return [newRng as R, ok({ type: SearchResult.Type.Found, val: newResult, from, to: newRng as R })]
+            }
+            return iterate(newRng as R, curResult.pushRight(result.val.val))
+        }
 
-        if (isNo(result)) return [rng, no()]
-        return result.val.type === SearchResult.Type.Error || times >= this._slice.orLeft()
-            ? [newRng, ok(result.val)]
-            : [rng, ok({ type: SearchResult.Type.NotFound })]
+        return iterate(from, Vec.new())
     }
 }
 
@@ -54,7 +63,12 @@ unittest(Str.from('SearchRepeat'), () => {
     const charStream1 = CharStream.new(Str.from('    '))
     const [newCharStream1, result1] = spacesFrom2.search(charStream1)
     assertEq(() => [newCharStream1.pos(), 4])
-    assertEq(() => [result1, ok({ type: SearchResult.Type.Found })])
+    assertInc(() => [result1, ok<SearchResult<char, Vec<char>>>({
+        type: SearchResult.Type.Found,
+        val: Vec.from([' ', ' ', ' ', ' ']),
+        from: charStream1,
+        to: newCharStream1
+    })])
 
     const charStream2 = CharStream.new(Str.from(' '))
     const [newCharStream2, result2] = spacesFrom2.search(charStream2)
@@ -66,5 +80,20 @@ unittest(Str.from('SearchRepeat'), () => {
     const charStream3 = CharStream.new(Str.from('         '))
     const [newCharStream3, result3] = spacesTo5.search(charStream3)
     assertEq(() => [newCharStream3.pos(), 5])
-    assertEq(() => [result3, ok({ type: SearchResult.Type.Found })])
+    assertEq(() => [result3, ok<SearchResult<char, Vec<char>>>({
+        type: SearchResult.Type.Found,
+        val: Vec.from([' ', ' ', ' ', ' ', ' ']),
+        from: charStream3,
+        to: newCharStream3
+    })])
+
+    const charStream4 = CharStream.new(Str.from(''))
+    const [newCharStream4, result4] = spacesFrom2.search(charStream4)
+    assertEq(() => [newCharStream4.pos(), 0])
+    assertEq(() => [result4, no()])
+
+    const charStream5 = CharStream.new(Str.from(' '))
+    const [newCharStream5, result5] = spacesFrom2.search(charStream5)
+    assertEq(() => [newCharStream5.pos(), 0])
+    assertEq(() => [result5, ok({ type: SearchResult.Type.NotFound })])
 })

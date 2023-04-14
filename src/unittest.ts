@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { inspect } from 'util'
+import { inspect as utilInspect } from 'util'
 
 import { Logger } from './logger'
 import { isNo, no, ok, unwrap } from './opt'
@@ -13,9 +13,13 @@ import { concat, enumerate, every, fold, forEach, map, some, filter, contains, f
 
 const unittestEnabled = process.env.NODEENV === 'test' || process.argv.includes('--test')
 
+const inspect = (data: unknown): string => {
+    return utilInspect(data, false, null)
+}
+
 interface TestNodeResult {
-  isSuccessfull(): bool
-  printResults(logger: Logger): void
+    isSuccessfull(): bool
+    printResults(logger: Logger): void
 }
 
 class TestNodeContext implements TestNodeResult {
@@ -27,9 +31,9 @@ class TestNodeContext implements TestNodeResult {
     private readonly _setLog: WriteSig<Vec<Str>>
 
     private constructor(fileCodePointer: FileCodePointer) {
-        this._fileCodePointer = fileCodePointer
-        ;[this._isSuccessfull, this._setIsSuccessfull] = Sig(false)
-        ;[this._log, this._setLog] = Sig(Vec.new<Str>())
+        this._fileCodePointer = fileCodePointer;
+        [this._isSuccessfull, this._setIsSuccessfull] = Sig(false);
+        [this._log, this._setLog] = Sig(Vec.new<Str>())
         this._logger = Logger.new((line: Str): void => {
             this._setLog(this._log().pushRight(line))
         })
@@ -92,8 +96,8 @@ class TestGroupContext implements TestNodeResult {
     private readonly _setChildren: WriteSig<Vec<TestNodeResult>>
 
     private constructor(description: Str, children: Vec<TestNodeResult> = Vec.new()) {
-        this._description = description
-        ;[this._children, this._setChildren] = Sig(children)
+        this._description = description;
+        [this._children, this._setChildren] = Sig(children)
     }
 
     static new(description: Str, children: Vec<TestNodeResult> = Vec.new()): TestGroupContext {
@@ -117,7 +121,7 @@ class TestGroupContext implements TestNodeResult {
             logger.error(message)
         }
         logger.withIndent(() => {
-          forEach(this._children(), (child) => child.printResults(logger))
+            forEach(this._children(), (child) => child.printResults(logger))
         })
     }
 }
@@ -199,11 +203,11 @@ const getCode = (path: Str, col: usize, row: usize): Vec<Str> => {
 }
 
 interface FileCodePointer {
-  path: Str
-  code: Vec<Str>
-  col: usize
-  row: usize
-  fullPath: Str
+    path: Str
+    code: Vec<Str>
+    col: usize
+    row: usize
+    fullPath: Str
 }
 
 const getTestStackLineFilePointer = (stack: Vec<FileCodePointer>): FileCodePointer => {

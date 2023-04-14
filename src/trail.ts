@@ -1,2 +1,2 @@
-import './searcher/searchers/search-any'
+import './searcher/searchers/search-repeat'
 // import './rng'

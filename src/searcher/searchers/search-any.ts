@@ -10,11 +10,11 @@ import { CharStream } from 'src/parser/lexer/char-stream'
 export class SearchAny<T> implements Searcher<T> {
     private readonly _items: Vec<Searcher<T>>
 
-    private constructor (items: Vec<Searcher<T>>) {
+    private constructor(items: Vec<Searcher<T>>) {
         this._items = items
     }
-    
-    static new <T>(items: Vec<Searcher<T>>): SearchAny<T> {
+
+    static new<T>(items: Vec<Searcher<T>>): SearchAny<T> {
         return new SearchAny(items)
     }
 

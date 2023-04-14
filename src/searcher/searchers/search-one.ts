@@ -8,11 +8,11 @@ import { InpLeftRng } from 'src/rng'
 export class SearchOne<T> implements Searcher<T> {
     private readonly _toFind: T
 
-    private constructor (_toFind: T) {
+    private constructor(_toFind: T) {
         this._toFind = _toFind
     }
-    
-    static new <T>(toFind: T): SearchOne<T> {
+
+    static new<T>(toFind: T): SearchOne<T> {
         return new SearchOne(toFind)
     }
 
