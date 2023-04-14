@@ -31,9 +31,6 @@ export class SearchUntil<T> implements Searcher<T, Vec<T>> {
         const iterate = (curRng: R, curResult: Vec<T>, prevResult: Opt<T>): [newRng: R, result: Opt<SearchResult<T, Vec<T>>>] => {
             const [newRng, result] = curRng.popLeft()
             if (isNo(result)) {
-                if (curResult.isEmpty()) {
-                    return [from, no<SearchResult<T, Vec<T>>>()]
-                }
                 return [from, ok({ type: SearchResult.Type.Error, msg: Str.from(`expected end of sequence: ${this._until}`) })]
             }
             if (result.val === this._until && (isNo(prevResult) || prevResult.val !== this._escape)) {
@@ -71,5 +68,8 @@ unittest(Str.from('SearchUntil'), () => {
     const charStream3 = CharStream.new(Str.from(''))
     const [_newCharStream3, result3] = exceptDoubleQuote.search(charStream3)
     assertEq(() => [newCharStream1.pos(), 2])
-    assertEq(() => [result3, no()])
+    assertEq(() => [result3, ok<SearchResult<char, Vec<char>>>({
+        type: SearchResult.Type.Error,
+        msg: Str.from('expected end of sequence: "')
+    })])
 })
