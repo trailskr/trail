@@ -1,6 +1,6 @@
 import { CharStream } from '../../parser/lexer/char-stream'
 import { Str } from 'src/str'
-import { assertEq, assertInc, unittest } from 'src/unittest'
+import { assertEq, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
 import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { Slice } from 'src/slice'
@@ -30,7 +30,7 @@ export class SearchRepeat<T> implements Searcher<T, Vec<T>> {
             const [newRng, result] = this._searcher.search(curRng)
             if (isNo(result)) {
                 if (curResult.isEmpty()) {
-                    return [from as R, no<SearchResult<T, Vec<T>>>()]
+                    return [from, no<SearchResult<T, Vec<T>>>()]
                 }
                 const sliceLeft = this._slice.left()
                 if (isNo(sliceLeft) || curResult.len() >= sliceLeft.val) {
@@ -50,7 +50,7 @@ export class SearchRepeat<T> implements Searcher<T, Vec<T>> {
             if (isOk(sliceRight) && sliceRight.val === newResult.len()) {
                 return [newRng as R, ok({ type: SearchResult.Type.Found, val: newResult, from, to: newRng as R })]
             }
-            return iterate(newRng as R, curResult.pushRight(result.val.val))
+            return iterate(newRng as R, newResult)
         }
 
         return iterate(from, Vec.new())
@@ -63,7 +63,7 @@ unittest(Str.from('SearchRepeat'), () => {
     const charStream1 = CharStream.new(Str.from('    '))
     const [newCharStream1, result1] = spacesFrom2.search(charStream1)
     assertEq(() => [newCharStream1.pos(), 4])
-    assertInc(() => [result1, ok<SearchResult<char, Vec<char>>>({
+    assertEq(() => [result1, ok<SearchResult<char, Vec<char>>>({
         type: SearchResult.Type.Found,
         val: Vec.from([' ', ' ', ' ', ' ']),
         from: charStream1,
