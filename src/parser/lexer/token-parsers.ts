@@ -6,7 +6,7 @@ import { Vec } from 'src/vec'
 import { CharStream } from './char-stream'
 import { SearchAny } from '../../searcher/searchers/search-any'
 import { SearchChar } from '../../searcher/searchers/search-one'
-import { SearchCharInRange } from '../../searcher/searchers/search-char-in-range'
+import { SearchCharInRange } from '../../searcher/searchers/search-in-range'
 import { SearchExceptChar } from '../../searcher/searchers/search-except-char'
 import { SearchRepeat } from '../../searcher/searchers/search-repeat'
 import { SearchSequence, SequenceFlag } from '../../searcher/searchers/search-sequence'
@@ -100,13 +100,13 @@ const decimalInteger = SearchSequence.new(Vec.from([{
 
 const exponentPart = SearchSequence.new(Vec.from([{
     searcher: SearchAny.new(Vec.from([
-        SearchChar.new('e'), 
+        SearchChar.new('e'),
         SearchChar.new('E')
     ])),
     flag: SequenceFlag.RequireEnd,
 }, {
     searcher: SearchAny.new(Vec.from([
-        SearchChar.new('+'), 
+        SearchChar.new('+'),
         SearchChar.new('-')
     ])),
     flag: SequenceFlag.Optional,

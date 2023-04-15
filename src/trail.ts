@@ -1,2 +1,2 @@
-import './searcher/searchers/search-until'
+import './searcher/searchers/search-in-range'
 // import './rng'
