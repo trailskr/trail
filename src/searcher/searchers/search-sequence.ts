@@ -4,6 +4,8 @@ import { assertEq, unittest } from 'src/unittest'
 import { Searcher, SearchResult } from '../searcher'
 import { Vec } from 'src/vec'
 import { SearchChar } from './search-one'
+import { Opt } from 'src/opt'
+import { InpLeftRng } from 'src/rng'
 
 export enum SequenceFlag {
     None = 'None',
@@ -12,19 +14,20 @@ export enum SequenceFlag {
     End = 'End',
 }
 
-export interface SequenceItem {
-    searcher: Searcher,
+export interface SequenceItem<T, U> {
+    key: Str,
+    searcher: Searcher<T, U>,
     flag: SequenceFlag
 }
 
-export class SearchSequence implements Searcher {
+export class SearchSequence<T> implements Searcher<T> {
     private readonly _items: Vec<SequenceItem>
 
-    private constructor (items: Vec<SequenceItem>) {
+    private constructor(items: Vec<SequenceItem>) {
         this._items = items
     }
-    
-    static new (items: Vec<SequenceItem>): SearchSequence {
+
+    static new<T>(items: Vec<SequenceItem>): SearchSequence<T> {
         return new SearchSequence(items)
     }
 
@@ -32,28 +35,28 @@ export class SearchSequence implements Searcher {
         return this._items
     }
 
-    parse(charStream: CharStream): [newCharStream: CharStream, result: SearchResult] {
+    search<R extends InpLeftRng<T>>(from: R): [newRng: R, result: Opt<SearchResult<T>>] {
         /// isEndend is false when was SequenceFlag.RequreEnd item and was't SequenceFlag.End
-        const [newCharStream, isEnded] = this._items.fold(
-            [charStream, true] as [CharStream, bool],
+        const [newRng, isEnded] = this._items.fold(
+            [from, true] as [CharStream, bool],
             ([ptr, isEnded], { searcher, flag }, _, stop) => {
-                const [newCharStream, result] = searcher.parse(ptr)
-                if (result !== SearchResult.Found && flag !== SequenceFlag.Optional) {
+                const [newRng, result] = searcher.parse(ptr)
+                if (result !== SearchResult.Type.Found && flag !== SequenceFlag.Optional) {
                     stop()
-                    return [isEnded ? charStream : newCharStream, isEnded] as [CharStream, bool]
+                    return [isEnded ? from : newRng, isEnded] as [CharStream, bool]
                 }
                 const newIsEnded = flag === SequenceFlag.RequireEnd
                     ? false
                     : isEnded || flag === SequenceFlag.End
-                return [newCharStream, newIsEnded] as [CharStream, bool]
+                return [newRng, newIsEnded] as [CharStream, bool]
             }
         )
-      
-        return newCharStream != charStream
+
+        return newRng != from
             ? isEnded
-                ? [newCharStream, SearchResult.Found]
-                : [newCharStream, SearchResult.NotEnded]
-            : [charStream, SearchResult.NotFound]
+                ? [newRng, SearchResult.Type.Found]
+                : [newRng, SearchResult.Type.Error]
+            : [from, SearchResult.Type.NotFound]
     }
 }
 
@@ -66,12 +69,12 @@ unittest(Str.from('SearchSequence'), () => {
     const charStream1 = CharStream.new(Str.from('\r\n'))
     const [newCharStream1, result1] = lineEnd.parse(charStream1)
     assertEq(() => [newCharStream1.pos(), 2])
-    assertEq(() => [result1, SearchResult.Found])
+    assertEq(() => [result1, SearchResult.Type.Found])
 
     const charStream2 = CharStream.new(Str.from('\n'))
     const [newCharStream2, result2] = lineEnd.parse(charStream2)
     assertEq(() => [newCharStream2.pos(), 1])
-    assertEq(() => [result2, SearchResult.Found])
+    assertEq(() => [result2, SearchResult.Type.Found])
 
     const aString = SearchSequence.new(Vec.from([
         { searcher: SearchChar.new('"'), flag: SequenceFlag.RequireEnd },
@@ -81,10 +84,10 @@ unittest(Str.from('SearchSequence'), () => {
     const charStream3 = CharStream.new(Str.from('"a"'))
     const [newCharStream3, result3] = aString.parse(charStream3)
     assertEq(() => [newCharStream3.pos(), 3])
-    assertEq(() => [result3, SearchResult.Found])
+    assertEq(() => [result3, SearchResult.Type.Found])
 
     const charStream4 = CharStream.new(Str.from('"a'))
     const [newCharStream4, result4] = aString.parse(charStream4)
     assertEq(() => [newCharStream4.pos(), 2])
-    assertEq(() => [result4, SearchResult.NotEnded])
+    assertEq(() => [result4, SearchResult.Type.Error])
 })
