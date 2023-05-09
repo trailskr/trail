@@ -2,14 +2,14 @@
 // Memory = (T, Z) => {
 //     size = T
 //     block = Z
-// 
+//
 // MemoryNumber = Memory(u32, i32)
-// 
+//
 // mem = MemoryNumber { size = 31, block = -15 }
 // mem = MemoryNumber {
 //     size = 31
 //     block = -15
-// 
+//
 // SomeEnum = (T) => | Some { val = T }, None |
 // SomeEnum = (T) => |
 //     Some { val = T }
@@ -42,3 +42,14 @@ impl (T, E) => {
         => if self.isOk then self.val else val
 
 a = Opt::Ok(val)
+
+add = (a, b) => {
+  a + b
+}
+
+add2: { args: (A, B), ret: C } = #(A, B, C) => \
+  => (a: A, b: B): C where add: (A, B): C => a + b
+
+
+
+
