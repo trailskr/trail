@@ -157,7 +157,7 @@ const getCode = (path: string, col: usize, row: usize): string[] => {
     const lineOpt = lines[lineIndex]
     if (lineOpt == null) return []
     // spaces before code start
-    let line = ` ${lineOpt.slice(col - 1)}`
+    let line = Array(col).join(' ') + lineOpt.slice(col - 1)
     const result: string[] = []
     const parensStack: char[] = []
     for (;;) {
