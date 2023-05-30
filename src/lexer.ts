@@ -49,7 +49,7 @@ export class Lexer {
 
     tokenize(from: CodePtr = this.ptr): Token {
         if (this.ptr.pos >= this.code.length) {
-            return new Token(TokenType.EOF, from, this.ptr)
+            return new Token(TokenType.EOF, this.ptr, this.ptr)
         }
         const char = this.peek()
         if (isDigit(char)) return this.tokenizeNumber()
@@ -74,7 +74,7 @@ unittest('lexer', () => {
     const code = '   2   +  351   '
     const lexer = new Lexer(code)
     const tokens = lexer.tokenizeAll()
-    const joinedTokens = tokens.map((token) => token.text(code)).join(' ')
+    const joinedTokens = tokens.slice(0, -1).map((token) => token.text(code)).join(' ')
     assertEq(() => [tokens.length, 4])
     assertEq(() => ['2 + 351', joinedTokens])
 })

@@ -1,7 +1,7 @@
-import { BinaryOperatorExpression, BinaryOperatorType, DecimalIntegerNumberExpression, Expression } from './expression'
+import { BinaryOperatorExpression, BinaryOperatorType, DecimalIntegerNumberExpression, Expression, UnaryOperatorExpression, UnaryOperatorType } from './expression'
 import { Lexer } from './lexer'
 import { Token, TokenType } from './token'
-import { unittest } from './unittest'
+import { assertEq, unittest } from './unittest'
 
 export class Parser {
     constructor(
@@ -32,6 +32,13 @@ export class Parser {
     }
 
     unary(): Expression {
+        const token = this.peek()
+        if (this.match(TokenType.Minus)) {
+            return new UnaryOperatorExpression(token.from, token.to, UnaryOperatorType.Minus, this.primary())
+        }
+        if (this.match(TokenType.Plus)) {
+            return new UnaryOperatorExpression(token.from, token.to, UnaryOperatorType.Plus, this.primary())
+        }
         return this.primary()
     }
 
@@ -88,13 +95,13 @@ export class Parser {
     }
 }
 
-unittest('lexer', () => {
-    const code = '2 + 351'
+unittest('parser', () => {
+    const code = '+2 + -351'
     const lexer = new Lexer(code)
     const tokens = lexer.tokenizeAll()
     const parser = new Parser(code, tokens)
     const expressions = parser.parseAll()
-    expressions.forEach((expr) => {
-        console.log(expr, expr.eval())
-    })
+    const [expr] = expressions
+    console.log(expr.toString(), '=', expr.eval())
+    assertEq(() => [expr.eval(), -349])
 })

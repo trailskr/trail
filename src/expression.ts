@@ -7,7 +7,11 @@ export abstract class Expression {
     ) {}
 
     eval(): f64 {
-        throw new Error('abstract method calls')
+        throw new Error('abstract method call')
+    }
+
+    toString(): string {
+        throw new Error('abstract method call')
     }
 }
 
@@ -45,6 +49,16 @@ export class BinaryOperatorExpression extends Expression {
             default: return l / r
         }
     }
+
+    toString(): string {
+        const [l, r] = [this.left.toString(), this.right.toString()]
+        switch (this.operator) {
+            case BinaryOperatorType.Add: return `${l} + ${r}`
+            case BinaryOperatorType.Sub: return `${l} - ${r}`
+            case BinaryOperatorType.Mul: return `${l} * ${r}`
+            default: return `${l} / ${r}`
+        }
+    }
 }
 
 export enum UnaryOperatorType {
@@ -68,8 +82,13 @@ export class UnaryOperatorExpression extends Expression {
     }
 
     eval(): f64 {
-        const l = this.right.eval()
-        return this.operator === UnaryOperatorType.Minus ? -l : l
+        const r = this.right.eval()
+        return this.operator === UnaryOperatorType.Minus ? -r : r
+    }
+
+    toString(): string {
+        const r = this.right.toString()
+        return this.operator === UnaryOperatorType.Minus ? `-${r}` : `+${r}`
     }
 }
 
@@ -87,5 +106,9 @@ export class DecimalIntegerNumberExpression extends Expression {
 
     eval(): f64 {
         return Number(this.value)
+    }
+
+    toString(): string {
+        return String(Number(this.value))
     }
 }
