@@ -21,7 +21,7 @@ assert(int(5) == 5)
 // All types is initialized by their default value
 assert(int() == 0)
 
-// ??? "instance of" operator returns suitabillity of values for types
+// ??? "instance of" operator returns suitability of values for types
 assert(5 iof any)
 assert(5 iof num)
 assert(5 iof int)
@@ -39,7 +39,7 @@ assert(tof(5) is int)
 // a = 7 // error, a is immutable
 d = _ // later binding (same as d = und())
 
-// log(d) // const can not be used before later redefinishion or can not be redefined if used
+// log(d) // const can not be used before later redefinition or can not be redefined if used
 
 if system.os == WINDOWS \
   d = 10 // later binding, d is also immutable
@@ -159,7 +159,7 @@ assert(d.tof is tof(d) is str)
 assert(int('10') == 10)
 assert(str(10) == '10')
 
-// availablility operator
+// availability operator
 assert(0? is true)
 assert(''? is true)
 assert(sub? is true)
@@ -228,7 +228,7 @@ assert([0..3] == [0, 1, 2])
 assert([3..0] == [3, 2, 1])
 assert([0...32, 8] == [0, 8, 16, 24, 32])
 
-// cicles
+// cycles
 // there is no cycle operators, only recursive function calls
 \
   self = i => \
