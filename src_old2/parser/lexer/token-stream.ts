@@ -1,7 +1,7 @@
 import { isOk, no, ok, Opt } from 'src/opt'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
-import { assertInc, unittest } from 'src/unittest'
+import { assertInc, unittest } from 'src_old3/unittest'
 import { Vec } from 'src/vec'
 import { CharStream } from './char-stream'
 import { SearchChar } from '../../searcher/searchers/search-one'
@@ -63,7 +63,7 @@ export class TokenStream implements InpLeftRng<TokenOpt> {
                 return [charStream, no() as Opt<TokenOpt>]
             }
         )
-      
+
         return isOk(foundToken)
             ? [new TokenStream(newCharStream, false), foundToken]
             : [new TokenStream(charStream, false), no()]

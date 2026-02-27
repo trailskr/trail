@@ -1,7 +1,7 @@
 import { CharStream } from '../../parser/lexer/char-stream'
 import { isNo, isOk, no, ok, Opt } from 'src/opt'
 import { Searcher, SearchResult } from '../searcher'
-import { assertEq, unittest } from 'src/unittest'
+import { assertEq, unittest } from 'src_old3/unittest'
 import { Str } from 'src/str'
 import { InpLeftRng } from 'src/rng'
 

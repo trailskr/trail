@@ -1,6 +1,6 @@
 import { ok } from 'src/opt'
 import { Str } from 'src/str'
-import { assertInc, unittest } from 'src/unittest'
+import { assertInc, unittest } from 'src_old3/unittest'
 import { AstNodeType, BinaryOperatorType } from './ast'
 
 const testAst = (sourceCode: Str, resultCode: Partial<AstNode>) => {

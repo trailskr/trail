@@ -1,7 +1,7 @@
 import { no, ok } from 'src/opt'
 import { Slice } from 'src/slice'
 import { Str } from 'src/str'
-import { assertEq, assertInc, unittest } from 'src/unittest'
+import { assertEq, assertInc, unittest } from 'src_old3/unittest'
 import { Vec } from 'src/vec'
 import { CharStream } from './char-stream'
 import { SearchAny } from '../../searcher/searchers/search-any'

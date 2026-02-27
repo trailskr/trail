@@ -1,0 +1,14 @@
+.{
+    .name = .trail,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.16.0-dev.2623+27eec9bd6",
+    .fingerprint = 0xb268858f98563bff,
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "README.md",
+        "LICENSE",
+    },
+}
