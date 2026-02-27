@@ -1,5 +1,5 @@
-import { ok } from 'src/opt'
-import { Str } from 'src/str'
+import { ok } from 'src_old2/opt'
+import { Str } from 'src_old2/str'
 import { assertInc, unittest } from 'src_old3/unittest'
 import { AstNodeType, BinaryOperatorType } from './ast'
 

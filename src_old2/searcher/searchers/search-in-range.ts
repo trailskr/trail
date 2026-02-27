@@ -1,9 +1,9 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { isNo, isOk, no, ok, Opt } from 'src/opt'
+import { isNo, isOk, no, ok, Opt } from 'src_old2/opt'
 import { Searcher, SearchResult } from '../searcher'
 import { assertEq, unittest } from 'src_old3/unittest'
-import { Str } from 'src/str'
-import { InpLeftRng } from 'src/rng'
+import { Str } from 'src_old2/str'
+import { InpLeftRng } from 'src_old2/rng'
 
 export class SearchCharInRange<T> implements Searcher<T> {
     private readonly _from: T

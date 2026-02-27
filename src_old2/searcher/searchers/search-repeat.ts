@@ -1,12 +1,12 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { Str } from 'src/str'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
 import { Searcher, SearchResult } from '../searcher'
-import { isNo, isOk, no, ok, Opt } from 'src/opt'
-import { Slice } from 'src/slice'
-import { InpLeftRng } from 'src/rng'
+import { isNo, isOk, no, ok, Opt } from 'src_old2/opt'
+import { Slice } from 'src_old2/slice'
+import { InpLeftRng } from 'src_old2/rng'
 import { SearchOne } from './search-one'
-import { Vec } from 'src/vec'
+import { Vec } from 'src_old2/vec'
 
 export class SearchRepeat<T> implements Searcher<T, Vec<T>> {
     private readonly _searcher: Searcher<T, T>

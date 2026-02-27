@@ -1,11 +1,11 @@
-import { Str } from 'src/str'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
 import { Searcher, SearchResult } from '../searcher'
-import { Vec } from 'src/vec'
-import { isNo, no, ok, Opt } from 'src/opt'
-import { InpLeftRng } from 'src/rng'
+import { Vec } from 'src_old2/vec'
+import { isNo, no, ok, Opt } from 'src_old2/opt'
+import { InpLeftRng } from 'src_old2/rng'
 import { SearchOne } from './search-one'
-import { CharStream } from 'src/parser/lexer/char-stream'
+import { CharStream } from 'src_old2/parser/lexer/char-stream'
 
 export class SearchAny<T> implements Searcher<T> {
     private readonly _items: Vec<Searcher<T>>

@@ -1,9 +1,9 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { Opt, isNo, no, ok } from 'src/opt'
-import { Str } from 'src/str'
+import { Opt, isNo, no, ok } from 'src_old2/opt'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
-import { InpLeftRng } from 'src/rng'
-import { Vec } from 'src/vec'
+import { InpLeftRng } from 'src_old2/rng'
+import { Vec } from 'src_old2/vec'
 import { SearchResult, Searcher } from '../searcher'
 
 export class SearchUntil<T> implements Searcher<T, Vec<T>> {

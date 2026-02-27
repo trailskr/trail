@@ -1,14 +1,14 @@
-import { isOk, no, ok, Opt } from 'src/opt'
-import { Slice } from 'src/slice'
-import { Str } from 'src/str'
+import { isOk, no, ok, Opt } from 'src_old2/opt'
+import { Slice } from 'src_old2/slice'
+import { Str } from 'src_old2/str'
 import { assertInc, unittest } from 'src_old3/unittest'
-import { Vec } from 'src/vec'
+import { Vec } from 'src_old2/vec'
 import { CharStream } from './char-stream'
 import { SearchChar } from '../../searcher/searchers/search-one'
 import { SearchRepeat } from '../../searcher/searchers/search-repeat'
 import { ampersand, and, arrow, assign, at, colon, concat, decimalFractionalNumber, decimalIntegerNumber, div, dot, equal, exclamationMark, falseP, greaterThan, greaterThanOrEqual, indent, indentifier, leftCurlyBrace, leftParenthesis, leftSquareBracket, lessThan, lessThanOrEqual, lineEnd, minus, mul, not, notEqual, or, plus, questionMark, rightCurlyBrace, rightParenthesis, rightSquareBracket, sharp, stringDoubleQuote, stringSingleQuote, trueP, verticalBar } from './token-parsers'
 import { TokenOpt, TokenType } from './tokens'
-import { fold, InpLeftRng } from 'src/rng'
+import { fold, InpLeftRng } from 'src_old2/rng'
 
 const whiteSpace = SearchRepeat.new(SearchChar.new(' '), Slice.new(ok(1), no()))
 

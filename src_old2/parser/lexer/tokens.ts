@@ -1,5 +1,5 @@
-import { Opt } from 'src/opt'
-import { Str } from 'src/str'
+import { Opt } from 'src_old2/opt'
+import { Str } from 'src_old2/str'
 import { CharStream } from './char-stream'
 
 export enum TokenType {
@@ -32,7 +32,7 @@ export enum TokenType {
     Colon = 'Colon',
     At = 'At',
     Sharp = 'Sharp',
-    
+
     Ampersand = 'Ampersand',
     VerticalBar = 'VerticalBar',
     LeftParenthesis = 'LeftParenthesis',
@@ -44,7 +44,7 @@ export enum TokenType {
 
     True = 'True',
     False = 'False',
-    
+
     Identifier = 'Identifier',
     DecimalIntegerNumber = 'DecimalIntegerNumber',
     DecimalFractionalNumber = 'DecimalFractionalNumber',

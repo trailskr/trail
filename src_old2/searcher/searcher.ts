@@ -1,6 +1,6 @@
-import { Opt } from 'src/opt'
-import { InpLeftRng } from 'src/rng'
-import { Str } from 'src/str'
+import { Opt } from 'src_old2/opt'
+import { InpLeftRng } from 'src_old2/rng'
+import { Str } from 'src_old2/str'
 
 export namespace SearchResult {
     export enum Type {

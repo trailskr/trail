@@ -1,9 +1,9 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { isNo, no, ok, Opt } from 'src/opt'
-import { Str } from 'src/str'
+import { isNo, no, ok, Opt } from 'src_old2/opt'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
 import { Searcher, SearchResult } from '../searcher'
-import { InpLeftRng } from 'src/rng'
+import { InpLeftRng } from 'src_old2/rng'
 
 export class SearchOne<T> implements Searcher<T> {
     private readonly _toFind: T

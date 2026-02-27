@@ -1,11 +1,11 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { Str } from 'src/str'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
 import { Searcher, SearchResult } from '../searcher'
-import { Vec } from 'src/vec'
+import { Vec } from 'src_old2/vec'
 import { SearchChar } from './search-one'
-import { Opt } from 'src/opt'
-import { InpLeftRng } from 'src/rng'
+import { Opt } from 'src_old2/opt'
+import { InpLeftRng } from 'src_old2/rng'
 
 export enum SequenceFlag {
     None = 'None',

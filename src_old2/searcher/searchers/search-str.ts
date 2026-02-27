@@ -1,6 +1,6 @@
 import { CharStream } from '../../parser/lexer/char-stream'
-import { isNo } from 'src/opt'
-import { Str } from 'src/str'
+import { isNo } from 'src_old2/opt'
+import { Str } from 'src_old2/str'
 import { assertEq, unittest } from 'src_old3/unittest'
 import { Searcher, SearchResult } from '../searcher'
 

@@ -1,7 +1,7 @@
-import { isNo, ok, Opt } from 'src/opt'
-import { InpLeftRng } from 'src/rng'
-import { Slice } from 'src/slice'
-import { Str } from 'src/str'
+import { isNo, ok, Opt } from 'src_old2/opt'
+import { InpLeftRng } from 'src_old2/rng'
+import { Slice } from 'src_old2/slice'
+import { Str } from 'src_old2/str'
 
 export class CharStream implements InpLeftRng<char> {
     private readonly _code: Str
